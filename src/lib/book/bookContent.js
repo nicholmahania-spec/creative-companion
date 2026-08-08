@@ -82,17 +82,23 @@ export const FIELD_HOMES = {
   detective: { view: 'project', label: labelForStepId('define') },
   /* Identity: the words live on the direction sheet, which renders on every
      Identity screen, so they all point at the sheet. */
+  /* Positioning is the designer's synthesis of the client's "what does your
+     business do?", not a copy of it, so it is still written on the sheet.
+     See BRIEF_OWNED_WORDS for why the lines below are not. */
   positioning: { view: 'brand', section: 'positioning', label: 'the sheet' },
-  voice: { view: 'brand', section: 'voice', label: 'the sheet' },
-  messagingPromise: { view: 'brand', section: 'messaging', label: 'the sheet' },
-  messagingProof: { view: 'brand', section: 'messaging', label: 'the sheet' },
-  messagingPersonality: {
-    view: 'brand',
-    section: 'messaging',
-    label: 'the sheet',
-  },
+  /* THE BRIEF ASKS THESE, SO THE BRIEF IS WHERE THEY ARE WRITTEN.
+     They pointed at the sheet while the sheet had a box for each. It reports
+     them now, so "Write it on the sheet" would land the designer on a line
+     they cannot type in — a link that names a destination where the thing
+     cannot be done, which is the dead-pointer defect this file's own
+     `identityLabel` comment was added to prevent. */
+  voice: { view: 'project', label: labelForStepId('define') },
+  messagingPromise: { view: 'project', label: labelForStepId('define') },
+  messagingProof: { view: 'project', label: labelForStepId('define') },
+  messagingPersonality: { view: 'project', label: labelForStepId('define') },
+  dontUse: { view: 'project', label: labelForStepId('define') },
+  /* No brief question asks what TO do — this one stays the designer's. */
   doUse: { view: 'brand', section: 'words', label: 'the sheet' },
-  dontUse: { view: 'brand', section: 'words', label: 'the sheet' },
   /* The tagline is on the sheet with the rest of the brand's words. The book
      used to carry its own input for it — an output authoring a decision. */
   tagline: { view: 'brand', section: 'tagline', label: 'the sheet' },

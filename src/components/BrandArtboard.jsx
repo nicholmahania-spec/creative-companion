@@ -91,19 +91,39 @@ function ArtboardLine({
      gone, so a brief edited tomorrow shows through here with nothing to sync.
      See `BRIEF_OWNED_WORDS` for which lines and why. */
   const inherited = isBriefOwned(field)
+  /* SOURCE MATERIAL IS NOT A DRAFT.
+     A line the designer still authors may have a brief answer BEHIND it
+     without that answer being the same fact — Positioning is written from
+     "What does your business do?", not equal to it. Putting the fallback
+     inside the box looked helpful and was a copy waiting to happen: the
+     textarea held the client's sentence, so the first keystroke sent
+     `e.target.value` — client sentence and all — into `project.positioning`,
+     forking one fact into two columns exactly as briefWords.js forbids.
+     So the box holds the designer's OWN words, and the client's answer sits
+     under it as the material to write from. The SHEET still falls back when
+     nothing has been written; only the control stops pre-filling. */
+  const ownValue = String(project?.[field] ?? '')
+  const sourceBehind = !inherited && fromBrief ? value : ''
   return (
     <>
       <WordKicker fromBrief={fromBrief}>{label}</WordKicker>
       {editable && !inherited ? (
-        <textarea
-          className={`artboard-brief-input${fromBrief ? ' is-from-brief' : ''}`}
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          placeholder={placeholder}
-          rows={rows}
-          aria-label={label}
-          style={style}
-        />
+        <>
+          <textarea
+            className="artboard-brief-input"
+            value={ownValue}
+            onChange={(e) => onChange?.(e.target.value)}
+            placeholder={placeholder}
+            rows={rows}
+            aria-label={label}
+            style={style}
+          />
+          {sourceBehind && (
+            <p className="artboard-word-source">
+              {`${BRIEF_PROVENANCE}: ${sourceBehind}`}
+            </p>
+          )}
+        </>
       ) : (
         <>
           <DirectionValue value={value} />

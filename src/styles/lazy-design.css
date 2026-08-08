@@ -2078,6 +2078,15 @@
   font-style: italic;
 }
 
+/* The client's answer sitting under a line the designer writes from it.
+   Reads as material, not as a value: muted, no field edge, no control. */
+.artboard-word-source {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* The route to where a brief-owned line is actually written.
    A text link, not a button: it is navigation, not a decision, and it must
    not compete with the design controls in the column beside it. */

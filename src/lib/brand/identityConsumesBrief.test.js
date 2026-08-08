@@ -9,6 +9,8 @@ import {
   isBriefOwned,
 } from './briefWords'
 import { DETECTIVE_CHAPTERS } from '../brief/detectiveBrief'
+import { FIELD_HOMES } from '../book/bookContent'
+import { isArtboardDeepLink } from '../journey/identitySubsteps'
 
 /**
  * IDENTITY CONSUMES THE BRIEF. IT DOES NOT RE-ASK IT.
@@ -156,5 +158,80 @@ describe('resolution stays live — nothing is copied', () => {
       value: '',
       fromBrief: false,
     })
+  })
+})
+
+describe('positioning is a synthesis, not a copy of the client\'s answer', () => {
+  /* The client supplies source material ("What does your business do?"). The
+     designer writes a positioning line FROM it. Those are two facts, and the
+     sheet must not let one become the other. */
+
+  it('never pre-fills the designer\'s box with the client\'s sentence', () => {
+    /* The box used to be `value={value}` — the RESOLVED value. With no
+       positioning written that is the client's `usp`, so the first keystroke
+       sent the whole string into `project.positioning` and the client's
+       description silently became the designer's positioning line. One fact
+       forked into two columns, which is the thing briefWords.js exists to
+       prevent. The box binds to the project's own field now. */
+    expect(artboard).toContain("const ownValue = String(project?.[field] ?? '')")
+    /* Checked on the TEXTAREA specifically. The read-only line below it
+       legitimately renders the resolved value — that is the display, and it
+       is the fallback working as intended. It is binding the EDITABLE
+       control to the resolved value that copies. */
+    const textareas = artboard.match(/<textarea[\s\S]*?\/>/g) || []
+    expect(textareas.length).toBeGreaterThan(0)
+    for (const t of textareas) {
+      expect(t, 'a textarea must not bind to the resolved value').not.toMatch(
+        /value=\{value\}/
+      )
+    }
+    expect(textareas.some((t) => t.includes('value={ownValue}'))).toBe(true)
+  })
+
+  it('still shows the client\'s answer, as material rather than as a draft', () => {
+    expect(artboard).toContain('sourceBehind')
+    expect(artboard).toContain('artboard-word-source')
+  })
+
+  it('still falls back for display and export when nothing is written', () => {
+    /* Only the CONTROL stopped pre-filling. What the sheet reports, and what
+       the book and the pack print, is unchanged. */
+    const p = { detective: { usp: 'We make small-batch ceramics' } }
+    expect(effectiveWord(p, 'positioning')).toEqual({
+      value: 'We make small-batch ceramics',
+      fromBrief: true,
+    })
+    const written = { ...p, positioning: 'For makers who ship on the date' }
+    expect(effectiveWord(written, 'positioning')).toEqual({
+      value: 'For makers who ship on the date',
+      fromBrief: false,
+    })
+  })
+})
+
+describe('every field points at a place it can actually be written', () => {
+  it('sends the brief-owned lines to the brief', () => {
+    for (const field of BRIEF_OWNED_WORDS) {
+      const home = FIELD_HOMES[field]
+      expect(home, `${field} needs a home`).toBeTruthy()
+      /* "Write it on the sheet" would land the designer on a line they
+         cannot type in. A link that names a destination where the thing
+         cannot be done is the dead-pointer defect, not a cosmetic detail. */
+      expect(home.view, `${field} must not point at Identity`).toBe('project')
+    }
+  })
+
+  it('keeps positioning on the sheet, and the sheet reachable', () => {
+    expect(FIELD_HOMES.positioning.view).toBe('brand')
+    expect(FIELD_HOMES.positioning.section).toBe('positioning')
+    /* The book's link routes through `goSystemSection`, which only lands on
+       the sheet for ids the artboard claims. If this ever stopped being an
+       artboard link the button would silently open Mark instead. */
+    expect(isArtboardDeepLink(FIELD_HOMES.positioning.section)).toBe(true)
+  })
+
+  it('keeps the designer\'s other own lines on the sheet too', () => {
+    expect(FIELD_HOMES.tagline.view).toBe('brand')
+    expect(FIELD_HOMES.doUse.view).toBe('brand')
   })
 })
