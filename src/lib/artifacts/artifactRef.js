@@ -37,6 +37,13 @@ export const ARTIFACT_KINDS = Object.freeze({
   palette: { stored: true, from: 'artifacts' },
   /** An immutable heading+body pairing snapshot in `project.artifacts`. */
   typePairing: { stored: true, from: 'artifacts' },
+  /**
+   * A curated stimulus shown in Visual Discovery — a typeface at a weight, a
+   * color. Resolves from `lib/discovery/samples.js`, not from project state:
+   * a sample belongs to the app, not to one brand, so two projects that both
+   * chose Fraunces reference the same id.
+   */
+  sample: { stored: true, from: 'samples' },
   /** Phase 3. A named combination of the above. Owns no brand content. */
   direction: { stored: false, from: 'artifacts' },
   /** Phase 5. */
@@ -126,6 +133,11 @@ export function resolveRef(project, ref) {
   switch (kind) {
     case 'markConcept':
       return (project.logoConcepts || []).find((c) => c?.id === id) || null
+    case 'sample':
+      /* App-level, not project-level — resolved by the caller through
+         `sampleById` so this module does not import the registry and the
+         grammar stays free of content. */
+      return null
     case 'evidence':
       /* Pins are workspace-wide with a projectId, not nested under the
          project, so this one takes the list from the caller's state. Use
@@ -134,6 +146,12 @@ export function resolveRef(project, ref) {
     default:
       return (project.artifacts || {})[id] || null
   }
+}
+
+/** `resolveRef` for samples, which belong to the app rather than a project. */
+export function resolveSampleRef(index, ref) {
+  if (!isRef(ref) || ref.kind !== 'sample') return null
+  return index?.get?.(ref.id) || null
 }
 
 /** `resolveRef` for evidence, which lives on the workspace, not the project. */
