@@ -13,6 +13,8 @@ import useIsMobile from '../../lib/useIsMobile'
 import DefineStartHere from './DefineStartHere'
 import BriefSpectrum from './BriefSpectrum'
 import '../../styles/lazy-define.css'
+import VisualDiscovery from '../discovery/VisualDiscovery'
+import useAppStore from '../../store/useAppStore'
 
 export { DETECTIVE_CHAPTERS, getDetectiveProgress, isFilled }
 
@@ -122,6 +124,11 @@ export default function DetectiveSheet({
      apparatus — the flag, the persisted defineOpenChapter, the auto-open
      effect — is deleted, not parked behind a toggle: an expand/collapse
      control would just bill a decision to undo the layout's default. */
+  /* Visual Discovery writes its own log on the project; the sheet itself
+     stays a presentation of `detective`. */
+  const activeProject = useAppStore((st) =>
+    st.projects.find((p) => p.id === st.currentProjectId)
+  )
   const [currentChapter, setCurrentChapter] = useState(DETECTIVE_CHAPTERS[0].id)
   const [focusField, setFocusField] = useState(null)
   const isMobile = useIsMobile()
@@ -400,6 +407,13 @@ export default function DetectiveSheet({
                 })}
               </div>
 
+              {/* Visual Discovery sits with the other look-and-feel questions
+                  because it answers the same thing a different way: the
+                  spectrums ask you to place yourself on a scale, this asks you
+                  to point at what you like. It adds no brief field — the
+                  choices are their own log and everything read from them is
+                  derived. */}
+              {ch.id === 'identity' && <VisualDiscovery project={activeProject} />}
             </article>
           )
         })}

@@ -79,10 +79,21 @@ describe('an existing workspace still loads', () => {
   it('gives every project the new containers, empty rather than absent', () => {
     expect(out.projects[0].artifacts).toEqual({})
     expect(out.projects[0].designerSurfaces).toEqual([])
+    // v7 — the discovery log, added the same way.
+    expect(out.projects[0].visualDiscovery).toEqual({ choices: [], verdict: null })
+  })
+
+  it('keeps a discovery log a project already had', () => {
+    const held = v5Workspace()
+    held.projects[0].visualDiscovery = {
+      choices: [{ id: 'x', category: 'type', shown: ['a', 'b'], chose: 'a' }],
+      verdict: null,
+    }
+    expect(migrate(held).projects[0].visualDiscovery.choices).toHaveLength(1)
   })
 
   it('is idempotent — running it again changes nothing', () => {
-    expect(migrate(out, 6)).toEqual(out)
+    expect(migrate(out, 7)).toEqual(out)
   })
 
   it('never overwrites a favorite the designer already set', () => {
