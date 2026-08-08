@@ -428,13 +428,21 @@
   margin: 0 auto;
 }
 
-.bbb-color-row__hex-input {
+.bbb-color-row input[type="text"].bbb-color-row__hex-input {
   font-family: ui-monospace, monospace;
   font-size: var(--fs-1, 0.75rem);
   /* `.bbb-color-row input[type="text"]` sets `flex: 1` — i.e. flex-basis 0 —
      which outranks a plain `width` in a flex line, so this field collapsed
      and a 7-character hex rendered as "#1". It needs a fixed track, not a
-     share of the row: the name beside it is what should absorb slack. */
+     share of the row: the name beside it is what should absorb slack.
+
+     The selector has to carry `input[type="text"]` too. Written as a bare
+     `.bbb-color-row__hex-input` this rule scored (0,1,0) against the (0,2,1)
+     of the rule it was written to beat, so `flex: 1` still won and
+     `flex-basis: 0` still overrode the width — the field kept shrinking and
+     clipped the last character, rendering #1C1917 as "#1C191". Six of seven
+     characters reads as a valid short hex rather than a truncation, which is
+     why this survived a fix that named the cause correctly. */
   flex: 0 0 auto;
   width: 6rem;
   min-width: 0;
