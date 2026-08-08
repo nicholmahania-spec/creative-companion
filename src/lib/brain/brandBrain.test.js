@@ -70,7 +70,8 @@ describe('what the brain remembers', () => {
   })
 
   it('remembers a colour role with no reason on record', () => {
-    const accent = brain.byTopic.colour.find((f) => f.label === 'Accent colour')
+    // Label is American English; the topic key stays `colour` (an id).
+    const accent = brain.byTopic.colour.find((f) => f.label === 'Accent color')
     expect(accent.value).toBe('#0F766E')
     expect(accent.why).toBe('')
   })

@@ -101,11 +101,6 @@
   color: var(--text-muted);
 }
 
-.desk-progress-strong {
-  color: var(--text-primary);
-  font-weight: 700;
-}
-
 .desk-next-meta {
   display: flex;
   flex-wrap: wrap;
@@ -856,7 +851,6 @@
   color: var(--text-muted);
 }
 
-.desk-check-short,
 .desk-check-list,
 .desk-check-facts {
   display: flex;
@@ -865,13 +859,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.desk-check-short li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
 }
 
 .desk-check-gap {
@@ -897,7 +884,6 @@
 }
 
 .desk-check-todo,
-.desk-check-group,
 .desk-check-group-count,
 .desk-check-fact-source {
   font-size: var(--fs-1);

@@ -216,14 +216,16 @@ export async function openBriefFieldChapter(page, fieldId) {
 }
 
 /**
- * Open one of Design's Identity sub-screens.
+ * Open one of Design's Identity tool screens: Mark · Color · Type · Handover.
  *
- * Identity was split into Mark → Words → Colour → Type → Preview (20d21a1).
- * Each sub-screen is mounted only while it is open, so fields that used to sit
- * on one flat Design column — `#msg-promise`, `#brand-tagline`, `#img-style` —
- * are simply absent until the sub-screen holding them is selected. Specs that
- * reached straight for them died waiting on an element that had not been
- * rendered yet, on an app that was working.
+ * Each is mounted only while open, so a field that lives on one is absent
+ * until it is selected.
+ *
+ * THE ARTBOARD IS NOT ONE OF THEM. Tagline, positioning, voice, promise,
+ * proof, personality and do/don't are edited on the direction sheet, which
+ * renders on every screen — reaching for `Tagline` needs no navigation at
+ * all. That is the point of the 2026-08-08 rework, and a spec that opens a
+ * tab to find those fields is describing an app that no longer exists.
  *
  * Labels come from IDENTITY_SUBSTEPS rather than being typed, so a rename
  * moves the callers with it instead of breaking them — the same single-source

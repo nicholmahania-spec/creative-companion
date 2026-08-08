@@ -664,13 +664,11 @@ export default function DeskView({
 
             {(finished.length > 0 || skippedStops.length > 0) && (
               <div className="desk-done">
+                {/* The progress string is already in this panel's head, a
+                    few rows up. Printing it twice in one rail made the same
+                    fact read as two facts. */}
                 <div className="desk-panel-head">
                   <span className="desk-eyebrow desk-eyebrow-strong">Done</span>
-                  {progressLabel && (
-                    <span className="desk-progress desk-progress-strong">
-                      {progressLabel}
-                    </span>
-                  )}
                 </div>
                 <ul className="desk-list">
                   {finished.map((f) => (

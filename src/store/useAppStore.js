@@ -268,6 +268,18 @@ export function brandIdentityDefaults() {
    * Not multi-concept storage — one line on Mark. Optional.
    */
   logoClientChose: '',
+  /**
+   * The marks actually made, so more than one has a home.
+   * `[{ id, image, label, why, chosen }]` — exactly one `chosen`, and the
+   * chosen image is mirrored into `logoImage` so every downstream reader
+   * (pack, book, portal, mocks, stationery) is unchanged.
+   *
+   * WORKSPACE ONLY. Never added to the pack snapshot or any client surface:
+   * a client sees the mark that was selected, not the ones that were not.
+   * Deliberately absent from TEMPLATE_STYLE_KEYS for the same reason a
+   * template must not carry another client's brief.
+   */
+  logoConcepts: [],
   /** Optional wordmark text (falls back to project name) */
   logoWordmark: '',
   /** Clearspace / min-size / lockup guidance */
@@ -2786,6 +2798,146 @@ const useAppStore = create(
               : p
           ),
         })),
+
+      /* ── Logo concepts ────────────────────────────────────────────────
+         Somewhere to put the two or three marks you actually made.
+         The app had exactly ONE mark slot, so the losing concepts lived in a
+         folder outside it and "which one did they approve" was re-derived
+         from memory or a scroll back through email.
+
+         THE CHOSEN CONCEPT IS COPIED INTO `logoImage`, and nothing
+         downstream changes. The pack snapshot, the brand book, the portal,
+         the touchpoint mocks and the stationery all keep reading the single
+         field they already read. `logoConcepts` is workspace state and must
+         never reach a client surface — `packageFiles`/`buildBrandPackSnapshot`
+         do not know it exists, and `clientFacingLeak.test.js` keeps it that
+         way. */
+      addLogoConcept: (dataUrl, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const list = Array.isArray(p.logoConcepts) ? p.logoConcepts : []
+              /* The first concept added is chosen automatically. A designer
+                 with one mark should never have to also press a star to say
+                 "yes, that one" — the app can see it is the only candidate.
+                 Adding a second does NOT move the star. */
+              const first = list.length === 0
+              const next = [
+                ...list,
+                { id, image: dataUrl || '', label: '', why: '', chosen: first },
+              ]
+              return {
+                ...p,
+                logoConcepts: next,
+                ...(first ? { logoImage: dataUrl || '' } : null),
+                ...identityEdit(),
+              }
+            }),
+          }
+        }),
+
+      chooseLogoConcept: (conceptId, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const list = Array.isArray(p.logoConcepts) ? p.logoConcepts : []
+              const hit = list.find((c) => c.id === conceptId)
+              if (!hit) return p
+              return {
+                ...p,
+                logoConcepts: list.map((c) => ({
+                  ...c,
+                  chosen: c.id === conceptId,
+                })),
+                /* The star IS the routing. No separate "use this one" step,
+                   and no `logoClientChose` text box to keep in step with it. */
+                logoImage: hit.image || '',
+                /* Its reasoning comes with it, so the book's Logo page
+                   describes the mark that actually shipped. Only when the
+                   concept has one — an empty why must not wipe a direction
+                   the designer wrote before concepts existed. */
+                ...(String(hit.why || '').trim()
+                  ? { logoDirection: hit.why }
+                  : null),
+                ...identityEdit(),
+              }
+            }),
+          }
+        }),
+
+      /** Whole-list write. Exists for undo: restoring one removed concept
+       *  means restoring the list AND the chosen flag exactly as they were,
+       *  which no per-concept action can express. */
+      setLogoConcepts: (list, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) =>
+              p.id === owner
+                ? { ...p, logoConcepts: Array.isArray(list) ? list : [] }
+                : p
+            ),
+          }
+        }),
+
+      updateLogoConcept: (conceptId, patch, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const list = Array.isArray(p.logoConcepts) ? p.logoConcepts : []
+              const target = list.find((c) => c.id === conceptId)
+              /* The chosen concept's reasoning IS `logoDirection` — the field
+                 the brand book's Logo page prints and `bookFieldsReach.test.js`
+                 guards. Keeping them as two boxes is what made "How the mark
+                 behaves" a form that could not tell you which concept it
+                 described. */
+              const mirrorsDirection =
+                target?.chosen && Object.hasOwn(patch || {}, 'why')
+              return {
+                ...p,
+                logoConcepts: list.map((c) =>
+                  c.id === conceptId ? { ...c, ...patch } : c
+                ),
+                ...(mirrorsDirection ? { logoDirection: patch.why } : null),
+                ...identityEdit(),
+              }
+            }),
+          }
+        }),
+
+      removeLogoConcept: (conceptId, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const list = Array.isArray(p.logoConcepts) ? p.logoConcepts : []
+              const next = list.filter((c) => c.id !== conceptId)
+              const removedChosen = list.some(
+                (c) => c.id === conceptId && c.chosen
+              )
+              if (!removedChosen) return { ...p, logoConcepts: next, ...identityEdit() }
+              /* Removing the chosen one must not leave `logoImage` pointing at
+                 an image with no concept behind it — the deliverable would
+                 keep shipping a mark the workspace no longer shows. Promote
+                 the first survivor, or clear. */
+              const promoted = next[0] || null
+              return {
+                ...p,
+                logoConcepts: next.map((c, i) => ({ ...c, chosen: i === 0 })),
+                logoImage: promoted?.image || '',
+                ...identityEdit(),
+              }
+            }),
+          }
+        }),
 
       removeMoodPin: (id) =>
         set((state) => ({

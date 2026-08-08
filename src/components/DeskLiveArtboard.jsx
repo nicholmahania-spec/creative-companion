@@ -36,12 +36,35 @@ function headingSpecimen(project = {}) {
   return 'Heading specimen'
 }
 
+/**
+ * NEVER `project.brief`.
+ *
+ * That field is the AUTO-COMPOSED summary of the client's answers —
+ * "Client: X Goal: Y Story: Z Deliverables: Primary logo, Logo variations…"
+ * run together with no punctuation — and this function used it as the
+ * fallback body specimen. So the card headed "Identity · live artboard"
+ * rendered a machine-built index of the brief, set in the brand's body face,
+ * as if it were a specimen of the brand's writing. It is the clearest example
+ * of the defect this rework exists to fix: project information formatted to
+ * look like design work.
+ *
+ * The fallbacks now go through things a person actually wrote — voice, then
+ * the designer's positioning line, then the client's own words about how the
+ * brand should feel — and stop honestly rather than reaching for the
+ * summary.
+ */
 function bodySpecimen(project = {}) {
-  const voice = String(project.voice || '').trim()
-  if (voice) return voice.length > 220 ? `${voice.slice(0, 217).trimEnd()}…` : voice
-  const brief = String(project.brief || project.detective?.goal || '').trim()
-  if (brief) return brief.length > 220 ? `${brief.slice(0, 217).trimEnd()}…` : brief
-  return 'Body specimen — set voice or a short positioning line in Identity.'
+  const clip = (v) => (v.length > 220 ? `${v.slice(0, 217).trimEnd()}…` : v)
+  const written = [
+    project.voice,
+    project.positioning,
+    project.detective?.toneOfVoice,
+    project.detective?.feel,
+  ]
+    .map((v) => String(v || '').trim())
+    .find(Boolean)
+  if (written) return clip(written)
+  return 'Body specimen — write a voice or positioning line on Identity.'
 }
 
 export default function DeskLiveArtboard({
@@ -142,7 +165,7 @@ export default function DeskLiveArtboard({
             ))}
           </div>
         ) : (
-          <p className="desk-live-empty-pal">No palette yet — set colours in Identity.</p>
+          <p className="desk-live-empty-pal">No palette yet — set colors on Identity.</p>
         )}
         {/* The "no palette" branch below can never fire for a real project —
             every project is CREATED with the four stone defaults, so
@@ -156,7 +179,7 @@ export default function DeskLiveArtboard({
             four — the line disappears the moment any colour is set. */}
         {stockPalette ? (
           <p className="desk-live-pal-note">
-            Placeholder colours — set real ones on {labelForStepId('design')}.
+            Placeholder colors — set real ones on {labelForStepId('design')}.
           </p>
         ) : null}
       </div>

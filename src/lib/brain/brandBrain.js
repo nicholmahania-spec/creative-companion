@@ -218,10 +218,28 @@ export function buildBrandBrain({ project = null, moodItems = [] } = {}) {
   push({ topic: 'logo', label: 'Clearspace', value: p.logoClearspace, source: SOURCE.identity })
   push({ topic: 'logo', label: 'Minimum size', value: p.logoMinSize, source: SOURCE.identity })
   push({ topic: 'logo', label: 'What not to do to the mark', value: p.logoDonts, source: SOURCE.identity })
+  /* Derived from the starred concept, with the old hand-typed note as the
+     fallback for projects that recorded it before concepts existed. The note
+     was a second place to keep a fact the workspace now holds directly, and
+     a memory that reads the note instead of the star would start disagreeing
+     with the mark that actually shipped. */
   push({
     topic: 'logo',
     label: 'The mark the client chose',
-    value: p.logoClientChose,
+    value: (() => {
+      const chosen = (Array.isArray(p.logoConcepts) ? p.logoConcepts : []).find(
+        (c) => c?.chosen
+      )
+      const named = String(chosen?.label || '').trim()
+      if (named) return named
+      return p.logoClientChose
+    })(),
+    why: (() => {
+      const chosen = (Array.isArray(p.logoConcepts) ? p.logoConcepts : []).find(
+        (c) => c?.chosen
+      )
+      return String(chosen?.why || '').trim() || undefined
+    })(),
     source: SOURCE.identity,
   })
 
@@ -245,7 +263,12 @@ export function buildBrandBrain({ project = null, moodItems = [] } = {}) {
   for (const role of Object.keys(roles)) {
     push({
       topic: 'colour',
-      label: `${role.charAt(0).toUpperCase()}${role.slice(1)} colour`,
+      /* The topic KEY stays `colour` — an internal identifier, and renaming
+         it would churn `TOPIC_WORDS`, `BRAIN_TOPICS` and the field map for no
+         user-visible gain. The LABEL is what a designer reads, so that is
+         American English. Same rule the brief follows for `colourPalette`:
+         spelling is a UI concern, ids are data. */
+      label: `${role.charAt(0).toUpperCase()}${role.slice(1)} color`,
       value: roles[role],
       why: roleWhy[role],
       source: SOURCE.identity,
@@ -436,7 +459,7 @@ export function suggestedQuestions(brain) {
   const out = []
   if (has('direction')) out.push('Why did we choose this direction?')
   if (has('type')) out.push('Why this typeface?')
-  if (has('colour')) out.push('Why these colours?')
+  if (has('colour')) out.push('Why these colors?')
   if (has('rejected')) out.push('What did the client rule out?')
   if (has('feedback')) out.push('What did the client say?')
   if (has('audience')) out.push('Who is this for?')

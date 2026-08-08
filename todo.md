@@ -6,7 +6,33 @@
 
 ---
 
-## Identity rework — Block A shipped, Blocks B–F await approval (2026-08-08)
+## Identity rework — Blocks A–C shipped, D–F open (2026-08-08)
+
+**Shipped in B/C:** the artboard is the workspace — editable, on every tool
+screen, left on wide and first on mobile. Words and Preview are gone as
+screens; Handover is new. `logoConcepts[]` gives the mark a real
+add → compare → star loop, and only the starred concept reaches a client.
+Dashboard: loose ends stopped counting your own to-do list and the client's
+blank brief answers, the Desk artboard stopped using the composed brief as a
+type specimen, and the unasked three-gap list is gone.
+
+**Still open — D, E(part), F:**
+- **D — Type specimen bench.** Real hierarchy at real sizes in the brand's own
+  colors. Type still shows two face names and a one-line specimen each.
+- **E — remaining.** Handover exists; the Brand Book Builder is still a fourth
+  authoring surface (`bookContent.js` `PAGE_FIELDS` edits 14 project + 10
+  brief fields). Make it read-only-with-a-link where the field is authored
+  elsewhere.
+- **F** — `competitors` on Research; rename the Asset library tool to end the
+  "Assets" name collision with path stop 5.
+- **Dashboard, deeper pass.** Still project-management-shaped: "Already done"
+  / "Skip this one" acknowledgement links, the Done checklist, the duplicated
+  stops list. Reduced, not resolved.
+- **Deferred by the owner:** Touchpoints' first fold stays as it is.
+
+---
+
+## Identity rework — the original Block A record (2026-08-08)
 
 Full audit and plan are in the session that produced this. Block A (data
 ownership only, no IA change) is done: positioning owns its own field,
@@ -16,10 +42,7 @@ raises the contrast bar, version chrome reachable from every Identity screen.
 **Blocks B–F are NOT approved yet. Do not start them.** Recorded so the intent
 survives the session:
 
-- **B — the artboard becomes the workspace.** `BrandArtboard`'s `editable`
-  branch is fully wired and unreachable (`editable={false}` at all call sites);
-  the artboard renders only on the `preview` sub-screen, so PRD §12's "the
-  artboard is readable first" is failing today.
+- **B — DONE.** The artboard is the workspace, editable, on every screen.
 - **OWNER CLARIFICATION, 2026-08-08 — read before building B.** *"Do not
   interpret 'artboard' as a nicely formatted summary of project information."*
   It is the visual workspace the identity is BUILT and EVALUATED against: mark,
@@ -27,8 +50,8 @@ survives the session:
   applications all changing live as the editors are used. Placing today's
   static information sheet beside today's forms preserves the exact problem
   the rework exists to fix.
-- **C** — `logoConcepts[]` per the spec further down this file. Unstarred
-  concepts must never reach the client package.
+- **C — DONE.** `logoConcepts[]` shipped; `logoConcepts.test.js` asserts the
+  rejected marks never reach the pack, and are never carried into a template.
 - **D** — Type specimen bench: real hierarchy at real sizes in the brand's own
   colors, not two font names.
 - **E** — one always-present Handover screen; genuine-convention defaults

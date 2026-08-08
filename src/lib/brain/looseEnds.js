@@ -8,12 +8,29 @@
  *
  * TWO RULES
  *
- * 1. It only counts things that are genuinely WAITING — an unread client
- *    message, a revision round still open, a required brief answer nobody
- *    gave. Ordinary unfinished work is not a loose end. The brand check
- *    already says what is undocumented, and doubling that up here would
- *    make “you’re clear” unreachable on any live project, which turns the
- *    whole thing into noise.
+ * 1. It only counts things that are genuinely WAITING ON SOMEBODY — an unread
+ *    client message, a revision round still open, feedback with no verdict.
+ *    Ordinary unfinished work is not a loose end. The brand check already
+ *    says what is undocumented, and doubling that up here would make
+ *    “you’re clear” unreachable on any live project, which turns the whole
+ *    thing into noise.
+ *
+ *    TWO THINGS WERE REMOVED FROM THIS LIST ON 2026-08-08, both for the same
+ *    reason: they were not waiting on anyone, so counting them made "loose
+ *    ends" a second name for "work you have not finished".
+ *
+ *    - **Open tasks.** Your own to-do list, which already has a panel on this
+ *      screen and a queue on Touchpoints. Reporting its length here as a
+ *      loose end meant a designer with a healthy plan read "6 loose ends" and
+ *      the number went UP as they broke work into steps — a count that
+ *      punishes planning.
+ *
+ *    - **Unanswered brief questions.** These became rows reading "Write the
+ *      goal in the brief", "Name the audience in the brief" — the CLIENT's
+ *      answers, restated as the designer's chores, on the designer's
+ *      workspace. The brief is the client's intake surface and Strategy
+ *      already shows what is blank there, without the framing. (Owner,
+ *      2026-08-08: "Do not turn client brief answers into designer tasks.")
  *
  * 2. “Clear” means clear of what it checked, and it says what it checked.
  *    A green light that quietly skipped something teaches you not to trust
@@ -28,8 +45,9 @@ const text = (v) => String(v ?? '').trim()
 /**
  * @param {{
  *   project?: object,
- *   tasks?: array,
  *   clientRows?: array,   // clientInbox rows (already the full set)
+ *   // `tasks` was a parameter until 2026-08-08. Callers may still pass it;
+ *   // it is ignored. Your own to-do list is not something waiting on you.
  * }} input
  * @returns {{
  *   ends: Array<{ id: string, label: string, count: number, view: string }>,
@@ -38,21 +56,9 @@ const text = (v) => String(v ?? '').trim()
  *   headline: string,
  * }}
  */
-export function looseEnds({ project = null, tasks = [], clientRows = [] } = {}) {
+export function looseEnds({ project = null, clientRows = [] } = {}) {
   const p = project || {}
   const ends = []
-
-  const openTasks = (Array.isArray(tasks) ? tasks : []).filter(
-    (t) => t && !t.completed
-  )
-  if (openTasks.length) {
-    ends.push({
-      id: 'tasks',
-      label: `${openTasks.length} open task${openTasks.length === 1 ? '' : 's'}`,
-      count: openTasks.length,
-      view: 'desk',
-    })
-  }
 
   const unread = (Array.isArray(clientRows) ? clientRows : []).filter(
     (r) => r?.unread && sameProjectId(r.projectLocalId, p.id)
@@ -88,25 +94,32 @@ export function looseEnds({ project = null, tasks = [], clientRows = [] } = {}) 
     })
   }
 
-  const missingBrief = getRequiredEmpty(p.detective || {}, p.deadline || '')
-  if (missingBrief.length) {
+  /* Waiting ON THE CLIENT is a real loose end; a blank brief on a project
+     that was never sent is not — it is just work that has not started, and
+     naming it here made the client's questions read as the designer's
+     chores. Reported only once the brief has actually gone out, and worded
+     as what it is: somebody else's turn. */
+  const sentToClient = !!(p.discoveryShareId || p.clientPortalId)
+  const awaitingClient =
+    sentToClient && p.discoveryShareStatus !== 'submitted'
+      ? getRequiredEmpty(p.detective || {}, p.deadline || '')
+      : []
+  if (awaitingClient.length) {
     ends.push({
       id: 'brief',
-      /* "nobody has given" was written for a two-party project, but the
-         solo designer reading it IS the only person who could have given
-         them — so it lands as an accusation from the tool. State the fact. */
-      label: `${missingBrief.length} brief answer${missingBrief.length === 1 ? '' : 's'} not filled in yet`,
-      count: missingBrief.length,
+      label: `Waiting on the client for ${awaitingClient.length} brief answer${
+        awaitingClient.length === 1 ? '' : 's'
+      }`,
+      count: awaitingClient.length,
       view: 'project',
     })
   }
 
   const checked = [
-    'open tasks',
     'client messages',
     'revision rounds',
     'feedback decisions',
-    'required brief answers',
+    'answers the client still owes',
   ]
 
   /* Count THINGS, not kinds of thing.

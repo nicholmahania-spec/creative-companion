@@ -18,7 +18,6 @@ import { useMemo, useState } from 'react'
 import {
   brandCompleteness,
   completenessHeadline,
-  topGaps,
 } from '../lib/brain/completeness'
 import { clearLine, looseEnds } from '../lib/brain/looseEnds'
 import {
@@ -67,8 +66,6 @@ export default function BrandCheckPanel({
     setAsked(q)
   }
 
-  const short = topGaps(check, 3)
-
   return (
     <section className="desk-panel desk-check" aria-label="Check my brand">
       {/* No count in the head. "29 things not documented yet" is the
@@ -105,22 +102,15 @@ export default function BrandCheckPanel({
         )}
       </div>
 
-      {!open && short.length > 0 && (
-        <ul className="desk-check-short">
-          {short.map((row) => (
-            <li key={row.id}>
-              <button
-                type="button"
-                className="desk-check-gap"
-                onClick={() => go(row)}
-              >
-                {row.todo}
-              </button>
-              <span className="desk-check-group">{row.groupLabel}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* The unasked three-gap list is gone (2026-08-08).
+          This panel's own header comment argued that a permanent list of
+          everything undone is an ambient reproach on a screen whose job is to
+          get you back to work — and then rendered three of them unasked
+          anyway, directly under the loose-ends list, which is a second list
+          of open items in the same box. The full check is one press away and
+          is still exactly as reachable; what changed is that it no longer
+          greets you — the opened panel renders every group in full, so
+          nothing became less visible on request. */}
 
       <div className="desk-check-brain">
         <div className="desk-panel-head">

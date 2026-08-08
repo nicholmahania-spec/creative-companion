@@ -17,6 +17,7 @@ import {
   resolveIdentitySubstep,
   nextIdentitySubstep,
   prevIdentitySubstep,
+  isArtboardDeepLink,
 } from '../lib/journey/identitySubsteps'
 import useAppStore from '../store/useAppStore'
 import versionService, {
@@ -56,7 +57,6 @@ import {
   suggestRoleColor,
 } from '../lib/color'
 import { loadTypePairFont, loadBrandFamilies } from '../lib/book/fontLoader'
-import { chosenDirection } from '../lib/decisionLog'
 import { downscaleDataUrl } from '../lib/moodPins'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import ReadabilityRows from '../features/palette/ReadabilityRows'
@@ -93,6 +93,22 @@ const HEALTH_SCOPE_NOTE = (() => {
   return `Reads ${list}, plus how the palette sits together. Your other jobs are saved with the brand — they just don't move this number.`
 })()
 
+/**
+ * Sizes to look at the mark at, so "smallest size" is a judgement rather than
+ * a guess. Named for what they ARE in the world — a favicon, an app icon, a
+ * business card — because "16px" answers a question nobody asked. Rendered at
+ * CSS pixels, which is honest for the digital rows and indicative for print.
+ */
+const MARK_TEST_SIZES = [
+  { px: 16, label: 'Favicon' },
+  { px: 32, label: 'App icon' },
+  { px: 48, label: 'Card' },
+  { px: 96, label: 'Letterhead' },
+]
+
+/** Stable empty array — a fresh `[]` each render would defeat memo children. */
+const EMPTY_CONCEPTS = []
+
 const BrandArtboard = lazy(() => import('../components/BrandArtboard'))
 
 export default function DesignView({
@@ -113,7 +129,6 @@ export default function DesignView({
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const setBrandTokenTags = useAppStore((s) => s.setBrandTokenTags)
-  const updateDirection = useAppStore((s) => s.updateDirection)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
   const addPaletteColor = useAppStore((s) => s.addPaletteColor)
@@ -122,7 +137,11 @@ export default function DesignView({
   const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
   const setColorRole = useAppStore((s) => s.setColorRole)
   const seedStrategyAttributes = useAppStore((s) => s.seedStrategyAttributes)
-  const setLogoDirection = useAppStore((s) => s.setLogoDirection)
+  const addLogoConcept = useAppStore((s) => s.addLogoConcept)
+  const chooseLogoConcept = useAppStore((s) => s.chooseLogoConcept)
+  const updateLogoConcept = useAppStore((s) => s.updateLogoConcept)
+  const removeLogoConcept = useAppStore((s) => s.removeLogoConcept)
+  const setLogoConcepts = useAppStore((s) => s.setLogoConcepts)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
   /* Resume from project; sub-nav / Next / deep link all write identitySubstep. */
@@ -164,6 +183,24 @@ export default function DesignView({
     () => contrastTargetFor(activeProject?.detective),
     [activeProject?.detective?.accessibilityNeeds]
   )
+
+  const concepts = Array.isArray(activeProject?.logoConcepts)
+    ? activeProject.logoConcepts
+    : EMPTY_CONCEPTS
+
+  /* The client's own existing artwork, shown on Mark when it is relevant.
+     `existingAssetsFiles` is the array-shaped attachment the brief collects
+     (`[{ name, url }]`), and it is only design material when there IS a
+     previous identity — on a from-scratch job there is nothing to replace. */
+  const existingMarks = useMemo(() => {
+    const kind = activeProject?.detective?.engagementType
+    if (kind !== 'rebrand' && kind !== 'extend') return []
+    const files = activeProject?.detective?.existingAssetsFiles
+    return (Array.isArray(files) ? files : []).filter((f) => f?.url)
+  }, [
+    activeProject?.detective?.engagementType,
+    activeProject?.detective?.existingAssetsFiles,
+  ])
   /* The client's own stated vetoes, read back against the palette. The
      cheapest useful second opinion in the app: no judgement required,
      because the client already said it. */
@@ -474,8 +511,15 @@ export default function DesignView({
     if (!brandEditSectionProp) return
     const target = resolveIdentitySubstep(brandEditSectionProp)
     updateBrandField('identitySubstep', target)
+    /* The words moved onto the artboard, which is on every screen — so a
+       "add your voice" pointer has to highlight the SHEET, not a panel on the
+       tool side that no longer contains it. Without this, every retired
+       section id would land on Mark with nothing marked, and a pointer that
+       resolves to a generic place teaches the user to stop trusting the
+       resume affordance. */
+    const focus = isArtboardDeepLink(brandEditSectionProp) ? 'artboard' : target
     setBrandEditSectionProp?.(null)
-    setDeepLinkFocus(target)
+    setDeepLinkFocus(focus)
     const t = setTimeout(() => setDeepLinkFocus(null), 2200)
     return () => clearTimeout(t)
   }, [brandEditSectionProp, setBrandEditSectionProp, updateBrandField])
@@ -717,19 +761,6 @@ export default function DesignView({
   }
 
   // The one field the brand book's "Direction Decision" page depends on
-  // (directions + decisionLog) used to be writable only in off-path Ideate.
-  // Two plain fields here — never a picker, never blocking anything below —
-  // write through the same updateDirection() Ideate uses, so choosing or
-  // refining a direction from Identity logs a real decision instead of
-  // leaving the book's Proof panel blank.
-  const identityDirections = Array.isArray(activeProject?.directions)
-    ? activeProject.directions
-    : []
-  const identityChosen = chosenDirection(activeProject)
-  const identityTargetId = identityChosen?.id || identityDirections[0]?.id || 'a'
-  const identityTarget =
-    identityDirections.find((d) => d.id === identityTargetId) || {}
-
   return (
     <>
           <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
@@ -743,65 +774,15 @@ export default function DesignView({
                   {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}
                 </p>
               </div>
-              {/* Reachable from every Identity screen.
-                  It used to render only on Preview, on the reasoning that
-                  craft screens should open on the field rather than on a
-                  version decision. That reasoning still holds and is honoured
-                  by PLACEMENT: this sits in the title row's right slot, which
-                  is otherwise empty, so the first field of every screen is
-                  still the first thing under the sub-nav.
-                  What did not hold was reachability. `bumpDesignVersionIfV1`
-                  fires automatically on a mark upload and on a type change
-                  and toasts "Mark image · v2" — announcing a version from a
-                  screen with nowhere to go and see it. A thing you are told
-                  exists and cannot find reads as lost, and re-deriving "which
-                  version did I send them?" is the memory tax this stop is for
-                  removing. Final home is the Handover screen. */}
-              {(
-                <div className="brand-template-actions">
-                  <div className="version-controls">
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      title="Bump the design version"
-                      onClick={async () => {
-                        const r = bumpDesignVersion()
-                        if (r?.ok)
-                          flashMicro(`Version ${r.version}`)
-                        await loadVersionHistory()
-                      }}
-                    >
-                      Bump · {activeProject?.designVersion || 'v1'}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      title="View version history"
-                      onClick={async () => {
-                        await loadVersionHistory()
-                        setShowVersionHistory(true)
-                      }}
-                    >
-                      History
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      title="Manage templates"
-                      onClick={async () => {
-                        await loadTemplates()
-                        setShowTemplateModal(true)
-                      }}
-                    >
-                      Templates
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
+            {/* Labels only. The screens were numbered 01–04, which asserts a
+                sequence the app does not enforce and reads as a four-part
+                completion contract — most jobs legitimately never fill all
+                four, so the numbering quietly reported an unfinished
+                obligation on every visit. */}
             <nav className="identity-subnav" aria-label="Identity screens">
-              {IDENTITY_SUBSTEPS.map((step, i) => {
+              {IDENTITY_SUBSTEPS.map((step) => {
                 const active = identitySubstep === step.id
                 return (
                   <button
@@ -811,13 +792,61 @@ export default function DesignView({
                     aria-current={active ? 'step' : undefined}
                     onClick={() => setIdentitySubstep(step.id)}
                   >
-                    <span className="identity-subnav-num" aria-hidden="true">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
                     {step.label}
                   </button>
                 )
               })}</nav>
+
+            <div className="design-workspace">
+            {/* THE ARTBOARD IS THE WORKSPACE, not a preview of it.
+                Persistent on every tool screen, and editable: the words a
+                brand needs — tagline, positioning, voice, promise, proof,
+                personality, do/don't — are typed onto the sheet they appear
+                on, beside the mark and the palette they have to work with.
+                There is no "Words" screen any more, and no Preview
+                destination; a preview is not an activity.
+
+                Order matters and is load-bearing. On wide screens the sheet
+                is the left column and the tools are the right; on mobile it
+                is FIRST, before the tools. PRD §12 asks for exactly that and
+                the five-way split had broken it — the sheet had been
+                quarantined behind a fifth tab, so four of five screens showed
+                no picture of the brand at all.
+
+                Palette ROLES are deliberately not assignable here. The
+                artboard's role control is a two-step mode (arm a role, then
+                click a swatch), and a mode that stays armed across a screen
+                change means an identical click means different things
+                depending on something invisible. Roles stay on Color, where
+                the control is direct. One input site per field. */}
+            <div
+              className={`design-artboard-column${
+                deepLinkFocus === 'artboard' ? ' is-deep-link-focus' : ''
+              }`}
+              role="region"
+              aria-label="Brand direction sheet"
+            >
+              <Suspense fallback={<div className="panel-hint">Loading…</div>}>
+                <BrandArtboard
+                  id="system-artboard"
+                  project={activeProject || {}}
+                  palette={projectPalette}
+                  pins={deskMood.filter((m) => m.inPack)}
+                  editable
+                  studio={studioName}
+                  onTaglineChange={(v) => updateBrandField('tagline', v)}
+                  onPositioningChange={(v) => updateBrandField('positioning', v)}
+                  onVoiceChange={(v) => updateBrandField('voice', v)}
+                  onDoChange={(v) => updateBrandField('doUse', v)}
+                  onDontChange={(v) => updateBrandField('dontUse', v)}
+                  onPromiseChange={(v) => updateBrandField('messagingPromise', v)}
+                  onProofChange={(v) => updateBrandField('messagingProof', v)}
+                  onPersonalityChange={(v) =>
+                    updateBrandField('messagingPersonality', v)
+                  }
+                />
+              </Suspense>
+            </div>
 
             <div className="design-edit-column">
             {identitySubstep === 'logo' && (
@@ -832,7 +861,183 @@ export default function DesignView({
                 <h2 className="design-section-title">Mark</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
+
+              {/* ADD A CONCEPT IS THE FIRST CONTROL ON THE SCREEN.
+                  It used to be a file input at the very bottom, under six
+                  text fields asking you to describe a mark you had not
+                  uploaded yet — "if it's at the bottom, I won't see it or use
+                  it" (PRD §2), applied to the one action this screen exists
+                  for. The describing moved to Handover, where it belongs:
+                  after there is something to describe. */}
+              <div className="mark-concepts" role="group" aria-label="Concepts">
+                <div className="mark-concepts-head">
+                  <p className="field-label" style={{ margin: 0 }}>
+                    Concepts
+                  </p>
+                  {concepts.length > 0 && (
+                    <span className="mark-concepts-hint">
+                      {concepts.length === 1
+                        ? 'Add another to compare them side by side'
+                        : 'Star the one you are taking forward'}
+                    </span>
+                  )}
+                </div>
+
+                <ul className="mark-concept-grid">
+                  {concepts.map((concept, i) => (
+                    <li
+                      key={concept.id}
+                      className={`mark-concept${concept.chosen ? ' is-chosen' : ''}`}
+                    >
+                      <div className="mark-concept-frame">
+                        {concept.image ? (
+                          <img src={concept.image} alt="" />
+                        ) : (
+                          <span className="mark-concept-blank" aria-hidden="true" />
+                        )}
+                      </div>
+                      {/* One gesture, no ranking and no archive-the-rejects
+                          chore. Starring writes `logoImage`, so the chosen
+                          mark flows to the pack, the book, the portal and the
+                          mocks with nothing else to remember. */}
+                      <button
+                        type="button"
+                        className={`mark-concept-star${concept.chosen ? ' is-on' : ''}`}
+                        aria-pressed={concept.chosen}
+                        onClick={() => {
+                          if (concept.chosen) return
+                          chooseLogoConcept(concept.id, activeProject?.id)
+                          flashMicro(
+                            `${concept.label?.trim() || `Concept ${i + 1}`} is the one`
+                          )
+                        }}
+                      >
+                        {concept.chosen ? '★ Chosen' : '☆ Choose this'}
+                      </button>
+                      <input
+                        className="field-input mark-concept-name"
+                        value={concept.label || ''}
+                        placeholder={`Concept ${i + 1}`}
+                        aria-label={`Name for concept ${i + 1}`}
+                        onChange={(e) =>
+                          updateLogoConcept(
+                            concept.id,
+                            { label: e.target.value },
+                            activeProject?.id
+                          )
+                        }
+                      />
+                      {/* The route's reasoning, on the route. This was a
+                          disconnected "How the mark behaves" box that could
+                          not tell you which concept it described. On the
+                          chosen concept it writes `logoDirection`, which is
+                          the field the brand book's Logo page prints. */}
+                      <input
+                        className="field-input mark-concept-why"
+                        value={
+                          concept.chosen
+                            ? activeProject?.logoDirection || ''
+                            : concept.why || ''
+                        }
+                        placeholder="Why this one"
+                        aria-label={`Why concept ${i + 1}`}
+                        onChange={(e) =>
+                          updateLogoConcept(
+                            concept.id,
+                            { why: e.target.value },
+                            activeProject?.id
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="text-link mark-concept-remove"
+                        onClick={() => {
+                          const before = concepts
+                          const beforeMark = activeProject?.logoImage
+                          removeLogoConcept(concept.id, activeProject?.id)
+                          offerUndo?.('Concept removed', () => {
+                            setLogoConcepts(before, activeProject?.id)
+                            setLogoImage(beforeMark, activeProject?.id)
+                          })
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+
+                  <li className="mark-concept is-add">
+                    <label className="mark-concept-add">
+                      <span className="mark-concept-add-plus" aria-hidden="true">
+                        +
+                      </span>
+                      <span className="mark-concept-add-label">
+                        {concepts.length === 0 ? 'Add your first mark' : 'Add a concept'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/*"
+                        className="sr-only"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          e.target.value = ''
+                          if (!file) return
+                          if (file.size > 2.5 * 1024 * 1024) {
+                            flashToast('Image must be under 2.5MB')
+                            return
+                          }
+                          /* Capture the project NOW, not when the read
+                             finishes — the downscale is async and on a large
+                             image the gap is long enough to switch projects
+                             in. */
+                          const ownerProjectId = activeProject?.id
+                          const reader = new FileReader()
+                          reader.onerror = () =>
+                            flashToast('Could not read that image. Try another file.')
+                          reader.onload = async () => {
+                            let img = reader.result
+                            try {
+                              img = await downscaleDataUrl(reader.result, file.type)
+                            } catch {
+                              /* keep the original */
+                            }
+                            addLogoConcept(img, ownerProjectId)
+                            const bump = bumpDesignVersionIfV1()
+                            flashMicro(
+                              bump?.bumped ? `Concept added · ${bump.version}` : 'Concept added'
+                            )
+                          }
+                          reader.readAsDataURL(file)
+                        }}
+                      />
+                    </label>
+                  </li>
+                </ul>
+              </div>
+
+              {/* The old mark, when there IS an old mark. On a rebrand this is
+                  the single most relevant image on the screen and the app was
+                  hiding it inside the brief: the client attached it, and the
+                  designer working on its replacement could not see it without
+                  leaving Identity. Shown only for `rebrand`/`extend`, because
+                  on a from-scratch job there is nothing to show. */}
+              {existingMarks.length > 0 && (
+                <div className="mark-existing" role="group" aria-label="What they have now">
+                  <p className="field-label" style={{ margin: 0 }}>
+                    What they have now
+                  </p>
+                  <div className="mark-existing-row">
+                    {existingMarks.map((f) => (
+                      <figure key={f.url} className="mark-existing-item">
+                        <img src={f.url} alt={f.name || 'Existing brand asset'} />
+                      </figure>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="field-block" style={{ marginTop: '0.85rem' }}>
                 <label className="field-label" htmlFor="logo-wordmark">
                   Wordmark
                 </label>
@@ -850,161 +1055,41 @@ export default function DesignView({
                   }
                 />
               </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-custom">
-                  How the mark behaves
-                </label>
-                <input
-                  id="logo-custom"
-                  className="field-input"
-                  value={activeProject?.logoDirection || ''}
-                  onChange={(e) => setLogoDirection(e.target.value)}
-                  placeholder="e.g. always with wordmark"
-                />
-              </div>
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-client-chose">
-                  Client chose
-                </label>
-                <input
-                  id="logo-client-chose"
-                  className="field-input"
-                  value={activeProject?.logoClientChose || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoClientChose', e.target.value)
-                  }
-                  placeholder="e.g. Option B · monogram, 3 Aug phone call"
-                />
-              </div>
-              <div className="brand-two-up">
-                <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                  <label className="field-label" htmlFor="logo-clearspace">
-                    Clearspace
-                  </label>
-                  <textarea
-                    id="logo-clearspace"
-                    className="field-input"
-                    rows={2}
-                    value={activeProject?.logoClearspace || ''}
-                    onChange={(e) =>
-                      updateBrandField('logoClearspace', e.target.value)
-                    }
-                    placeholder={'e.g. height of the “x” all around'}
-                  />
-                </div>
-                <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                  <label className="field-label" htmlFor="logo-min-size">
-                    Smallest mark size
-                  </label>
-                  <input
-                    id="logo-min-size"
-                    className="field-input"
-                    value={activeProject?.logoMinSize || ''}
-                    onChange={(e) =>
-                      updateBrandField('logoMinSize', e.target.value)
-                    }
-                    placeholder="e.g. 24px digital · 12mm print"
-                  />
-                </div>
-              </div>
 
-              <div className="field-block" style={{ marginBottom: '0.85rem' }}>
-                <label className="field-label" htmlFor="logo-donts">
-                  Mark mistakes to avoid
-                </label>
-                {/* The rules used to live in this field's PLACEHOLDER, which
-                    was wrong twice over.
-
-                    They vanish on the first keystroke — guidance you can only
-                    read while you have written nothing is guidance you cannot
-                    consult while you write. And the placeholder's copy had
-                    drifted from the real defaults it claimed to show: it said
-                    "Do not stretch or distort" where DEFAULT_LOGO_DONTS says
-                    "Do not stretch, skew, or distort the mark". Those real
-                    lines are what ship to the client in 02_LOGO/, so the field
-                    was describing rules the handoff does not contain. The
-                    third line was also sliced in half by the fixed height,
-                    before any of that mattered.
-
-                    Now: the defaults are rendered from the constant, so they
-                    cannot drift again, and a button writes them in rather than
-                    asking anyone to retype what the app already knows. */}
-                <textarea
-                  id="logo-donts"
-                  className="field-input field-textarea"
-                  rows={3}
-                  value={activeProject?.logoDonts || ''}
-                  onChange={(e) =>
-                    updateBrandField('logoDonts', e.target.value)
-                  }
-                  placeholder="One rule per line"
-                  aria-describedby="logo-donts-defaults"
-                />
-                <div className="logo-donts-defaults" id="logo-donts-defaults">
-                  <p className="field-hint">
-                    Leave this blank and the handoff uses these:
-                  </p>
-                  <ul className="logo-donts-list">
-                    {DEFAULT_LOGO_DONTS.map((rule) => (
-                      <li key={rule}>{rule}</li>
-                    ))}
-                  </ul>
-                  {!String(activeProject?.logoDonts || '').trim() && (
-                    <button
-                      type="button"
-                      className="btn btn-ghost logo-donts-use"
-                      onClick={() =>
-                        updateBrandField(
-                          'logoDonts',
-                          DEFAULT_LOGO_DONTS.join('\n')
-                        )
-                      }
-                    >
-                      Start from these
-                    </button>
-                  )}
-                </div>
-              </div>
+              {/* Judged by looking, not by typing a number.
+                  Handover asks for a minimum size; this is where that answer
+                  comes from. The app does NOT ship a default — a minimum size
+                  is a legibility outcome of one specific mark, not a
+                  convention, so a pre-filled number would be an invented
+                  measurement with the studio's name on it. */}
               {activeProject?.logoImage ? (
-                <div
-                  className="logo-variant-row"
-                  role="group"
-                  aria-label="Mark versions"
-                >
-                  <p className="field-label" style={{ marginBottom: '0.4rem' }}>
-                    Mark versions
+                <div className="mark-sizes" role="group" aria-label="The mark at size">
+                  <p className="field-label" style={{ margin: 0 }}>
+                    At size
                   </p>
-                  <div className="logo-variant-grid">
-                    <div className="logo-variant-card is-primary">
-                      <span className="logo-variant-label">Primary</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-reverse">
-                      <span className="logo-variant-label">Reverse</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
-                    <div className="logo-variant-card is-mono">
-                      <span className="logo-variant-label">Mono</span>
-                      <img src={activeProject.logoImage} alt="" />
-                    </div>
+                  <div className="mark-size-row">
+                    {MARK_TEST_SIZES.map((s) => (
+                      <figure key={s.px} className="mark-size-item">
+                        <img
+                          src={activeProject.logoImage}
+                          alt=""
+                          style={{ height: `${s.px}px` }}
+                        />
+                        <figcaption>{s.label}</figcaption>
+                      </figure>
+                    ))}
                   </div>
                 </div>
               ) : null}
+
               <MarkColourCheck
                 logoImage={activeProject?.logoImage}
-                /* THE COLOURS THE DESIGNER HAS ACTUALLY CHOSEN — which is not
-                   the same as "the palette", twice over. App.jsx substitutes
-                   DEFAULT_PALETTE when a project has none, AND every project
-                   is created carrying those same four stone values, so
-                   `palette.length` is never 0 and an untouched project looks
-                   identical to a decided one.
-
-                   Checking a mark against four colours nobody picked would
-                   report the designer's own logo as an intruder in their
-                   brand. Verified in a browser: before this, uploading a red
-                   mark to a brand-new project said "Leans on #b91c1c, which
-                   isn't in your palette yet" — against a palette they had
-                   never seen, let alone chosen. */
+                /* THE COLORS THE DESIGNER HAS ACTUALLY CHOSEN — which is not
+                   the same as "the palette". Every project is created
+                   carrying the four stone defaults, so `palette.length` is
+                   never 0 and an untouched project looks identical to a
+                   decided one. Checking a mark against four colors nobody
+                   picked reports the designer's own logo as an intruder. */
                 palette={
                   paletteIsUntouched(activeProject?.palette)
                     ? []
@@ -1033,254 +1118,6 @@ export default function DesignView({
                   flashMicro(`${hex} added to palette`)
                 }}
               />
-              <div className="finish-secondary-row" style={{ marginTop: '0.85rem' }}>
-                <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
-                  {activeProject?.logoImage ? 'Replace mark image' : 'Upload mark image'}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/*"
-                    className="sr-only"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      e.target.value = ''
-                      if (!file) return
-                      if (file.size > 2.5 * 1024 * 1024) {
-                        flashToast('Image must be under 2.5MB')
-                        return
-                      }
-
-                      /* Capture the project NOW, not when the read finishes.
-                         The downscale below is async and on a large image the
-                         gap is long enough to switch projects in — the same
-                         capture-before-await rule setProjectPalette follows a
-                         few hundred lines up. */
-                      const ownerProjectId = activeProject?.id
-                      // Local data URL + downscale (same pipeline as mood pins)
-                      const reader = new FileReader()
-                      reader.onerror = () =>
-                        flashToast('Could not read that image. Try another file.')
-                      reader.onload = async () => {
-                        try {
-                          const scaled = await downscaleDataUrl(
-                            reader.result,
-                            file.type
-                          )
-                          setLogoImage(scaled, ownerProjectId)
-                        } catch {
-                          setLogoImage(reader.result, ownerProjectId)
-                        }
-                        const bump = bumpDesignVersionIfV1()
-                        flashMicro(
-                          bump?.bumped
-                            ? `Mark image · ${bump.version}`
-                            : 'Mark image added'
-                        )
-                      }
-                      reader.readAsDataURL(file)
-                    }}
-                  />
-                </label>
-                {activeProject?.logoImage ? (
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      setLogoImage('')
-                      flashMicro('Mark image removed')
-                    }}
-                  >
-                    Remove mark
-                  </button>
-                ) : null}
-              </div>
-            </section>
-            )}
-
-            {identitySubstep === 'essentials' && (
-            <section
-              id="design-section-content-essentials"
-              data-section="essentials"
-              className={`panel brand-section${
-                deepLinkFocus === 'essentials' ? ' is-deep-link-focus' : ''
-              }`}
-            >
-              <header className="design-section-head">
-                <h2 className="design-section-title">Words</h2>
-                <span className="design-section-rule" aria-hidden="true" />
-              </header>
-              <div className="field-block brand-direction-block">
-                <label className="field-label" htmlFor="brand-direction-title">
-                  Direction you're building
-                  {/* If Ideate later switches which direction is chosen,
-                      this box silently starts showing a different (often
-                      blank) one — nothing else here would say so. Naming
-                      which slot it is makes a switch visible instead of
-                      reading as the text having vanished. */}
-                  {identityTarget.label && (
-                    <span className="brand-direction-slot"> — {identityTarget.label}</span>
-                  )}
-                </label>
-                <input
-                  id="brand-direction-title"
-                  className="field-input"
-                  value={identityTarget.title || ''}
-                  placeholder="e.g. Harbor quiet"
-                  onChange={(e) =>
-                    updateDirection(identityTargetId, {
-                      title: e.target.value,
-                      chosen: true,
-                    })
-                  }
-                />
-                <label
-                  className="field-label brand-direction-why-label"
-                  htmlFor="brand-direction-why"
-                >
-                  Why
-                </label>
-                <input
-                  id="brand-direction-why"
-                  className="field-input"
-                  value={identityTarget.note || ''}
-                  placeholder="Optional — one line"
-                  onChange={(e) =>
-                    updateDirection(identityTargetId, {
-                      note: e.target.value,
-                      chosen: true,
-                    })
-                  }
-                />
-              </div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="brand-tagline">
-                  Tagline
-                </label>
-                <input
-                  id="brand-tagline"
-                  className="field-input"
-                  value={activeProject?.tagline || ''}
-                  onChange={(e) =>
-                    updateBrandField('tagline', e.target.value)
-                  }
-                  placeholder="e.g. Quiet confidence, made local"
-                />
-              </div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="brand-brief">
-                  Positioning
-                </label>
-                {/* Writes `positioning`, NOT `brief`.
-                    `brief` is the auto-composed summary of the client's
-                    answers, and `updateDetective` rewrites it on every
-                    keystroke in the brief — including the client's, through
-                    the portal. A positioning line written here used to live
-                    there, so it was destroyed the next time any brief
-                    question was touched, silently and with no way back.
-                    `positioning` is the field the brand book already printed
-                    (bookContent.js, brandBookPdf.js) and that nothing in src/
-                    ever wrote. */}
-                <textarea
-                  id="brand-brief"
-                  className="field-textarea"
-                  value={activeProject?.positioning || ''}
-                  onChange={(e) =>
-                    updateBrandField('positioning', e.target.value)
-                  }
-                  placeholder="Who it’s for · how it should feel"
-                  rows={2}
-                />
-              </div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="brand-voice">
-                  Voice
-                </label>
-                <textarea
-                  id="brand-voice"
-                  className="field-textarea"
-                  value={activeProject?.voice || ''}
-                  onChange={(e) => updateBrandField('voice', e.target.value)}
-                  placeholder="Warm, plain, a bit wry"
-                  rows={2}
-                />
-              </div>
-              {/* Always visible — collapsed details read as "not there" */}
-              <div className="brand-do-dont" style={{ marginTop: '0.65rem' }}>
-                <div className="field-block" style={{ marginBottom: 0 }}>
-                  <label className="field-label" htmlFor="brand-do">
-                    Do
-                  </label>
-                  <textarea
-                    id="brand-do"
-                    className="field-textarea"
-                    value={activeProject?.doUse || ''}
-                    onChange={(e) =>
-                      updateBrandField('doUse', e.target.value)
-                    }
-                    placeholder="Short sentences · real photos"
-                    rows={2}
-                  />
-                </div>
-                <div className="field-block" style={{ marginBottom: 0 }}>
-                  <label className="field-label" htmlFor="brand-dont">
-                    Don&apos;t
-                  </label>
-                  <textarea
-                    id="brand-dont"
-                    className="field-textarea"
-                    value={activeProject?.dontUse || ''}
-                    onChange={(e) =>
-                      updateBrandField('dontUse', e.target.value)
-                    }
-                    placeholder="Jargon · stock grins"
-                    rows={2}
-                  />
-                </div>
-              </div>
-              <div className="field-block" style={{ marginTop: '0.75rem' }}>
-                <label className="field-label" htmlFor="msg-promise">
-                  Promise
-                </label>
-                <textarea
-                  id="msg-promise"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.messagingPromise || ''}
-                  onChange={(e) =>
-                    updateBrandField('messagingPromise', e.target.value)
-                  }
-                  placeholder="e.g. We ship on the date we said"
-                />
-              </div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="msg-proof">
-                  Proof
-                </label>
-                <textarea
-                  id="msg-proof"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.messagingProof || ''}
-                  onChange={(e) =>
-                    updateBrandField('messagingProof', e.target.value)
-                  }
-                  placeholder="e.g. 40 homes built · zero missed opens"
-                />
-              </div>
-              <div className="field-block">
-                <label className="field-label" htmlFor="msg-personality">
-                  Personality
-                </label>
-                <textarea
-                  id="msg-personality"
-                  className="field-input"
-                  rows={2}
-                  value={activeProject?.messagingPersonality || ''}
-                  onChange={(e) =>
-                    updateBrandField('messagingPersonality', e.target.value)
-                  }
-                  placeholder="Steady · clear · a little dry humor"
-                />
-              </div>
             </section>
             )}
 
@@ -1948,31 +1785,108 @@ export default function DesignView({
             </section>
             )}
 
-
-            {identitySubstep === 'preview' && (
-            <>
-            <div
-              className="design-preview-rail design-artboard-bottom"
-              tabIndex={0}
-              role="region"
-              aria-label="Live brand preview"
+            {identitySubstep === 'handover' && (
+            <section
+              id="design-section-content-handover"
+              data-section="handover"
+              className={`panel brand-section design-handover${
+                deepLinkFocus === 'handover' ? ' is-deep-link-focus' : ''
+              }`}
             >
-              <div className="design-rail-label">Artboard</div>
-              <Suspense
-                fallback={<div className="panel-hint">Loading…</div>}
-              >
-                <BrandArtboard
-                  id="system-artboard"
-                  project={activeProject || {}}
-                  palette={projectPalette}
-                  pins={deskMood.filter((m) => m.inPack)}
-                  editable={false}
-                  studio={studioName}
+              <header className="design-section-head">
+                <h2 className="design-section-title">Handover</h2>
+                <span className="design-section-rule" aria-hidden="true" />
+              </header>
+
+              {/* WHAT THIS SCREEN IS, and why it is a screen rather than the
+                  bottom of Mark.
+
+                  Clearspace, minimum size, misuse, imagery direction, writing
+                  and print are DOCUMENTATION — they describe decisions
+                  already made, and they only make sense once a mark and a
+                  palette exist. They used to open the Mark screen, so the
+                  first thing the identity workspace asked for was a
+                  description of a mark that had not been made yet.
+
+                  It is always present and always in the same place, never
+                  conditional on a mark existing. A destination that
+                  materialises when some other field becomes truthy is a
+                  screen nobody ever learns the location of, and coming back
+                  to find a section you have never seen is worse than finding
+                  an empty one. */}
+              <p className="design-handover-lead">
+                What ships with the mark. Fill in what is true; blank prints
+                nothing.
+              </p>
+
+              <div className="brand-two-up">
+                <div className="field-block">
+                  <label className="field-label" htmlFor="logo-clearspace">
+                    Clearspace
+                  </label>
+                  <input
+                    id="logo-clearspace"
+                    className="field-input"
+                    value={activeProject?.logoClearspace || ''}
+                    onChange={(e) =>
+                      updateBrandField('logoClearspace', e.target.value)
+                    }
+                    placeholder={'e.g. height of the “x” all around'}
+                  />
+                </div>
+                <div className="field-block">
+                  <label className="field-label" htmlFor="logo-min-size">
+                    Smallest mark size
+                  </label>
+                  <input
+                    id="logo-min-size"
+                    className="field-input"
+                    value={activeProject?.logoMinSize || ''}
+                    onChange={(e) =>
+                      updateBrandField('logoMinSize', e.target.value)
+                    }
+                    placeholder="e.g. 24px digital · 12mm print"
+                  />
+                  {/* No default, deliberately. Clearspace has a real
+                      convention behind it (one cap-height, near-universal in
+                      published standards) — a minimum size does not. It is a
+                      legibility outcome of one particular mark, so a
+                      pre-filled number would be a measurement the app
+                      invented. Mark has the mark at real sizes; that is where
+                      this answer comes from. */}
+                  <p className="field-hint">
+                    Check it on Mark, at size — there is no standard number.
+                  </p>
+                </div>
+              </div>
+
+              <div className="field-block">
+                <label className="field-label" htmlFor="logo-donts">
+                  Mark mistakes to avoid
+                </label>
+                <textarea
+                  id="logo-donts"
+                  className="field-input field-textarea"
+                  rows={4}
+                  value={
+                    activeProject?.logoDonts || DEFAULT_LOGO_DONTS.join('\n')
+                  }
+                  onChange={(e) => updateBrandField('logoDonts', e.target.value)}
+                  placeholder="One rule per line"
+                  aria-describedby="logo-donts-defaults"
                 />
-              </Suspense>
-            </div>
-            <div className="design-preview-notes is-secondary">
-              <h3 className="design-preview-notes-title">Imagery</h3>
+                {/* The defaults are the value now, not a hint plus a button
+                    that asks you to accept them. `DEFAULT_LOGO_DONTS` is what
+                    the handoff ships when this is blank, so a "Start from
+                    these" press was a decision about something the app
+                    already knew the answer to. Written in on first sight of
+                    this screen; edit or clear to override. */}
+                <p className="field-hint" id="logo-donts-defaults">
+                  Standard rules are filled in — edit or clear them.
+                </p>
+              </div>
+
+<h3 className="design-handover-title">Imagery</h3>
               <div className="field-block">
                 <label className="field-label" htmlFor="img-style">
                   Look of photos / drawings
@@ -2018,7 +1932,7 @@ export default function DesignView({
                   placeholder="Clip art · harsh flash"
                 />
               </div>
-              <h3 className="design-preview-notes-title">Writing and print</h3>
+              <h3 className="design-handover-title">Writing and print</h3>
               <div className="field-block">
                 <label className="field-label" htmlFor="wr-case">
                   Headings
@@ -2111,9 +2025,53 @@ export default function DesignView({
                   placeholder="e.g. matt lamination, spot UV"
                 />
               </div>
-            </div>
-            </>
+              {/* Versions live here, not on a Preview tab.
+                  `bumpDesignVersionIfV1` fires by itself on a mark upload and
+                  a type change and toasts "Concept added · v2" — announcing a
+                  version from a screen with nowhere to go and look at it.
+                  This is the "what ships" screen, so it is where the question
+                  gets asked. */}
+              <div className="design-handover-versions">
+                <p className="field-label" style={{ margin: 0 }}>
+                  Versions
+                </p>
+                <div className="version-controls">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={async () => {
+                      const r = bumpDesignVersion()
+                      if (r?.ok) flashMicro(`Version ${r.version}`)
+                      await loadVersionHistory()
+                    }}
+                  >
+                    Save a version · {activeProject?.designVersion || 'v1'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={async () => {
+                      await loadVersionHistory()
+                      setShowVersionHistory(true)
+                    }}
+                  >
+                    History
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={async () => {
+                      await loadTemplates()
+                      setShowTemplateModal(true)
+                    }}
+                  >
+                    Templates
+                  </button>
+                </div>
+              </div>
+            </section>
             )}
+            </div>
             </div>
 
             <div className="path-continue-row design-path-footer">
