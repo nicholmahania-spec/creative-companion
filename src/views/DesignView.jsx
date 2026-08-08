@@ -843,14 +843,12 @@ export default function DesignView({
                   studio={studioName}
                   onTaglineChange={(v) => updateBrandField('tagline', v)}
                   onPositioningChange={(v) => updateBrandField('positioning', v)}
-                  onVoiceChange={(v) => updateBrandField('voice', v)}
                   onDoChange={(v) => updateBrandField('doUse', v)}
-                  onDontChange={(v) => updateBrandField('dontUse', v)}
-                  onPromiseChange={(v) => updateBrandField('messagingPromise', v)}
-                  onProofChange={(v) => updateBrandField('messagingProof', v)}
-                  onPersonalityChange={(v) =>
-                    updateBrandField('messagingPersonality', v)
-                  }
+                  /* Voice, Promise, Proof, Personality and Don't are answered
+                     in the brief. Identity reads them; this is the route to
+                     where they are written. Strategy is the `project` view —
+                     DESIGN_GRAMMAR.md §1. */
+                  onEditInBrief={() => setActiveView?.('project')}
                 />
               </Suspense>
             </div>

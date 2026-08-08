@@ -11,9 +11,14 @@ import { colorSpec } from '../lib/brandSystem'
 import { pinFaceStyle } from '../lib/moodPins'
 import { creditedFooter } from '../lib/book/exportFiles'
 import { hasAnswer } from '../lib/brand/directionValue'
-import { BRIEF_PROVENANCE, effectiveWord } from '../lib/brand/briefWords'
+import {
+  BRIEF_PROVENANCE,
+  effectiveWord,
+  isBriefOwned,
+} from '../lib/brand/briefWords'
 import { clientFacingName, wordmarkName } from '../lib/client/clientRecord'
 import { IDENTITY_SUBSTEPS } from '../lib/journey/identitySubsteps'
+import { labelForStepId } from '../lib/journey/journey'
 /* The artboard's own rules — the palette strip, its swatch cells, the lockup
    grid — live in `lazy-design.css`. Import them here rather than relying on the route:
    Review and the export modal render this component too, and neither of them
@@ -75,23 +80,66 @@ function ArtboardLine({
   placeholder,
   rows = 2,
   style,
+  onEditInBrief,
 }) {
   const { value, fromBrief } = effectiveWord(project, field)
+  /* IDENTITY REPORTS THESE, IT DOES NOT ASK THEM.
+     The brief asks the same question, so a box here is a second place to
+     answer one thing — and when nobody has answered, an empty box on a design
+     workspace asking the designer to write the client's tone of voice. The
+     value still RESOLVES live through `effectiveWord`; only the control is
+     gone, so a brief edited tomorrow shows through here with nothing to sync.
+     See `BRIEF_OWNED_WORDS` for which lines and why. */
+  const inherited = isBriefOwned(field)
+  /* SOURCE MATERIAL IS NOT A DRAFT.
+     A line the designer still authors may have a brief answer BEHIND it
+     without that answer being the same fact — Positioning is written from
+     "What does your business do?", not equal to it. Putting the fallback
+     inside the box looked helpful and was a copy waiting to happen: the
+     textarea held the client's sentence, so the first keystroke sent
+     `e.target.value` — client sentence and all — into `project.positioning`,
+     forking one fact into two columns exactly as briefWords.js forbids.
+     So the box holds the designer's OWN words, and the client's answer sits
+     under it as the material to write from. The SHEET still falls back when
+     nothing has been written; only the control stops pre-filling. */
+  const ownValue = String(project?.[field] ?? '')
+  const sourceBehind = !inherited && fromBrief ? value : ''
   return (
     <>
       <WordKicker fromBrief={fromBrief}>{label}</WordKicker>
-      {editable ? (
-        <textarea
-          className={`artboard-brief-input${fromBrief ? ' is-from-brief' : ''}`}
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          placeholder={placeholder}
-          rows={rows}
-          aria-label={label}
-          style={style}
-        />
+      {editable && !inherited ? (
+        <>
+          <textarea
+            className="artboard-brief-input"
+            value={ownValue}
+            onChange={(e) => onChange?.(e.target.value)}
+            placeholder={placeholder}
+            rows={rows}
+            aria-label={label}
+            style={style}
+          />
+          {sourceBehind && (
+            <p className="artboard-word-source">
+              {`${BRIEF_PROVENANCE}: ${sourceBehind}`}
+            </p>
+          )}
+        </>
       ) : (
-        <DirectionValue value={value} />
+        <>
+          <DirectionValue value={value} />
+          {/* Only where the designer could act on it. The same sheet prints
+              into the client pack and the PDF, and a navigation link has no
+              meaning there. */}
+          {editable && inherited && onEditInBrief && (
+            <button
+              type="button"
+              className="text-link artboard-word-home"
+              onClick={onEditInBrief}
+            >
+              {`Edit in ${labelForStepId('define')}`}
+            </button>
+          )}
+        </>
       )}
     </>
   )
@@ -152,12 +200,12 @@ export default function BrandArtboard({
   studio = '',
   onTaglineChange,
   onPositioningChange,
-  onVoiceChange,
   onDoChange,
-  onDontChange,
-  onPromiseChange,
-  onProofChange,
-  onPersonalityChange,
+  /* Voice, Promise, Proof, Personality and Don't are the brief's — the sheet
+     resolves and reports them, and this is the route to where they are
+     actually written. No onChange for them any more; there is nothing here to
+     change. */
+  onEditInBrief,
 }) {
   const autoRoles = useMemo(() => mapPaletteRoles(palette), [palette])
   const roles = {
@@ -278,7 +326,7 @@ export default function BrandArtboard({
         label="Voice"
         project={project}
         field="voice"
-        onChange={onVoiceChange}
+        onEditInBrief={onEditInBrief}
         editable={editable}
         placeholder="How we sound"
       />
@@ -510,12 +558,16 @@ export default function BrandArtboard({
         )
       })()}
 
-      {/* Editable in place, and shown even when empty — this used to render
-          only if one of the three already had a value, so the three lines the
-          brand book prints under "Messaging" had no editor anywhere on the
-          identity workspace unless something had already filled them. All
-          three resolve the client's own brief answer as the effective value
-          (`briefWords.js`); typing writes the designer's override. */}
+      {/* Reported, not asked. All three resolve the client's own brief answer
+          (`briefWords.js`) and the brief is where they are written, so the
+          sheet shows the effective value and routes to Strategy.
+
+          Still shown on the editable sheet even when all three are empty:
+          these are three of the lines the brand book prints under
+          "Messaging", and a row that disappears until something fills it is
+          how the designer loses track of what the book is still waiting on.
+          On a read-only sheet — the client pack, the PDF — an empty block
+          would be three em-dashes nobody can act on, so it stays hidden. */}
       {(editable ||
         project.messagingPromise ||
         project.messagingProof ||
@@ -528,7 +580,7 @@ export default function BrandArtboard({
             label="Promise"
             project={project}
             field="messagingPromise"
-            onChange={onPromiseChange}
+            onEditInBrief={onEditInBrief}
             editable={editable}
             placeholder="What you always deliver"
           />
@@ -536,7 +588,7 @@ export default function BrandArtboard({
             label="Proof"
             project={project}
             field="messagingProof"
-            onChange={onProofChange}
+            onEditInBrief={onEditInBrief}
             editable={editable}
             placeholder="What backs it up"
           />
@@ -544,7 +596,7 @@ export default function BrandArtboard({
             label="Personality"
             project={project}
             field="messagingPersonality"
-            onChange={onPersonalityChange}
+            onEditInBrief={onEditInBrief}
             editable={editable}
             placeholder="If the brand were a person"
           />
@@ -570,7 +622,7 @@ export default function BrandArtboard({
             label="Don't"
             project={project}
             field="dontUse"
-            onChange={onDontChange}
+            onEditInBrief={onEditInBrief}
             editable={editable}
             placeholder="What to avoid…"
           />
