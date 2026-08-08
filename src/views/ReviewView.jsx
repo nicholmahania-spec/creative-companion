@@ -119,7 +119,6 @@ export default function ReviewView({
           <section className="panel brand-section review-feedback-hero">
             <div className="brand-section-label">
               Notes
-              <span className="sketch-feedback-shared-hint"> (shared with Touchpoints)</span>
             </div>
             <div className="field-block review-notes-block">
               <label className="field-label sr-only" htmlFor="feedback-notes">

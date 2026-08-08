@@ -11,6 +11,7 @@ import { liftMeasuredRows } from './workLogSeparation'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
 import { create } from 'zustand'
+import { isArtifactKind, makeRef } from '../lib/artifacts/artifactRef'
 import { persist } from 'zustand/middleware'
 import {
   appendDecision,
@@ -280,6 +281,30 @@ export function brandIdentityDefaults() {
    * template must not carry another client's brief.
    */
   logoConcepts: [],
+  /**
+   * Immutable, id-keyed artifact snapshots — palettes and type pairings today.
+   *
+   * The thing Directions, Presentations, Books, Templates, Approvals and
+   * Collections all need before any of them can be built: a way to say "this
+   * one" about a creative artifact without copying its contents. Ids are
+   * derived from content (`artifactSnapshot.js`), so the same palette
+   * referenced from four places is stored once and an existing reference
+   * cannot change meaning under a later edit.
+   *
+   * SMALL VALUES ONLY. This object is inside the single persisted blob. Hexes
+   * and face names belong here; image bytes never do.
+   */
+  artifacts: {},
+  /**
+   * Surfaces the DESIGNER added at Touchpoints.
+   *
+   * Kept apart from `detective.brandSurfaces`, which is the client's own
+   * answer to what the brand has to appear on. Touchpoints used to push
+   * straight into that array, so a designer adding "signage" rewrote the
+   * client's brief with no record that anyone had. Both lists are unioned for
+   * display; only the client's half is the brief.
+   */
+  designerSurfaces: [],
   /** Optional wordmark text (falls back to project name) */
   logoWordmark: '',
   /** Clearspace / min-size / lockup guidance */
@@ -2799,6 +2824,56 @@ const useAppStore = create(
           ),
         })),
 
+      /**
+       * Record an artifact snapshot and hand back a reference to it.
+       *
+       * Idempotent by construction: the id comes from the content, so calling
+       * this twice with the same palette writes once and returns the same ref.
+       * Callers store the REF, never the record — that is the whole point.
+       *
+       * @param {{id: string, kind: string}} snapshot from `artifactSnapshot.js`
+       * @returns {{kind: string, id: string}|null}
+       */
+      putArtifact: (snapshot, projectId) => {
+        if (!snapshot?.id || !isArtifactKind(snapshot.kind)) return null
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const bag = p.artifacts || {}
+              /* Same id means same content. Rewriting it would churn the
+                 persisted blob for no change. */
+              if (bag[snapshot.id]) return p
+              return { ...p, artifacts: { ...bag, [snapshot.id]: snapshot } }
+            }),
+          }
+        })
+        return makeRef(snapshot.kind, snapshot.id)
+      },
+
+      /* ── Favorites ────────────────────────────────────────────────────
+         `favorite` and `inPack` are two different facts and were one boolean.
+
+         `inPack` has always meant "on the client's shortlist" — capped at six,
+         ordered, one hero, and read by the pack export, the artboard's mood
+         strip, `stopEstablished`, `completeness` and `brandBrain`. It keeps
+         that meaning exactly; 51 call sites depend on it.
+
+         `favorite` is the designer's own "I like this, keep it as evidence for
+         later" — unbounded, unordered, never client-facing. It is what Color,
+         Type, Mark and Directions consume. Liking something and showing it to
+         a client were the same click, so a designer could not keep a reference
+         without putting it in front of the client. */
+      toggleFavorite: (id, on) =>
+        set((state) => ({
+          moodItems: state.moodItems.map((m) =>
+            m.id === id
+              ? { ...m, favorite: on == null ? !m.favorite : !!on }
+              : m
+          ),
+        })),
+
       /* ── Logo concepts ────────────────────────────────────────────────
          Somewhere to put the two or three marks you actually made.
          The app had exactly ONE mark slot, so the losing concepts lived in a
@@ -3351,7 +3426,7 @@ const useAppStore = create(
           }
         },
       },
-      version: 5,
+      version: 6,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
@@ -3379,6 +3454,16 @@ const useAppStore = create(
             })
           })
           moodItems = next
+        }
+        /* v6: `inPack` was one boolean meaning both "I like this" and "show
+           this to the client". A pin already on the shortlist was liked, so it
+           becomes a favorite too. Nothing is removed and `inPack` keeps its
+           exact meaning — the 51 readers of it are untouched. Idempotent: a
+           pin that already carries the flag is left alone. */
+        if (fromVersion < 6 && moodItems.length) {
+          moodItems = moodItems.map((m) =>
+            m && m.favorite === undefined ? { ...m, favorite: !!m.inPack } : m
+          )
         }
         return {
           ...blank,
@@ -3409,6 +3494,16 @@ const useAppStore = create(
                     ),
                   ],
                   decisionLog: Array.isArray(p.decisionLog) ? p.decisionLog : [],
+                  /* v6: additive. An older project has no artifacts and no
+                     designer-added surfaces; both are empty, never absent, so
+                     no reader needs a null branch. */
+                  artifacts:
+                    p.artifacts && typeof p.artifacts === 'object'
+                      ? p.artifacts
+                      : {},
+                  designerSurfaces: Array.isArray(p.designerSurfaces)
+                    ? p.designerSurfaces
+                    : [],
                   directions:
                     Array.isArray(p.directions) && p.directions.length >= 3
                       ? p.directions

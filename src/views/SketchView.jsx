@@ -31,6 +31,7 @@ import {
 } from '../lib/color'
 import {
   touchpointsFor,
+  allBrandSurfaces,
   touchpointLabel,
   touchpointCheckHint,
 } from '../lib/journey/touchpoints'
@@ -167,11 +168,12 @@ export default function SketchView(props) {
 
   const addTask = useAppStore((s) => s.addTask)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
-  const updateDetective = useAppStore((s) => s.updateDetective)
 
   /* Touchpoints — derived from the brief, so the surfaces offered are the
      ones this project actually has, not a fixed four for every brand. */
-  const touchpointSurfaces = activeProject?.detective?.brandSurfaces
+  /* What the client asked for, plus what the designer added here. Two lists,
+     one view — see `addQuickSurface`. */
+  const touchpointSurfaces = allBrandSurfaces(activeProject)
   const touchpointDeliverables = activeProject?.detective?.deliverablesPicked
   const touchpointApps = touchpointsFor(
     touchpointSurfaces,
@@ -232,13 +234,21 @@ export default function SketchView(props) {
     [activeProject?.colorRoles]
   )
 
+  /* THE CLIENT'S ANSWER IS NOT THE DESIGNER'S LIST.
+     This used to push straight into `detective.brandSurfaces`, so a designer
+     adding a surface here rewrote the client's brief answer with no record
+     that anyone had — and the brief is the one place the client's own words
+     are supposed to survive. Designer additions live on the project and are
+     unioned for display; the brief keeps saying what the client asked for. */
   const addQuickSurface = (id) => {
-    const prev = Array.isArray(touchpointSurfaces) ? [...touchpointSurfaces] : []
-    if (prev.includes(id)) {
+    if (touchpointSurfaces.includes(id)) {
       flashMicro?.(`${touchpointLabel(id)} · already on the list`)
       return
     }
-    updateDetective('brandSurfaces', [...prev, id])
+    const mine = Array.isArray(activeProject?.designerSurfaces)
+      ? activeProject.designerSurfaces
+      : []
+    updateBrandField('designerSurfaces', [...mine, id])
     flashMicro?.(`${touchpointLabel(id)} · added`)
   }
 
@@ -546,19 +556,27 @@ export default function SketchView(props) {
         <div className="field-block sketch-feedback-block">
           <label className="field-label" htmlFor="sketch-feedback-notes">
             Feedback so far
-            {/* Same field as Review's "Notes" — named differently in each
-                place, which reads as two separate logs unless you notice
-                text from one showing up in the other. */}
-            <span className="sketch-feedback-shared-hint"> (shared with Review)</span>
           </label>
-          <textarea
+          {/* READ-ONLY HERE. This and Review's "Notes" were two editors on one
+              field, so the same log looked like two and either could clobber
+              the other mid-sentence. Review owns it — it is the surface whose
+              job is feedback, and it is where the append-only comment and
+              approval records will land. */}
+          <p
             id="sketch-feedback-notes"
-            className="field-input"
-            rows={3}
-            value={activeProject?.feedbackNotes || ''}
-            onChange={(e) => updateBrandField('feedbackNotes', e.target.value)}
-            placeholder="Change · why · keep — optional"
-          />
+            className={`sketch-feedback-read${
+              activeProject?.feedbackNotes ? '' : ' is-empty'
+            }`}
+          >
+            {activeProject?.feedbackNotes || '—'}
+          </p>
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => setActiveView?.('review')}
+          >
+            {activeProject?.feedbackNotes ? 'Edit on Review' : 'Write it on Review'}
+          </button>
         </div>
 
         <section className="capture-strip sketch-capture" aria-label="Capture">

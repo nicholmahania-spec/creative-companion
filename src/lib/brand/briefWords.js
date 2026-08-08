@@ -52,6 +52,14 @@ export const BRIEF_WORD_SOURCES = {
   messagingProof: 'messagingProof',
   /* "If your business were a person, what would they be like?" */
   messagingPersonality: 'brandAsPerson',
+  /* THE CLIENT'S CONTACT DETAILS, ASKED ONCE.
+     `orgEmail`/`orgPhone` were typed into the stationery preview on Assets
+     while the brief had already asked the same two questions in Chapter 01,
+     so a project could print one number on the letterhead and hold another in
+     the client directory. Resolved rather than copied, like every other line
+     here: what the designer typed wins, the client's answer fills the gap. */
+  orgEmail: 'clientEmail',
+  orgPhone: 'clientPhone',
   /* "Is there anything you definitely don't want?" */
   dontUse: 'avoid',
   /* `doUse` and `tagline` have NO brief source, and that is correct — nothing

@@ -33,6 +33,7 @@ export default function ResearchView({
   const removeMoodPin = useAppStore((s) => s.removeMoodPin)
   const updateMoodPinNote = useAppStore((s) => s.updateMoodPinNote)
   const toggleMoodPinInPack = useAppStore((s) => s.toggleMoodPinInPack)
+  const toggleFavorite = useAppStore((s) => s.toggleFavorite)
   const movePackPin = useAppStore((s) => s.movePackPin)
   const setMoodPinFocal = useAppStore((s) => s.setMoodPinFocal)
   const setPackHeroPin = useAppStore((s) => s.setPackHeroPin)
@@ -686,6 +687,29 @@ export default function ResearchView({
                                 </p>
                               </div>
                             )}
+                            {/* FAVORITE AND PACK ARE TWO DIFFERENT ACTS.
+                                Liking a reference and putting it in front of a
+                                client used to be one click, so keeping a
+                                seventh reference meant deciding which one the
+                                client would not see. Favorite is unbounded and
+                                private; the pack is the six the client gets. */}
+                            <button
+                              type="button"
+                              className={`research-pin-fav${item.favorite ? ' is-on' : ''}`}
+                              title={item.favorite ? 'Favorite — remove' : 'Favorite'}
+                              aria-label={
+                                item.favorite ? 'Remove favorite' : 'Favorite'
+                              }
+                              aria-pressed={!!item.favorite}
+                              onClick={() => {
+                                toggleFavorite(item.id)
+                                flashMicro(
+                                  item.favorite ? 'Favorite removed' : 'Favorite'
+                                )
+                              }}
+                            >
+                              ♥
+                            </button>
                             <button
                               type="button"
                               className={`research-pin-star${item.inPack ? ' is-on' : ''}`}

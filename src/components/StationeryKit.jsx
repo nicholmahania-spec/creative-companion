@@ -9,6 +9,7 @@ import { elementToPdf, elementToPng, PAGE_SIZES } from '../lib/book/stationery'
 /* Stationery rules live in lazy-design.css; import here so Assets can load
    the kit without visiting Identity first. */
 import '../styles/lazy-design.css'
+import { effectiveWord } from '../lib/brand/briefWords'
 
 export default function StationeryKit({
   activeProject = {},
@@ -73,7 +74,7 @@ export default function StationeryKit({
             <input
               id="org-phone"
               className="field-input"
-              value={activeProject.orgPhone || ''}
+              value={effectiveWord(activeProject, 'orgPhone').value}
               onChange={(e) => updateBrandField('orgPhone', e.target.value)}
               placeholder="(555) 555-0100"
             />
@@ -83,7 +84,7 @@ export default function StationeryKit({
             <input
               id="org-email"
               className="field-input"
-              value={activeProject.orgEmail || ''}
+              value={effectiveWord(activeProject, 'orgEmail').value}
               onChange={(e) => updateBrandField('orgEmail', e.target.value)}
               placeholder="you@yourstudio.com"
             />
@@ -184,8 +185,8 @@ export default function StationeryKit({
               {(() => {
                 const line = [
                   activeProject.orgAddress,
-                  activeProject.orgPhone,
-                  activeProject.orgEmail,
+                  effectiveWord(activeProject, 'orgPhone').value,
+                  effectiveWord(activeProject, 'orgEmail').value,
                   activeProject.orgWebsite,
                 ]
                   .filter(Boolean)
@@ -343,7 +344,7 @@ export default function StationeryKit({
                 {orgName}
               </div>
               <div className="stationery-sig-contact">
-                {[activeProject.orgPhone, activeProject.orgEmail, activeProject.orgWebsite]
+                {[effectiveWord(activeProject, 'orgPhone').value, effectiveWord(activeProject, 'orgEmail').value, activeProject.orgWebsite]
                   .filter(Boolean)
                   .join('  ·  ')}
               </div>

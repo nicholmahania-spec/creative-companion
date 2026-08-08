@@ -17,6 +17,7 @@ import {
 } from './bookBuilder'
 import { toISODate } from '../dates'
 import { clientFacingName } from '../client/clientRecord'
+import { allBrandSurfaces } from '../journey/touchpoints'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from '../color'
 import {
   DETECTIVE_CHAPTERS,
@@ -387,7 +388,10 @@ export function buildBrandPackSnapshot({
     toneOfVoice: d.toneOfVoice || '',
     technical: d.technical || '',
     accessibilityNeeds: d.accessibilityNeeds || '',
-    brandSurfaces: Array.isArray(d.brandSurfaces) ? d.brandSurfaces : [],
+    /* The client's answer plus the designer's Touchpoints additions — see
+       `allBrandSurfaces`. Both belong in the book; only the brief's half is
+       the client's own answer. */
+    brandSurfaces: allBrandSurfaces(p),
     /* The per-surface notes from Touchpoints — "how it shows up" on a business
        card, a shopfront, an app icon. The book previously printed only the
        LIST of surfaces, so the sentence the designer wrote about each one

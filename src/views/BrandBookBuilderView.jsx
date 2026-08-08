@@ -12,11 +12,11 @@ import {
   EDGE_ORDER,
   nearestEdgeStop,
 } from '../lib/book/bookBuilder'
-import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES, fieldHome } from '../lib/book/bookContent'
+import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES, fieldHome, FIELD_HOMES } from '../lib/book/bookContent'
 import { currentBrandPack } from '../lib/book/currentPack'
 import { downloadBrandPackVectorPdf } from '../lib/book/exportFiles'
 import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../lib/book/bookDocument'
-import { labelFor, parseLabel, familyByName, FONT_GROUPS } from '../lib/book/fontCatalog'
+import { labelFor, parseLabel, familyByName } from '../lib/book/fontCatalog'
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
 import { loadBrandFamilies } from '../lib/book/fontLoader'
 import { useModalFocus } from '../lib/useModalFocus'
@@ -132,19 +132,6 @@ const PAGE_SIZES = { letter: { w: 8.5, h: 11, label: "Letter (8.5 × 11 in)" }, 
 
 /* One picker for both headline and body, so the two can never drift apart
    the way the old pair of literals did. */
-function FontSelect({ id, value, onChange }) {
-  return (
-    <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
-      {FONT_GROUPS.map((g) => (
-        <optgroup key={g.id} label={g.label}>
-          {g.families.map((f) => (
-            <option key={f.id} value={f.name}>{f.name}</option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
-  );
-}
 
 function isLight(hex) {
   const r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
@@ -276,6 +263,26 @@ function BookTextFields({ pageId, x, onOpen }) {
         );
       })}
     </>
+  );
+}
+
+/* A brand fact the book PRINTS but does not OWN.
+   Same shape as `BookTextFields` because it is the same rule: the book is an
+   output surface, and an output may not author a decision. These three —
+   name, tagline, and the two faces — were the last places it did. */
+function BookOwnedElsewhere({ label, value, homeLabel, onOpen }) {
+  return (
+    <div className="bbb-field bbb-read">
+      <span className="bbb-read-label">{label}</span>
+      <p className={`bbb-read-value${value ? '' : ' is-empty'}`}>
+        {value || '—'}
+      </p>
+      {onOpen && (
+        <button type="button" className="text-link bbb-read-link" onClick={onOpen}>
+          {value ? `Edit on ${homeLabel}` : `Write it on ${homeLabel}`}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -857,7 +864,6 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
   const moodItems = useAppStore((s) => s.moodItems)
   const setBookBuilder = useAppStore((s) => s.setBookBuilder)
   const setPaletteTokens = useAppStore((s) => s.setPaletteTokens)
-  const updateBrandField = useAppStore((s) => s.updateBrandField)
   const renameProject = useAppStore((s) => s.renameProject)
 
   const project = activeProject || {}
@@ -870,7 +876,6 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
     if (project.id) renameProject(project.id, v)
   }
   const tagline = project.tagline || ''
-  const setTagline = (v) => updateBrandField('tagline', v)
 
   /* Wrappers matching the owner's setter signatures, so the markup below is
      unchanged from their file while the values live in the store. */
@@ -901,21 +906,18 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
   const headlineWeight = bb.type.headlineWeight
   const bodyWeight = bb.type.bodyWeight
 
-  const setHeadlineFont = (v) => {
-    setBookBuilder({ type: { ...bb.type, headlineFont: v } })
-    updateBrandField('typeHeading', labelFor(v, headlineWeight))
-  }
-  const setBodyFont = (v) => {
-    setBookBuilder({ type: { ...bb.type, bodyFont: v } })
-    updateBrandField('typeBody', labelFor(v, bodyWeight))
-  }
+  /* THE FACES ARE THE BRAND'S, NOT THE BOOK'S.
+     These four setters used to write `typeHeading` / `typeBody`, so picking a
+     face for the document renamed the brand's typeface — the Type bench and
+     the book were two authors of one decision. The families are now shown and
+     routed; weight stays a document control and writes only `bb.type`, which
+     is what the PDF renders with. `headlineFont`/`bodyFont` still resolve from
+     the brand label first, so the book keeps printing the brand's faces. */
   const setHeadlineWeight = (v) => {
     setBookBuilder({ type: { ...bb.type, headlineWeight: v } })
-    updateBrandField('typeHeading', labelFor(headlineFont, v))
   }
   const setBodyWeight = (v) => {
     setBookBuilder({ type: { ...bb.type, bodyWeight: v } })
-    updateBrandField('typeBody', labelFor(bodyFont, v))
   }
 
   const headlineSize = bb.type.headlineSize
@@ -1466,10 +1468,14 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
             <label htmlFor="bbb-brandName">Brand name</label>
             <input id="bbb-brandName" type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} />
           </div>
-          <div className="bbb-field">
-            <label htmlFor="bbb-tagline">Tagline</label>
-            <input id="bbb-tagline" type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} />
-          </div>
+          <BookOwnedElsewhere
+            label="Tagline"
+            value={tagline}
+            homeLabel={FIELD_HOMES.tagline.label}
+            onOpen={() =>
+              openFieldHome(FIELD_HOMES.tagline.view, FIELD_HOMES.tagline.section)
+            }
+          />
         </Section>
 
         {/* Sheet / Edge space / print-shop bleed — the three controls the
@@ -1543,7 +1549,17 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
         <Section title="Type scale">
           <div className="bbb-field">
             <label htmlFor="bbb-headlineFont">Headline font</label>
-            <FontSelect id="bbb-headlineFont" value={headlineFont} onChange={setHeadlineFont} />
+            <BookOwnedElsewhere
+              label="Headline face"
+              value={headingLabel}
+              homeLabel={FIELD_HOMES.typeHeading.label}
+              onOpen={() =>
+                openFieldHome(
+                  FIELD_HOMES.typeHeading.view,
+                  FIELD_HOMES.typeHeading.section
+                )
+              }
+            />
           </div>
           <div className="bbb-field-row">
             <div className="bbb-field">
@@ -1573,7 +1589,17 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
           </div>
           <div className="bbb-field">
             <label htmlFor="bbb-bodyFont">Body font</label>
-            <FontSelect id="bbb-bodyFont" value={bodyFont} onChange={setBodyFont} />
+            <BookOwnedElsewhere
+              label="Body face"
+              value={bodyLabel}
+              homeLabel={FIELD_HOMES.typeBody.label}
+              onOpen={() =>
+                openFieldHome(
+                  FIELD_HOMES.typeBody.view,
+                  FIELD_HOMES.typeBody.section
+                )
+              }
+            />
           </div>
           <div className="bbb-field-row">
             <div className="bbb-field">
