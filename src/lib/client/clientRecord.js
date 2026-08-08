@@ -162,3 +162,31 @@ export function forgetClientRecord(records, name) {
   delete next[key]
   return next
 }
+
+/**
+ * The name that goes on anything the client sees.
+ *
+ * THE DEFECT THIS CLOSES. `project.name` is the designer's internal job name —
+ * "My project", "Roastery rebrand v2", "Sparrow — round 3". It is chosen for
+ * finding the thing in a list, not for printing. It was nonetheless what the
+ * brand pack put on the cover, in the running footer of every page, in the
+ * markdown heading and in the downloaded filename. A designer who names their
+ * projects the way designers actually name projects shipped files headed with
+ * their own shorthand.
+ *
+ * `detective.clientName` is the client's own answer to "Client / company
+ * name", and is already what the artboard, the client directory and the
+ * discovery brief use. This makes the exports agree with them.
+ *
+ * The internal name remains the fallback, not the default: a project whose
+ * brief has not been started yet has nothing else to print, and an empty
+ * cover is worse than an internal one.
+ *
+ * @param {object} project
+ * @param {string} fallback  used when neither name exists
+ */
+export function clientFacingName(project, fallback = 'Untitled project') {
+  const client = String(project?.detective?.clientName || '').trim()
+  if (client) return client
+  return String(project?.name || '').trim() || fallback
+}

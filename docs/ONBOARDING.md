@@ -66,8 +66,18 @@ jsPDF / pdf-lib / pdfjs-dist · tesseract.js · Playwright + Vitest.
   system is `src/styles/shell.css` (always-on) plus `lazy-*.css` per view.
   Grepping `index.css` returns nothing and reads as "this style does not
   exist"; that misfire cost four wrong conclusions in one session.
-- **The `lazy-*.css` files are all loaded eagerly.** Vite preloads them, so a
-  rule in one view's sheet WILL apply to another view carrying that class.
+- **A `lazy-*.css` file arrives with its view, not at boot.** Once loaded it is
+  global, so a rule in one view's sheet WILL apply to another view carrying
+  that class — but only after something has pulled that view's chunk in. This
+  bullet used to say the sheets were "all loaded eagerly", which is wrong for a
+  sheet imported only by a lazily-imported view, and the error cost a real
+  defect: `.direction-palette { display: flex }` lived in `lazy-ideate.css`
+  while its `flex: 1` children lived in `lazy-design.css`, so Identity's color
+  swatches rendered 0px wide and unclickable on a cold load — and worked fine
+  for anyone who had visited Research first. **Keep a rule and the rules it
+  depends on in one sheet, and have shared components import their own sheet**
+  (`BrandArtboard.jsx`, `StationeryKit.jsx`). Guarded by
+  `src/lib/paletteStripCss.test.js`.
 - **Version bumps are manual and belong in the same commit** —
   `npm run bump` / `bump:minor` / `bump:major` by change type. The git hook
   that used to do this is disabled and must not be re-enabled: in this

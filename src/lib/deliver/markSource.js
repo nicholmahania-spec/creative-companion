@@ -60,7 +60,7 @@ import { extFromBytes, extFromDataUrl } from './naming'
    capitalises it for the places that need it standing alone. */
 const HELD_REASON = {
   link: 'the app is holding a link to this artwork rather than the file itself',
-  colour: 'the mark is recorded as a colour, not as artwork',
+  colour: 'the mark is recorded as a color, not as artwork',
   unreadable: 'the stored artwork could not be read as an image file',
 }
 

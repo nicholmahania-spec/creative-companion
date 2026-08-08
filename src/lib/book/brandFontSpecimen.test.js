@@ -228,7 +228,7 @@ describe('a face the book cannot hold is never faked', () => {
     expect(text).not.toContain('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
     // ...and the page says which typeface the reader is actually looking at.
     expect(text).toContain("Shown in this book's own typeface, not in Gotham Bold")
-    expect(text).toContain('not one the book can carry a licence to embed')
+    expect(text).toContain('not one the book can carry a license to embed')
   }, 60000)
 
   it('declines a weight the family does not publish rather than substituting one', async () => {
@@ -297,7 +297,7 @@ describe('resolveBrandFace refuses everything it cannot prove', () => {
   it('refuses a family outside the catalog', () => {
     const r = resolveBrandFace('Gotham Bold', HELD)
     expect(r.ok).toBe(false)
-    expect(r.reason).toMatch(/licence to embed/)
+    expect(r.reason).toMatch(/license to embed/)
   })
 
   it('refuses a weight the family does not publish', () => {

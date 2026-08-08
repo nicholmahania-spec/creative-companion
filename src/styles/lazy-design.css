@@ -705,6 +705,29 @@
   background: var(--bg-muted);
 }
 
+/* THE PALETTE STRIP AND ITS SWATCHES BELONG TOGETHER.
+   The container rule used to live in `lazy-ideate.css` while the swatch rule
+   below lived here, so on a cold load of Identity the buttons got `flex: 1`
+   with no flex parent and rendered 0px wide — role assignment was unclickable
+   unless the designer had happened to visit Research first and pull the Spark
+   chunk in. `BrandArtboard` imports this sheet for exactly that reason: the
+   markup and the rules ship together, whatever route rendered them. */
+.direction-palette {
+  display: flex;
+  height: 52px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.direction-palette > div {
+  flex: 1;
+}
+
+.direction-palette.is-clickable {
+  gap: 0;
+}
+
 .palette-swatch-btn,
 .palette-role-swatch-btn {
   flex: 1;

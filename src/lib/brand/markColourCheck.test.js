@@ -265,7 +265,7 @@ describe('the sentence the designer actually reads', () => {
       state: 'unreadable',
       reason: 'decode-failed',
     })
-    expect(line).toBe("This image didn't open for a colour check.")
+    expect(line).toBe("This image didn't open for a color check.")
   })
 
   it('offers the mark colours as a starting palette when there is none', () => {

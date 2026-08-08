@@ -12,6 +12,12 @@ import { pinFaceStyle } from '../lib/moodPins'
 import { creditedFooter } from '../lib/book/exportFiles'
 import { hasAnswer } from '../lib/brand/directionValue'
 import { BRIEF_PROVENANCE, effectiveWord } from '../lib/brand/briefWords'
+import { clientFacingName } from '../lib/client/clientRecord'
+/* The artboard's own rules — the palette strip, its swatches, the role hint —
+   live in `lazy-design.css`. Import them here rather than relying on the route:
+   Review and the export modal render this component too, and neither of them
+   loads Identity's sheet. */
+import '../styles/lazy-design.css'
 
 const formatCmyk = (hex) => colorSpec(hex)?.cmyk || ''
 
@@ -196,9 +202,7 @@ export default function BrandArtboard({
             the brand's own name. `project.name` stays as the fallback for a
             project with no client record yet. */}
         <h1 className="direction-title" style={{ color: 'inherit' }}>
-          {String(project.detective?.clientName || '').trim() ||
-            project.name ||
-            'Untitled project'}
+          {clientFacingName(project)}
         </h1>
         {editable ? (
           <>

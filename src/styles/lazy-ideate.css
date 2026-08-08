@@ -95,19 +95,6 @@
   color: var(--text-muted);
 }
 
-
-.direction-palette {
-  display: flex;
-  height: 52px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin: 0.5rem 0 0.35rem;
-}
-
-.direction-palette > div {
-  flex: 1;
-}
-
 .direction-hex {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -198,12 +185,6 @@
 .direction-pin.is-hero-pin {
   outline: 2px solid var(--text-primary);
   outline-offset: 1px;
-}
-
-/* Artboard role assignment + project meter */
-
-.direction-palette.is-clickable {
-  gap: 0;
 }
 
 /* Ideate A/B/C direction cards */

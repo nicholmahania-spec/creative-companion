@@ -117,6 +117,56 @@ describe('the copy', () => {
     )
   })
 
+  /**
+   * THE BENCH MUST TEST A HIERARCHY, NOT ONE SENTENCE AT TWO SIZES.
+   *
+   * Body read `positioning` and Caption read the client's USP, which sounds
+   * distinct and is not: `effectiveWord(project, 'positioning')` RESOLVES to
+   * `detective.usp` when the designer has not written their own positioning
+   * line — which is most projects at the point the type gets chosen. Both
+   * rungs then printed the same sentence and the bench silently stopped
+   * answering the question it exists for.
+   */
+  it('never prints the same line on two rungs', () => {
+    const rungs = typeSpecimen(
+      project({
+        detective: {
+          clientName: 'Ember & Oak',
+          usp: 'Small-batch coffee roastery',
+          audience: 'Independent cafés and home brewers',
+        },
+        tagline: 'Roasted to the day',
+      })
+    )
+    const lines = rungs.map((r) => r.text.toLowerCase())
+    expect(new Set(lines).size).toBe(rungs.length)
+  })
+
+  it('does not collide when positioning resolves to the client’s USP', () => {
+    // The exact shape that produced the duplicate: a USP answered, no
+    // positioning line written.
+    const rungs = typeSpecimen(
+      project({ detective: { clientName: 'Ember & Oak', usp: 'Small-batch coffee roastery' } })
+    )
+    const body = rungs.find((r) => r.id === 'body')
+    const caption = rungs.find((r) => r.id === 'caption')
+    expect(body.text).toBe('Small-batch coffee roastery')
+    expect(body.own).toBe(true)
+    expect(caption.text).not.toBe(body.text)
+  })
+
+  it('marks the rung that runs out of sources rather than repeating one', () => {
+    // Only one usable sentence in the whole project. The rung that cannot
+    // have it says so; it does not borrow.
+    const rungs = typeSpecimen({
+      detective: { clientName: 'Ember & Oak', usp: 'Small-batch coffee roastery' },
+    })
+    const caption = rungs.find((r) => r.id === 'caption')
+    expect(caption.own).toBe(false)
+    expect(caption.text).toBeTruthy()
+    expect(new Set(rungs.map((r) => r.text)).size).toBe(rungs.length)
+  })
+
   it('clips a long line rather than letting it become a paragraph', () => {
     const rungs = typeSpecimen(
       project({ positioning: 'x'.repeat(400) })

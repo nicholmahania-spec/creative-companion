@@ -929,16 +929,19 @@ export default function DesignView({
                       />
                       {/* The route's reasoning, on the route. This was a
                           disconnected "How the mark behaves" box that could
-                          not tell you which concept it described. On the
-                          chosen concept it writes `logoDirection`, which is
-                          the field the brand book's Logo page prints. */}
+                          not tell you which concept it described.
+
+                          ONE CONCEPT → ONE RATIONALE. This box shows the
+                          concept's OWN `why`, never the project's mirrored
+                          `logoDirection`. Reading the mirror is what let
+                          concept A's rationale appear under concept B: star A,
+                          write a why, star B, and B's card showed A's sentence
+                          because the mirror had not moved. The store keeps
+                          `logoDirection` in step for the brand book's Logo
+                          page; the card does not read it back. */}
                       <input
                         className="field-input mark-concept-why"
-                        value={
-                          concept.chosen
-                            ? activeProject?.logoDirection || ''
-                            : concept.why || ''
-                        }
+                        value={concept.why || ''}
                         placeholder="Why this one"
                         aria-label={`Why concept ${i + 1}`}
                         onChange={(e) =>

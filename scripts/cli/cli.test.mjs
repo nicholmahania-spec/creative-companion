@@ -111,7 +111,10 @@ describe('export', () => {
       'tokens.css',
       'tokens.json',
       'pack.json',
-      'harbor-hearth-brand-kit.zip',
+      /* The CLIENT's name — `detective.clientName` is "Harbor & Hearth Co.",
+         the designer's internal project name is "Harbor & Hearth". Exports are
+         named for the client. See `clientFacingName`. */
+      'harbor-hearth-co-brand-kit.zip',
     ]) {
       expect(existsSync(join(out, name)), `${name} was not written`).toBe(true)
     }
