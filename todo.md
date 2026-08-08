@@ -6,7 +6,7 @@
 
 ---
 
-## Identity rework — Blocks A–C shipped, D–F open (2026-08-08)
+## Identity rework — Blocks A–F shipped (2026-08-08)
 
 **Shipped in B/C:** the artboard is the workspace — editable, on every tool
 screen, left on wide and first on mobile. Words and Preview are gone as
@@ -16,19 +16,33 @@ Dashboard: loose ends stopped counting your own to-do list and the client's
 blank brief answers, the Desk artboard stopped using the composed brief as a
 type specimen, and the unasked three-gap list is gone.
 
-**Still open — D, E(part), F:**
-- **D — Type specimen bench.** Real hierarchy at real sizes in the brand's own
-  colors. Type still shows two face names and a one-line specimen each.
-- **E — remaining.** Handover exists; the Brand Book Builder is still a fourth
-  authoring surface (`bookContent.js` `PAGE_FIELDS` edits 14 project + 10
-  brief fields). Make it read-only-with-a-link where the field is authored
-  elsewhere.
-- **F** — `competitors` on Research; rename the Asset library tool to end the
-  "Assets" name collision with path stop 5.
-- **Dashboard, deeper pass.** Still project-management-shaped: "Already done"
-  / "Skip this one" acknowledgement links, the Done checklist, the duplicated
-  stops list. Reduced, not resolved.
-- **Deferred by the owner:** Touchpoints' first fold stays as it is.
+**Shipped in D/E/F:** the Type bench sets both faces as a real hierarchy
+(display → caption) at real sizes on the brand's paper, in the brand's own
+sentences, with stand-in lines marked as such. The Brand Book Builder's word
+fields are read-only and route to where each answer is authored — it is an
+output surface now, not a fourth place to type the same fact. `competitors`
+reaches Research as a strip that drops a pre-titled note pin per name. The
+Asset library tool is **Library**, ending the "Assets" collision with stop 5.
+
+**Deliberately NOT done, with reasons — do not "finish" these without
+reading why:**
+
+- **"Already done" / "Skip this one" on the Desk gap card.** These look like
+  acknowledgement buttons and were on the removal list, but they are the ONLY
+  route into `setStepDone` and `toggleStepNotNeeded`. Deleting them makes an
+  unwanted stop permanently parked on the cold-start surface with no way to
+  clear it — i.e. it makes completion debt *permanent*, which is the opposite
+  of the goal. They are already weighted down to quiet asides.
+- **The Done list.** Same reason: it is the only undo for a task or step
+  marked done.
+- **The rail's upcoming-stops list.** It does duplicate the sidebar path map
+  (G3 bans a second map), but the sidebar is a drawer on mobile and this
+  could be the practical route to a stop from the Desk on a phone. Not
+  removed without measuring that.
+- **Touchpoints' first fold** — owner decision, PRD §12.
+- **`progressLabel` (`2/5`) in the What's next head.** A raw fraction as a
+  readout. Borderline against PRD §2; the duplicate copy of it is gone, the
+  primary one is left for the owner to call.
 
 ---
 

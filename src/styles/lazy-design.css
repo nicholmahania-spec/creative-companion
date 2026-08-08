@@ -2319,3 +2319,60 @@
   background: var(--bg-canvas);
   border-radius: 0 var(--radius) var(--radius) 0;
 }
+
+/* ── Type specimen bench ─────────────────────────────────────────────────
+   The pairing as a hierarchy, at real sizes, on the brand's paper. The sheet
+   does NOT theme (G4.4) — it is a picture of printed and rendered work, and
+   a body face judged on a themed grey panel reads as two different decisions
+   depending on whether the designer happens to be in deep mode. */
+
+.type-specimen {
+  margin-top: var(--space-4);
+}
+
+.type-specimen-sheet {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius);
+  border: 1px solid var(--paper-edge);
+  overflow-wrap: anywhere;
+}
+
+.type-specimen-rung {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* Which rung and which of the two faces set it — so a pairing that reads
+   wrong can be traced to the face that did it. Small, and in the paper's own
+   ink at low opacity rather than a workspace token, which would not survive
+   on a dark brand background. */
+.type-specimen-meta {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.55;
+}
+
+.type-specimen-line {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Stand-in copy reads quieter than the brand's own sentences, so nobody
+   mistakes filler for a decision somebody made. */
+.type-specimen-line.is-fallback {
+  opacity: 0.45;
+}
+
+.type-specimen-note {
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 40rem) {
+  .type-specimen-sheet {
+    padding: var(--space-4);
+  }
+}

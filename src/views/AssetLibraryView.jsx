@@ -29,6 +29,7 @@
  */
 import { useMemo, useRef, useState } from 'react'
 import useAppStore from '../store/useAppStore'
+import { labelForView } from '../lib/journey/journey'
 import { assetShelf, shelfEmptyState } from '../lib/assets/assetShelf'
 import { ASSET_CATEGORIES, categoryLabel, ALLOWED_MIME_TYPES } from '../lib/assets/assetLibrary'
 import { ingestFiles, ingestSummary } from '../lib/assets/ingestFiles'
@@ -83,7 +84,7 @@ export default function AssetLibraryView({
   return (
     <div className="assets-library view-enter" data-nav-dir={navDir}>
       <div className="flow-top">
-        <h1 className="page-title work-page-title">Asset library</h1>
+        <h1 className="page-title work-page-title">{labelForView('assets')}</h1>
       </div>
 
       {/* Said ONCE, above the shelf, when it is true of everything. Twenty

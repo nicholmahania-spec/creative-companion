@@ -59,6 +59,14 @@ derive it · should a design action produce it first. Only four noes earn a new
 field. Documentation is the by-product of a decision, never the thing that
 produces one.
 
+**1b. The brand book builder is an OUTPUT surface** (owner, 2026-08-08).
+
+Its word fields are read-only and link to where each answer is authored
+(`FIELD_HOMES` in `bookContent.js`). Do not give it editable copies again: the
+client answers in the brief, the designer sharpens on Identity's direction
+sheet, and a third box here made "which one does the PDF read?" unanswerable
+from the screen.
+
 **2. American English, everywhere a user can read it** (G9.1).
 
 color · favorite · organize · customize · behavior · center · labeled ·

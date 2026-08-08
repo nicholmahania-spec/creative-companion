@@ -23,6 +23,11 @@ If a screen fights these, the screen is wrong — not the grammar.
 | 4 | **Touchpoints** | `flow` | Applications from the brief; note or “looks right”. |
 | 5 | **Assets** | `finish` | Preview leave-behind → one download + handoff. |
 
+**The Tool called `assets` is *Library*, not "Asset library".** Stop 5 is
+**Assets** (view `finish`) and the Tool is view `assets` — the ids run the
+opposite way to the labels, so two nav entries a word apart were unreadable.
+The stop's label is settled and client-facing; the Tool moved.
+
 **Derive, never restate.** Use `JOURNEY_STEPS`, `labelForStepId`, `labelForView`, `PATH_STEP_COUNT`.  
 Ideate (`spark`) and Review are **Tools**, not path siblings. Timer, Calendar, Clients, Settings, Brand Book Builder — Tools.
 

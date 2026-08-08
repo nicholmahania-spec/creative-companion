@@ -1071,3 +1071,36 @@
   min-height: 4.5rem;
   resize: vertical;
 }
+
+/* ── Brand book builder: words are read here, written elsewhere ──────────
+   The builder is an output surface. Each row states the value the PDF will
+   print, names where that answer is authored, and goes there. */
+
+.bbb-field.bbb-read {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.bbb-read-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.bbb-read-value {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* An unanswered line reads as waiting, not as content — the em-dash rule the
+   direction sheet already follows. */
+.bbb-read-value.is-empty {
+  color: var(--text-muted);
+}
+
+.bbb-read-link {
+  justify-self: start;
+  font-size: var(--fs-1);
+}

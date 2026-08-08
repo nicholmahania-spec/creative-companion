@@ -43,7 +43,6 @@ import {
   BRAND_ROLE_KEYS,
   BRAND_ROLE_LABELS,
   mapPaletteRoles,
-  fontFamilyFromLabel,
   TYPE_PAIRS,
   typePairIdFromLabels,
   tintsAndShades,
@@ -61,6 +60,7 @@ import { downscaleDataUrl } from '../lib/moodPins'
 import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import ReadabilityRows from '../features/palette/ReadabilityRows'
 import MarkColourCheck from '../features/brand/MarkColourCheck'
+import TypeSpecimen from '../features/brand/TypeSpecimen'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
@@ -1721,15 +1721,6 @@ export default function DesignView({
                       font you own.
                     </p>
                   )}
-                  <div
-                    className="brand-type-display"
-                    style={{
-                      marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(headingFace),
-                    }}
-                  >
-                    {headingFace}
-                  </div>
                 </div>
                 <div className="field-block" style={{ marginBottom: 0 }}>
                   <label className="field-label" htmlFor="type-body">
@@ -1751,17 +1742,20 @@ export default function DesignView({
                       font you own.
                     </p>
                   )}
-                  <div
-                    className="brand-type-body"
-                    style={{
-                      marginTop: '0.65rem',
-                      fontFamily: fontFamilyFromLabel(bodyFace),
-                    }}
-                  >
-                    {bodyFace} — The quick brown fox keeps the brief honest.
-                  </div>
                 </div>
               </div>
+
+              {/* THE BENCH. Two faces set as an actual hierarchy, at real
+                  sizes, in the brand's own ink on paper — which is the thing
+                  being decided. What was here before was each face's name set
+                  in itself, which proves a font loaded and nothing else. */}
+              <TypeSpecimen
+                project={activeProject || {}}
+                paper={
+                  normalizeHex(activeProject?.colorRoles?.quiet) || undefined
+                }
+                ink={normalizeHex(activeProject?.colorRoles?.text) || undefined}
+              />
               {/* Optional, but visible — not tucked in a collapsible. This
                   reaches the brand book's type page, and a field worth
                   printing is not a field worth hiding at capture (the
