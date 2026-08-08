@@ -33,7 +33,14 @@ export const BRAND_SURFACE_OPTIONS = [
 export const DELIVERABLE_OPTIONS = [
   { id: 'logoPrimary', label: 'Primary logo' },
   { id: 'logoVariations', label: 'Logo variations (stacked, horizontal, icon)' },
-  { id: 'colourPalette', label: 'Colour palette' },
+  /* The LABEL is American English; the ID is not, and must not be.
+     `colourPalette` is a stored answer key — it is written into
+     `deliverablesPicked` on every project that ever picked it, and read by
+     the store, the touchpoint lookup, the exports and the tests. Renaming an
+     id to fix its spelling orphans real client answers, which is the rule
+     already stated at the top of this file. Spelling is a UI concern; ids
+     are data. */
+  { id: 'colourPalette', label: 'Color palette' },
   { id: 'typography', label: 'Typefaces' },
   { id: 'guidelines', label: 'Brand guidelines document' },
   { id: 'businessCard', label: 'Business cards' },
@@ -402,7 +409,7 @@ export const DETECTIVE_CHAPTERS = [
       {
         id: 'existingAssets',
         label: 'Any existing logo or artwork?',
-        tip: 'Old logo, colours, or attach it',
+        tip: 'Old logo, colors, or attach it',
         area: true,
         attach: true,
         required: false,
@@ -612,6 +619,18 @@ export function getDetectiveProgress(detective = {}) {
 
 /** Every declared field, flattened. */
 export const ALL_DETECTIVE_FIELDS = DETECTIVE_CHAPTERS.flatMap((c) => c.fields)
+
+/**
+ * The positioning spectrums, derived rather than listed.
+ *
+ * `strategySeed.js` turns these into strategy attributes so the client's
+ * answers reach the alignment bars instead of dead-ending in the brief. It
+ * reads the poles from here rather than restating them, so renaming a pole
+ * cannot leave the seeded label describing the old question.
+ */
+export const SPECTRUM_FIELDS = ALL_DETECTIVE_FIELDS.filter(
+  (f) => f.type === 'spectrum'
+)
 
 const normalise = (s) =>
   String(s || '')

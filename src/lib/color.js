@@ -454,7 +454,13 @@ export function buildPassPairs(palette = [], targetRatio = 4.5) {
  * Suggest pack role overrides so text/accent read on quiet/cover.
  * @returns {{ roles: object, changes: { role, from, to, why }[] }}
  */
-export function suggestRoleAaFixes(palette = [], roles = null) {
+export function suggestRoleAaFixes(palette = [], roles = null, { strict = false } = {}) {
+  /* The SAME bar `roleContrastPairs` scores against, threaded from the same
+     place. These two drifting apart is a named failure mode in this file: a
+     Fix button that aims lower than the meter it feeds reports success and
+     leaves the pair red. */
+  const bodyNeed = strict ? 7 : 4.5
+  const largeNeed = strict ? 4.5 : 3
   const auto = mapPaletteRoles(palette)
   const merged = {
     cover: normalizeHex(roles?.cover) || auto.cover,
@@ -473,15 +479,15 @@ export function suggestRoleAaFixes(palette = [], roles = null) {
   // text on quiet (body surfaces)
   {
     const r = contrastRatio(merged.text, merged.quiet)
-    if (r < 4.5) {
-      const fix = nudgeHexForContrast(merged.text, merged.quiet, 4.5)
+    if (r < bodyNeed) {
+      const fix = nudgeHexForContrast(merged.text, merged.quiet, bodyNeed)
       if (fix?.changed) apply('text', fix.hex, 'text on quiet → AA')
       else {
         const qH = hexToHsl(merged.quiet)
         if (qH) {
           for (const l of [0.96, 0.94, 0.9, 0.86]) {
             const cand = hslToHex(qH.h, qH.s * 0.5, l)
-            if (contrastRatio(merged.text, cand) >= 4.5) {
+            if (contrastRatio(merged.text, cand) >= bodyNeed) {
               apply('quiet', cand, 'quiet lightened for text AA')
               break
             }
@@ -494,8 +500,8 @@ export function suggestRoleAaFixes(palette = [], roles = null) {
   // accent on quiet (UI / links) ≥ 3:1
   {
     const r = contrastRatio(merged.accent, merged.quiet)
-    if (r < 3) {
-      const fix = nudgeHexForContrast(merged.accent, merged.quiet, 3)
+    if (r < largeNeed) {
+      const fix = nudgeHexForContrast(merged.accent, merged.quiet, largeNeed)
       if (fix?.changed) apply('accent', fix.hex, 'accent on quiet → UI AA')
     }
   }
@@ -518,8 +524,8 @@ export function suggestRoleAaFixes(palette = [], roles = null) {
    */
   {
     const needsWork =
-      contrastRatio(merged.text, merged.cover) < 3 ||
-      contrastRatio(merged.accent, merged.cover) < 3
+      contrastRatio(merged.text, merged.cover) < largeNeed ||
+      contrastRatio(merged.accent, merged.cover) < largeNeed
     if (needsWork) {
       const cH = hexToHsl(merged.cover)
       if (cH) {
@@ -532,7 +538,7 @@ export function suggestRoleAaFixes(palette = [], roles = null) {
           const cand = hslToHex(cH.h, cH.s, l)
           const tr = contrastRatio(merged.text, cand)
           const ar = contrastRatio(merged.accent, cand)
-          if (tr >= 3 && ar >= 3) {
+          if (tr >= largeNeed && ar >= largeNeed) {
             best = cand
             break
           }
@@ -543,8 +549,8 @@ export function suggestRoleAaFixes(palette = [], roles = null) {
           for (const l of [0.1, 0.06, 0.95, 0.98]) {
             const cand = hslToHex(cH.h, Math.min(cH.s, 0.15), l)
             if (
-              contrastRatio(merged.text, cand) >= 3 &&
-              contrastRatio(merged.accent, cand) >= 3
+              contrastRatio(merged.text, cand) >= largeNeed &&
+              contrastRatio(merged.accent, cand) >= largeNeed
             ) {
               best = cand
               break
@@ -899,20 +905,28 @@ export const NEUTRAL_KEYS = ['neutral', 'neutral2']
  *
  * @returns {Array<{id:string,fg:string,bg:string,need:number,ratio:number,ok:boolean}>}
  */
-export function roleContrastPairs(colorRoles = {}) {
+export function roleContrastPairs(colorRoles = {}, { strict = false } = {}) {
   const r = {}
   for (const k of HEALTH_ROLE_KEYS) r[k] = normalizeHex(colorRoles[k])
 
   // 4.5 for body copy, 3.0 for large/UI marks — the AA thresholds, applied
   // to the job each role actually does rather than to every combination.
+  //
+  // `strict` raises each one step to AAA, and is set from the client's own
+  // accessibility answer (see `contrastTargetFor`). It is threaded rather
+  // than read here so this stays a pure function of its arguments, and so the
+  // Fix button, the health score and the readability rows are all held to the
+  // same bar — the comment below is the reason they must be.
+  const body = strict ? 7 : 4.5
+  const large = strict ? 4.5 : 3
   const wanted = [
-    { id: 'text-on-quiet', fg: r.text, bg: r.quiet, need: 4.5 },
+    { id: 'text-on-quiet', fg: r.text, bg: r.quiet, need: body },
     // Cover type is hero-sized, so AA large (3:1) is the honest bar — and it
     // is the bar `suggestRoleAaFixes` already aims at. Scoring against 4.5
     // here would mean the Fix button could never clear the meter it feeds.
-    { id: 'text-on-cover', fg: r.text, bg: r.cover, need: 3 },
-    { id: 'accent-on-quiet', fg: r.accent, bg: r.quiet, need: 3 },
-    { id: 'accent-on-cover', fg: r.accent, bg: r.cover, need: 3 },
+    { id: 'text-on-cover', fg: r.text, bg: r.cover, need: large },
+    { id: 'accent-on-quiet', fg: r.accent, bg: r.quiet, need: large },
+    { id: 'accent-on-cover', fg: r.accent, bg: r.cover, need: large },
   ]
 
   return wanted
@@ -977,6 +991,10 @@ export function paletteHealthScore({
   palette = [],
   colorRoles = {},
   colorRoleWhy = {},
+  /* Raised to AAA when the client's brief asked for extra contrast. Passed
+     in, never read from a project here — this function stays pure, and the
+     one place that decides is `contrastTargetFor`. */
+  strict = false,
 } = {}) {
   const assigned = HEALTH_ROLE_KEYS.filter((k) =>
     String(colorRoles[k] || '').trim()
@@ -985,7 +1003,7 @@ export function paletteHealthScore({
 
   const started = assigned.length > 0
   const harmony = checkPaletteHarmony(palette)
-  const pairs = roleContrastPairs(colorRoles)
+  const pairs = roleContrastPairs(colorRoles, { strict })
 
   if (!started) {
     return {

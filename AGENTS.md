@@ -41,6 +41,40 @@ This lived only in those two docs, and this file — the one an agent actually
 reads for rules — was silent on it. Three PRs merged on 2026-08-07 (#170,
 #171, #172) shipped with no bump as a result. No test or CI job checks it.
 
+## Two standing product rules, added 2026-08-08
+
+Both are owner decisions and both are permanent. Full text in
+`DESIGN_GRAMMAR.md` — G1.5 and G9.1.
+
+**1. A stage must hand you a tool, not a form** (G1.5).
+
+> Every stage must provide a meaningful work surface appropriate to the
+> stage's job. A page is not considered functional merely because it stores
+> information related to that job.
+
+The brief (`detective`) is the ONLY client/strategic intake surface. Every
+later stop consumes it and none re-asks it. Before adding any input, in order:
+is it already in the brief · is it already authored elsewhere · can the app
+derive it · should a design action produce it first. Only four noes earn a new
+field. Documentation is the by-product of a decision, never the thing that
+produces one.
+
+**2. American English, everywhere a user can read it** (G9.1).
+
+color · favorite · organize · customize · behavior · center · labeled ·
+canceled · license · gray. Never colour / organise / behaviour / centre /
+labelled / grey. Labels, buttons, empty states, toasts, onboarding, the client
+portal, the brand book, example text. Never mix the two.
+
+Exempt, deliberately: **stored field ids** (`colourPalette` is a saved answer
+key — renaming it orphans real client data), **text the client typed**, and
+**keyword lists matched against client text** (`contrastMatrix`,
+`colourAxes`), which must accept both spellings. Non-user-facing comments are
+out of scope — don't churn them. Sweep the files you touched before calling a
+block done.
+
+---
+
 ## Owner decisions are final — advisors inform, they do not override
 
 **Stated by the owner 2026-08-03:** never reverse, quietly re-decide, or

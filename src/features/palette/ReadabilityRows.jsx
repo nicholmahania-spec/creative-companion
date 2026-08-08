@@ -32,7 +32,7 @@ import { readabilityLine, resolutionsFor } from '../../lib/contrast/contrastMatr
 
 const ROW_LABEL = {
   'text-on-quiet': 'Body text on your background',
-  'text-on-cover': 'Body text on your cover colour',
+  'text-on-cover': 'Body text on your cover color',
   'accent-on-quiet': 'Accent on your background',
   'accent-on-cover': 'Accent on your cover colour',
 }
@@ -50,19 +50,31 @@ export default function ReadabilityRows({
   roles,
   onApply,
   sample = 'The quick brown fox',
+  /* Raised to the AAA bar when the client's brief asked for extra contrast.
+     `strictNote` is the client's reason, said out loud — a checker that
+     quietly moved its own goalposts would read as broken, and the point of
+     this is that somebody ASKED. */
+  strict = false,
+  strictNote = '',
 }) {
-  const pairs = roleContrastPairs(roles || {})
+  const pairs = roleContrastPairs(roles || {}, { strict })
 
   if (!pairs.length) {
     return (
       <p className="panel-hint">
-        Give a colour a job above and its readability shows up here.
+        Give a color a job above and its readability shows up here.
       </p>
     )
   }
 
   return (
-    <ul className="readability-rows" aria-label="Readability">
+    <>
+      {strict && strictNote ? (
+        <p className="readability-strict-note" role="status">
+          {strictNote}
+        </p>
+      ) : null}
+      <ul className="readability-rows" aria-label="Readability">
       {pairs.map((pair) => {
         const routes = pair.ok ? [] : resolutionsFor(pair.fg, pair.bg, pair.need)
         const { fgRole, bgRole } = rolesOf(pair.id)
@@ -109,7 +121,7 @@ export default function ReadabilityRows({
                           >
                             {r.kind === 'move-background'
                               ? 'Adjust the background'
-                              : 'Adjust the text colour'}
+                              : 'Adjust the text color'}
                           </button>
                           <span className="readability-route-swatches">
                             <i style={{ background: r.from }} aria-hidden="true" />
@@ -123,7 +135,7 @@ export default function ReadabilityRows({
                               a confident auto-fix hides behind a tick. */}
                           {r.newColour && (
                             <span className="readability-route-warn">
-                              this is really a different colour
+                              this is really a different color
                             </span>
                           )}
                         </>
@@ -136,6 +148,7 @@ export default function ReadabilityRows({
           </li>
         )
       })}
-    </ul>
+      </ul>
+    </>
   )
 }

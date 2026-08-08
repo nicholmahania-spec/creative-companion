@@ -19,7 +19,7 @@ If a screen fights these, the screen is wrong — not the grammar.
 |---|--------|------|-----|
 | 1 | **Strategy** | `project` | Client + brief. Form-only — no mood board. |
 | 2 | **Research** | `studio` | One wall of refs; ★ up to 6 for the pack. |
-| 3 | **Identity** | `brand` | Mark → Words → Colour → Type → Preview. |
+| 3 | **Identity** | `brand` | Mark → Words → Color → Type → Preview. |
 | 4 | **Touchpoints** | `flow` | Applications from the brief; note or “looks right”. |
 | 5 | **Assets** | `finish` | Preview leave-behind → one download + handoff. |
 
@@ -30,6 +30,31 @@ Ideate (`spark`) and Review are **Tools**, not path siblings. Timer, Calendar, C
 **G1.2 Full main width** — shell `.main` fills the grid cell on every view (no 780px island). Reading measure lives on form/prose columns inside the page, not on `.main`.  
 **G1.3 One primary CTA** per page job; path Next solid; rail Continue secondary.  
 **G1.4 `pathDone` both ways** — user verdict outranks proxies. One tick, one meaning.
+
+**G1.5 A stage must hand you a tool, not a form.**
+
+> **Every stage must provide a meaningful work surface appropriate to the
+> stage's job. A page is not considered functional merely because it stores
+> information related to that job.**
+
+Owner, 2026-08-08, after Identity drifted into ~29 text inputs with the live
+artboard walled off behind a fifth tab. Storage is not a work surface. The
+test for any path page is *what can I actually DO here* — and "describe the
+thing" is not an answer.
+
+Before adding an input, in this order:
+
+1. Does this already exist in the brief (`detective`)? → **read it, never re-ask it**
+2. Does it already exist elsewhere in the app? → **one authoring home, link to it**
+3. Can the app derive it? → **derive it** (the client's four positioning
+   spectrums sat unread for months while the designer hand-placed the same
+   answers on five sliders)
+4. Should a design action produce it first? → **the decision comes first, the
+   documentation is its by-product**
+
+Only when all four are genuinely no does a new field earn its place. Corollary:
+the artboard is the **workspace** identity decisions are made against, not a
+formatted summary of project information printed beside the forms.
 
 ---
 
@@ -136,6 +161,26 @@ Utility: buttons primary / secondary / ghost, quiet status lines.
 
 Name real objects: brief, wall, mark, pack, handoff.  
 No “unlock your potential.” Empty states honest. Mate / Helper sparse and optional.
+
+**G9.1 American English, everywhere a user can read it.** Owner, 2026-08-08 —
+a permanent product requirement, not a preference. color · favorite · organize ·
+organization · customize · behavior · center · labeled · canceled · license ·
+program · gray. Never colour / favourite / organise / behaviour / centre /
+labelled / cancelled / licence / grey.
+
+Applies to labels, buttons, headings, helper text, empty states, tooltips,
+toasts, validation, onboarding, generated copy, the client portal, the brand
+book, and default/example text. **Never mix the two.**
+
+Three things it does **not** apply to, each for a reason:
+
+| Not covered | Why |
+|---|---|
+| **Stored field ids** (`colourPalette`, `colourAxes`, `dominantColour`) | An id is data. Renaming one orphans every answer already saved on a real project — the rule already stated at the top of `detectiveBrief.js`. Fix the label; leave the key. |
+| **Text the client typed** | Never silently rewrite a user's own words. |
+| **Keyword lists that MATCH client text** | `contrastMatrix`'s high-contrast list and `colourAxes`' veto list must accept both spellings, or half the clients who ask are ignored. Matched against, never rendered. |
+
+Non-user-facing code comments are out of scope — don't churn them.
 
 ---
 

@@ -8,7 +8,7 @@
 export const IDENTITY_SUBSTEPS = [
   { id: 'logo', label: 'Mark' },
   { id: 'essentials', label: 'Words' },
-  { id: 'colors', label: 'Colour' },
+  { id: 'colors', label: 'Color' },
   { id: 'type', label: 'Type' },
   { id: 'preview', label: 'Preview' },
 ]

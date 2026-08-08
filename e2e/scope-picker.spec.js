@@ -28,7 +28,7 @@ test('ticking extras keeps the full package', async ({ page }) => {
 
   /* The core deliverables are now ticked ON SCREEN rather than merely
      implied — what the designer sees is what the project gets. */
-  for (const label of ['Primary logo', 'Colour palette', 'Typefaces']) {
+  for (const label of ['Primary logo', 'Color palette', 'Typefaces']) {
     const box = page.locator('.create-check', { hasText: label }).first()
     await expect(box, `${label} should be ticked`).toHaveAttribute(
       'aria-pressed',

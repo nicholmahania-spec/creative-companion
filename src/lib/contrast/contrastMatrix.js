@@ -212,7 +212,7 @@ export function autoFixPair(fgHex, bgHex, target = WCAG.AA_NORMAL) {
  */
 export function cellSummary(cell) {
   if (!cell) return ''
-  if (cell.same) return 'Same colour'
+  if (cell.same) return 'Same color'
   if (cell.usableFor.length === 0) return 'Too close to read either way'
   return `Good for ${cell.usableFor.join(', ')}`
 }
@@ -321,4 +321,95 @@ export function readabilityLine(pair) {
   const ratio = `${pair.ratio.toFixed(1)}:1`
   if (pair.ok) return `${ratio} — comfortable to read`
   return `${ratio} — this needs ${pair.need}:1 to be easy to read`
+}
+
+/**
+ * Did the client ask for more contrast than AA?
+ *
+ * THE GAP THIS CLOSES. The brief asks "any accessibility needs we should
+ * design to?" and the answer was read by the exports and the brand book —
+ * printed for the client to read back — and by nothing that checks anything.
+ * The contrast tooling targeted AA regardless. A client could write "high
+ * contrast, our readers have low vision", watch it appear in their brand
+ * book, and get a palette signed off at the ordinary bar.
+ *
+ * Free text read with a keyword list, which is the same shape
+ * `colourAxes.vetoedFamilies` already uses on the `avoid` answer, and for the
+ * same reason: the alternative is asking the designer to translate an answer
+ * the client already gave.
+ *
+ * CONSERVATIVE ON PURPOSE, in one direction only. A missed phrase leaves the
+ * app where it is today; a false positive silently raises the bar on a
+ * project that never asked, which reads as the checker breaking. So the list
+ * is short and specific, "accessible"/"accessibility" alone do NOT trigger it
+ * (every answer to this question contains one of them), and the raised target
+ * is stated on screen rather than applied quietly.
+ */
+const HIGH_CONTRAST_PHRASES = [
+  'high contrast',
+  'higher contrast',
+  'high-contrast',
+  'strong contrast',
+  'more contrast',
+  'extra contrast',
+  'increased contrast',
+  'maximum contrast',
+  'aaa',
+  'wcag aaa',
+  'low vision',
+  'low-vision',
+  'partially sighted',
+  'visually impaired',
+  'visual impairment',
+  'sight loss',
+  /* BOTH SPELLINGS STAY, and this is not an inconsistency with the
+     American-English rule. That rule governs text the APP writes. This list
+     reads text the CLIENT wrote, and a client who types "colourblind" has
+     the same need as one who types "colorblind" — dropping the British
+     spelling here would silently ignore half of them. Never render these
+     strings; they are only ever matched against. */
+  'colour blind',
+  'color blind',
+  'colourblind',
+  'colorblind',
+  'legibility',
+  'hard to read',
+  'difficulty reading',
+  'large type',
+  'large print',
+  'larger type',
+]
+
+/**
+ * @param {string} text  the client's accessibility answer
+ * @returns {boolean}
+ */
+export function wantsHighContrast(text) {
+  const t = String(text || '').toLowerCase()
+  if (!t.trim()) return false
+  return HIGH_CONTRAST_PHRASES.some((p) => t.includes(p))
+}
+
+/**
+ * The contrast bar this project is held to, and why — one read, so the
+ * checker and the sentence explaining it cannot disagree.
+ *
+ * `strict` raises each pairing one WCAG step: body copy AA→AAA (4.5→7), and
+ * the large/UI pairings AA large→AAA large (3→4.5). It never invents a
+ * threshold; both are named rows in `WCAG` above.
+ *
+ * @param {object} detective  the project's brief answers
+ */
+export function contrastTargetFor(detective) {
+  const answer = String(detective?.accessibilityNeeds || '').trim()
+  const strict = wantsHighContrast(answer)
+  return {
+    strict,
+    answer,
+    /* Named, because "AAA" on its own is a standard nobody outside this
+       field reads, and the point is that the CLIENT asked for it. */
+    note: strict
+      ? 'Your client asked for extra contrast, so these are checked at the stricter AAA bar.'
+      : '',
+  }
 }
