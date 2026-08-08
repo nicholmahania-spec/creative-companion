@@ -6,6 +6,42 @@
 
 ---
 
+## Identity rework — Block A shipped, Blocks B–F await approval (2026-08-08)
+
+Full audit and plan are in the session that produced this. Block A (data
+ownership only, no IA change) is done: positioning owns its own field,
+strategy attributes seed from the brief's spectrums, `accessibilityNeeds`
+raises the contrast bar, version chrome reachable from every Identity screen.
+
+**Blocks B–F are NOT approved yet. Do not start them.** Recorded so the intent
+survives the session:
+
+- **B — the artboard becomes the workspace.** `BrandArtboard`'s `editable`
+  branch is fully wired and unreachable (`editable={false}` at all call sites);
+  the artboard renders only on the `preview` sub-screen, so PRD §12's "the
+  artboard is readable first" is failing today.
+- **OWNER CLARIFICATION, 2026-08-08 — read before building B.** *"Do not
+  interpret 'artboard' as a nicely formatted summary of project information."*
+  It is the visual workspace the identity is BUILT and EVALUATED against: mark,
+  palette, typography, tagline, verbal identity and representative
+  applications all changing live as the editors are used. Placing today's
+  static information sheet beside today's forms preserves the exact problem
+  the rework exists to fix.
+- **C** — `logoConcepts[]` per the spec further down this file. Unstarred
+  concepts must never reach the client package.
+- **D** — Type specimen bench: real hierarchy at real sizes in the brand's own
+  colors, not two font names.
+- **E** — one always-present Handover screen; genuine-convention defaults
+  written in as real values. **Do not fabricate a minimum-size number** — it is
+  a legibility outcome of a specific mark, not a convention.
+- **F** — `competitors` on Research; rename the Asset library tool to end the
+  "Assets" collision with path stop 5.
+- **Deferred by the owner:** Touchpoints' first fold stays as it is. PRD §12
+  requires the current step to own it. Not a second architectural change in
+  this pass.
+
+---
+
 ## OPEN WORK — read this section, the rest is a log
 
 Everything below this section is a record of what was done, kept for the

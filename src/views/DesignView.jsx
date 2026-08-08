@@ -30,6 +30,7 @@ import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
 import { DEFAULT_LOGO_DONTS } from '../lib/brandSystem'
 import { axesForPalette, vetoBreaches } from '../lib/brand/colourAxes'
+import { contrastTargetFor } from '../lib/contrast/contrastMatrix'
 import { axesForTypeface, missingFonts } from '../lib/brand/typeMetrics'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import {
@@ -87,7 +88,7 @@ const HEALTH_SCOPE_NOTE = (() => {
      writing five rationales the live question is "did that land anywhere?",
      not "was I punished?". It lands — `colorRoles` is copied wholesale into
      both the version snapshot and the export payload, so all nine jobs
-     reach the client's files. "Jobs" matches the "Colour jobs" heading
+     reach the client's files. "Jobs" matches the "Color jobs" heading
      below rather than introducing a second word for the same thing. */
   return `Reads ${list}, plus how the palette sits together. Your other jobs are saved with the brand — they just don't move this number.`
 })()
@@ -113,7 +114,6 @@ export default function DesignView({
   const updateBrandField = useAppStore((s) => s.updateBrandField)
   const setBrandTokenTags = useAppStore((s) => s.setBrandTokenTags)
   const updateDirection = useAppStore((s) => s.updateDirection)
-  const updateProjectBrief = useAppStore((s) => s.updateProjectBrief)
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
   const addPaletteColor = useAppStore((s) => s.addPaletteColor)
@@ -121,6 +121,7 @@ export default function DesignView({
   const bumpDesignVersion = useAppStore((s) => s.bumpDesignVersion)
   const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
   const setColorRole = useAppStore((s) => s.setColorRole)
+  const seedStrategyAttributes = useAppStore((s) => s.seedStrategyAttributes)
   const setLogoDirection = useAppStore((s) => s.setLogoDirection)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
 
@@ -154,6 +155,15 @@ export default function DesignView({
     () => axesForPalette(projectPalette || []),
     [projectPalette]
   )
+  /* The bar this project's colour is held to, read from the client's own
+     accessibility answer. Derived once and threaded into every consumer —
+     the rows, the health score, the pass-pair list and the Fix button — so
+     they cannot be held to different bars. A Fix that aims lower than the
+     meter it feeds is a named defect in color.js. */
+  const contrastTarget = useMemo(
+    () => contrastTargetFor(activeProject?.detective),
+    [activeProject?.detective?.accessibilityNeeds]
+  )
   /* The client's own stated vetoes, read back against the palette. The
      cheapest useful second opinion in the app: no judgement required,
      because the client already said it. */
@@ -165,11 +175,17 @@ export default function DesignView({
           activeProject?.detective?.avoid,
           activeProject?.detective?.colorNotes,
           activeProject?.brief,
+          activeProject?.positioning,
         ]
           .filter(Boolean)
           .join('\n')
       ),
-    [projectPalette, activeProject?.detective?.avoid, activeProject?.brief]
+    [
+      projectPalette,
+      activeProject?.detective?.avoid,
+      activeProject?.brief,
+      activeProject?.positioning,
+    ]
   )
   const setIdentitySubstep = (id) => {
     const next = resolveIdentitySubstep(id)
@@ -235,13 +251,24 @@ export default function DesignView({
     loadVersionHistory()
   }, [activeProject?.id])
 
+  /* The client's positioning answers, placed on the rulers before the bars
+     are read. Idempotent and one-shot in the store — see
+     `seedStrategyAttributes`. Called from both Strategy and here because a
+     designer who skipped Strategy would otherwise meet five empty bars
+     while four of the answers behind them were already in the brief. */
+  useEffect(() => {
+    if (!activeProject?.id) return
+    seedStrategyAttributes(activeProject.id)
+  }, [activeProject?.id, seedStrategyAttributes])
+
+
   const restoreSelectedVersion = async () => {
     if (!selectedVersion?.id || restoringVersion) return
     const label = selectedVersion.versionLabel || 'this version'
     const ok =
       typeof window !== 'undefined'
         ? window.confirm(
-            `Restore identity to ${label}? Current mark, words, colour and type will be replaced. Use Bump first if you want a save point.`
+            `Restore identity to ${label}? Current mark, words, color and type will be replaced. Use Bump first if you want a save point.`
           )
         : true
     if (!ok) return
@@ -504,8 +531,12 @@ export default function DesignView({
   }, [activeProject?.colorRoles, paletteRoles])
 
   const passPairs = useMemo(
-    () => buildPassPairs(projectPalette, 4.5).slice(0, 12),
-    [projectPalette]
+    () =>
+      buildPassPairs(projectPalette, contrastTarget.strict ? 7 : 4.5).slice(
+        0,
+        12
+      ),
+    [projectPalette, contrastTarget.strict]
   )
 
   const starredPinCount = useMemo(
@@ -634,7 +665,7 @@ export default function DesignView({
       c?.toLowerCase() === String(route.from).toLowerCase() ? route.to : c
     )
     if (nextPal.length >= 2) setProjectPalette(nextPal)
-    offerUndo?.(`${route.role} colour`, () => {
+    offerUndo?.(`${route.role} color`, () => {
       if (previous) setColorRole(route.role, previous)
       setProjectPalette(projectPalette)
     })
@@ -648,10 +679,15 @@ export default function DesignView({
   const applyAaRoleFix = () => {
     const { roles, changes } = suggestRoleAaFixes(
       projectPalette,
-      activeProject?.colorRoles
+      activeProject?.colorRoles,
+      { strict: contrastTarget.strict }
     )
     if (!changes.length) {
-      flashMicro?.('Roles already pass AA targets')
+      flashMicro?.(
+        contrastTarget.strict
+          ? 'Roles already pass the stricter AAA targets'
+          : 'Roles already pass AA targets'
+      )
       return
     }
     for (const c of changes) {
@@ -707,9 +743,21 @@ export default function DesignView({
                   {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}
                 </p>
               </div>
-              {/* Meta chrome only on Preview — craft screens open on the field,
-                  not version/template decisions (ADHD: decision fatigue). */}
-              {identitySubstep === 'preview' && (
+              {/* Reachable from every Identity screen.
+                  It used to render only on Preview, on the reasoning that
+                  craft screens should open on the field rather than on a
+                  version decision. That reasoning still holds and is honoured
+                  by PLACEMENT: this sits in the title row's right slot, which
+                  is otherwise empty, so the first field of every screen is
+                  still the first thing under the sub-nav.
+                  What did not hold was reachability. `bumpDesignVersionIfV1`
+                  fires automatically on a mark upload and on a type change
+                  and toasts "Mark image · v2" — announcing a version from a
+                  screen with nowhere to go and see it. A thing you are told
+                  exists and cannot find reads as lost, and re-deriving "which
+                  version did I send them?" is the memory tax this stop is for
+                  removing. Final home is the Handover screen. */}
+              {(
                 <div className="brand-template-actions">
                   <div className="version-controls">
                     <button
@@ -979,7 +1027,7 @@ export default function DesignView({
                   const before = activeProject?.palette || []
                   const owner = activeProject?.id
                   addPaletteColor(hex)
-                  offerUndo?.('Colour added', () =>
+                  offerUndo?.('Color added', () =>
                     setProjectPalette(before, owner)
                   )
                   flashMicro(`${hex} added to palette`)
@@ -1121,11 +1169,23 @@ export default function DesignView({
                 <label className="field-label" htmlFor="brand-brief">
                   Positioning
                 </label>
+                {/* Writes `positioning`, NOT `brief`.
+                    `brief` is the auto-composed summary of the client's
+                    answers, and `updateDetective` rewrites it on every
+                    keystroke in the brief — including the client's, through
+                    the portal. A positioning line written here used to live
+                    there, so it was destroyed the next time any brief
+                    question was touched, silently and with no way back.
+                    `positioning` is the field the brand book already printed
+                    (bookContent.js, brandBookPdf.js) and that nothing in src/
+                    ever wrote. */}
                 <textarea
                   id="brand-brief"
                   className="field-textarea"
-                  value={activeProject?.brief || ''}
-                  onChange={(e) => updateProjectBrief(e.target.value)}
+                  value={activeProject?.positioning || ''}
+                  onChange={(e) =>
+                    updateBrandField('positioning', e.target.value)
+                  }
                   placeholder="Who it’s for · how it should feel"
                   rows={2}
                 />
@@ -1233,7 +1293,7 @@ export default function DesignView({
               }`}
             >
               <header className="design-section-head">
-                <h2 className="design-section-title">Colour</h2>
+                <h2 className="design-section-title">Color</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
 
@@ -1264,6 +1324,7 @@ export default function DesignView({
                   palette: projectPalette,
                   colorRoles: activeProject?.colorRoles || {},
                   colorRoleWhy: activeProject?.colorRoleWhy || {},
+                  strict: contrastTarget.strict,
                 })
                 /* Nothing picked yet is not a failing grade. The score used
                    to open at 20% in red on an untouched project — a mark
@@ -1343,7 +1404,7 @@ export default function DesignView({
                         <div className="palette-row">
                           <label
                             className="palette-swatch-wrap"
-                            title="Pick colour"
+                            title="Pick color"
                           >
                             <input
                               type="color"
@@ -1360,7 +1421,7 @@ export default function DesignView({
                                   })
                                 }
                               }}
-                              aria-label={`Colour ${index + 1} picker`}
+                              aria-label={`Color ${index + 1} picker`}
                             />
                             <span
                               className="palette-swatch"
@@ -1381,7 +1442,7 @@ export default function DesignView({
                               if (e.key === 'Enter') e.currentTarget.blur()
                             }}
                             spellCheck={false}
-                            aria-label={`Colour ${index + 1} hex`}
+                            aria-label={`Color ${index + 1} hex`}
                           />
                           <span
                             className="palette-preview-chip"
@@ -1475,7 +1536,7 @@ export default function DesignView({
                     disabled={projectPalette.length >= 8}
                     onClick={() => addPaletteColor('#888888')}
                   >
-                    Add colour
+                    Add color
                   </button>
                   <button
                     type="button"
@@ -1513,7 +1574,7 @@ export default function DesignView({
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Colour jobs
+                    Color jobs
                   </p>
                 </div>
                 {/* A mode switch, and it must say so. Every subsequent click on
@@ -1573,7 +1634,9 @@ export default function DesignView({
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
-                    title="Nudge text / accent / quiet / cover until AA targets pass"
+                    title={`Nudge text / accent / quiet / cover until ${
+                      contrastTarget.strict ? 'AAA' : 'AA'
+                    } targets pass`}
                     onClick={() => applyAaRoleFix()}
                   >
                     Fix contrast
@@ -1650,6 +1713,8 @@ export default function DesignView({
                   <ReadabilityRows
                     roles={activeProject?.colorRoles || {}}
                     onApply={applyReadabilityRoute}
+                    strict={contrastTarget.strict}
+                    strictNote={contrastTarget.note}
                   />
 
                   <div

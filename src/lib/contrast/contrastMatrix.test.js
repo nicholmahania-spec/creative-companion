@@ -29,7 +29,7 @@ describe('a cell says what a pair is FOR, not just pass or fail', () => {
     // cells down the middle of the grid for a mistake nobody made.
     const cell = contrastCell('#1B4C7E', '#1B4C7E')
     expect(cell.same).toBe(true)
-    expect(cellSummary(cell)).toBe('Same colour')
+    expect(cellSummary(cell)).toBe('Same color')
   })
 
   it('says what a low-contrast pair IS good for before what it is not', () => {

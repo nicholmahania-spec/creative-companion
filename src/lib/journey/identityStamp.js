@@ -31,6 +31,7 @@
  */
 export const IDENTITY_FIELDS = [
   'tagline',
+  'positioning',
   'voice',
   'typeHeading',
   'typeBody',

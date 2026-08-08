@@ -49,7 +49,7 @@ export function versionIdentityPreview(data) {
     wordmark ||
     direction ||
     tagline ||
-    (palette.length ? 'Colour work' : '') ||
+    (palette.length ? 'Color work' : '') ||
     typeHeading ||
     'Empty identity'
   const lines = []
@@ -109,6 +109,10 @@ class VersionService {
       data: {
         // Brand identity
         tagline: project.tagline,
+        /* The designer's positioning line. Snapshotted separately from
+           `brief`, which is the recomposed summary of the client's answers
+           and is not identity work anyone would want restored over. */
+        positioning: project.positioning,
         voice: project.voice,
         typeHeading: project.typeHeading,
         typeBody: project.typeBody,
@@ -561,6 +565,7 @@ class VersionService {
 
       // Restore brand fields
       await updateBrandField('tagline', data.tagline || '')
+      await updateBrandField('positioning', data.positioning || '')
       await updateBrandField('voice', data.voice || '')
       await updateBrandField('typeHeading', data.typeHeading || 'Plus Jakarta Sans Bold')
       await updateBrandField('typeBody', data.typeBody || 'Plus Jakarta Sans Regular')

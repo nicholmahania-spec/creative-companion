@@ -68,7 +68,7 @@ export default function BrandArtboard({
    *  date and no platform credit — see `creditedFooter` in exportFiles.js. */
   studio = '',
   onTaglineChange,
-  onBriefChange,
+  onPositioningChange,
   onVoiceChange,
   onDoChange,
   onDontChange,
@@ -164,18 +164,25 @@ export default function BrandArtboard({
         )}
       </div>
 
+      {/* `positioning`, never `brief`.
+          `brief` is the auto-composed summary of the client's answers —
+          "Client: X Goal: Y Story: Z" run together with no punctuation — and
+          printing that under a heading promising a positioning statement is
+          the defect `exportFiles.js` already corrected for the brand book.
+          The sheet now says the same thing the book says: the designer's own
+          line, or the waiting em-dash when there isn't one yet. */}
       <div className="kicker">Positioning</div>
       {editable ? (
         <textarea
           className="artboard-brief-input"
-          value={project.brief || ''}
-          onChange={(e) => onBriefChange?.(e.target.value)}
+          value={project.positioning || ''}
+          onChange={(e) => onPositioningChange?.(e.target.value)}
           placeholder="Who · outcome · constraint"
           rows={2}
           aria-label="Positioning"
         />
       ) : (
-        <DirectionValue value={project.brief} />
+        <DirectionValue value={project.positioning} />
       )}
 
       <div className="kicker">Voice</div>

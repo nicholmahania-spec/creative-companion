@@ -115,7 +115,7 @@ export default function AlignmentBars({
               {r.high}
             </span>
             <span className="align-read">
-              {awaiting && (derived ? 'not in the colours' : 'strategy set')}
+              {awaiting && (derived ? 'not in the colors' : 'strategy set')}
               {!awaiting && r.state === 'unset' && 'not said'}
               {r.state === 'close' && 'matches'}
               {r.state === 'split' && 'strategy is split'}
@@ -133,7 +133,7 @@ export default function AlignmentBars({
                        phrasing sends the designer hunting for a control
                        that does not exist — reported in a cold-start run.
                        The truth is simpler: a hex cannot carry this. */
-                    `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; a colour cannot say`
+                    `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; a color cannot say`
                   : `your strategy asks for ${r.target > 0.5 ? r.high : r.low}; ${thingLabel} is not placed yet`
                 : r.state === 'unset'
                 ? 'not said'

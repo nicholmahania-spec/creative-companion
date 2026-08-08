@@ -3,7 +3,9 @@ import {
   DETECTIVE_CHAPTERS,
   isLogoOnlyScope,
   isWrongShapeForField,
+  SPECTRUM_FIELDS,
 } from '../lib/brief/detectiveBrief'
+import { attributesFromBrief } from '../lib/brand/strategySeed'
 import { BRAND_ROLE_KEYS } from '../lib/color'
 import { liftMeasuredRows } from './workLogSeparation'
 import { revisionSummary, roundCharge } from '../lib/revisions'
@@ -392,7 +394,18 @@ export function createBlankProject(name = STARTER_PROJECT_NAME, brief = '') {
     id,
     name: name || 'My project',
     active: true,
+    /* The AUTO-COMPOSED summary of the brief. Rewritten from `detective` on
+       every keystroke by `updateDetective` — including the client's, through
+       the portal. Nothing a designer types should ever live here. */
     brief: brief || '',
+    /* The designer's own positioning line, and a SEPARATE field for exactly
+       that reason. Identity's "Positioning" box used to write `brief`, so a
+       line written here was destroyed the next time anyone touched a brief
+       question. Meanwhile the brand book already printed `positioning`
+       (bookContent.js, brandBookPdf.js) — a field nothing in src/ wrote. One
+       edit closes both halves: the box writes the field the book reads, and
+       the composer can no longer reach it. */
+    positioning: '',
     logoDirection: '',
     directions: blankDirections(),
     /** Ideate diverge dump — cheap ideas before A/B/C shortlist (persisted). */
@@ -2853,6 +2866,36 @@ const useAppStore = create(
               : p
           ),
         })),
+
+      /**
+       * Place the client's positioning answers on the rulers, once.
+       *
+       * MATERIALISED, NOT DERIVED AT READ TIME, and that is the whole design.
+       * A read-time merge would fight the designer: adjust a seeded word and
+       * the derivation overwrites it; delete one and it returns on the next
+       * render. Writing real attributes hands them over — from that moment
+       * they are the designer's words to edit, remove or ignore, with no
+       * tombstones and no second source of truth.
+       *
+       * Runs only when `strategyAttributes` has NEVER been set. An empty
+       * array is a decision ("I cleared these"); `undefined` is the absence
+       * of one. Distinguishing them is what stops a cleared list refilling
+       * itself, without needing a `seeded` flag on every project.
+       */
+      seedStrategyAttributes: (projectId) => {
+        const state = get()
+        const p = state.projects.find((x) => x.id === projectId)
+        if (!p) return { ok: false, seeded: 0 }
+        if (Array.isArray(p.strategyAttributes)) return { ok: true, seeded: 0 }
+        const seeded = attributesFromBrief(p.detective, SPECTRUM_FIELDS)
+        if (!seeded.length) return { ok: true, seeded: 0 }
+        set({
+          projects: state.projects.map((x) =>
+            x.id === projectId ? { ...x, strategyAttributes: seeded } : x
+          ),
+        })
+        return { ok: true, seeded: seeded.length }
+      },
 
       /* A tagged candidate — today only the chosen typeface. Keyed by a
          stable slot name rather than an array, because there is exactly one

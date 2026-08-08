@@ -7,7 +7,7 @@
  * No milestones / Scope strip under the form (owner — brief is the work).
  * Footer: Back to desk · Next · Research · short needed count.
  */
-import { Suspense, lazy, useCallback, useMemo } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
@@ -67,6 +67,17 @@ export default function DefineView(props) {
   )
   const projectDeadline =
     projectDeadlineProp || activeProject?.deadline || ''
+
+  /* Translate the brief's four positioning spectrums into strategy
+     attributes, once. The client already answered "modern or traditional?";
+     asking the designer to re-place that on a slider by hand was the app
+     failing to use information it had. One-shot and idempotent in the store,
+     so an adjusted or cleared list is never overwritten. */
+  const seedStrategyAttributes = useAppStore((s) => s.seedStrategyAttributes)
+  useEffect(() => {
+    if (!activeProject?.id) return
+    seedStrategyAttributes(activeProject.id)
+  }, [activeProject?.id, seedStrategyAttributes])
 
   const requiredEmpty = useMemo(
     () => getRequiredEmpty(activeProject?.detective, projectDeadline),
