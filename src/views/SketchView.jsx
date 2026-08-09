@@ -336,6 +336,168 @@ export default function SketchView(props) {
       </div>
 
       {/* Fold: current step owns attention (redesign brief Work AOF) */}
+      {/* THE APPLICATIONS COME FIRST, because they are the stop.
+
+          This section used to start at line 798 of a 938-line file: you
+          arrived at Touchpoints and met "Current step · No step yet · Add
+          step", with the surfaces the brand actually has to survive on
+          sitting below three screens of task scaffolding. Blur your eyes on
+          the old page and it read as a to-do list.
+
+          Nothing was removed to fix it — the step panel, the capture strip,
+          the queue and the done list are all still here, in the same order,
+          directly below. They are secondary to the work, not absent from it,
+          and the queue is still the place a touchpoint gets turned into a
+          step. */}
+      {/* ── Touchpoints ──────────────────────────────────────────────────
+          The reason this stop exists, restored.
+
+          `journey.js` declares this stop as "Touchpoints — where the brand
+          shows up, one note per surface from the brief", and says what enough
+          looks like: "one surface noted or marked looks right." None of that
+          was on the screen. b90e24e overwrote this file — its parent version
+          WAS the Touchpoints screen — with a general step view, and the
+          heading kept reading "Touchpoints" because it comes from
+          `labelForStepId`, so the page named a job it no longer did.
+
+          The consequence was not cosmetic. `touchpointApps` had no writer
+          anywhere in src/, and `journeyProgress.js` gates this stop on it, so
+          the stop could NEVER complete — and the brand book's applications
+          page reads the same field, so it had nothing to draw from. Every
+          check stayed green throughout: no test renders this view, and an
+          empty object is a valid empty object.
+
+          Restored as an addition rather than a revert. The old file predates
+          the layout-pattern reference and the current-step panel, both of
+          which are pinned by e2e (`phase-surfaces`, `offline`), so putting it
+          back wholesale would have traded one loss for another. */}
+      <section className="touchpoints-block" aria-label="Applications">
+        <div className="touchpoints-head">
+          <h2 className="touchpoints-heading">Where the brand shows up</h2>
+          <p className="touchpoints-status" role="status">
+            {statusLine}
+          </p>
+        </div>
+
+        {!hasBriefSurfaces ? (
+          <div className="touchpoints-empty">
+            <p className="touchpoints-empty-title">
+              Name where the brand appears
+            </p>
+            {/* One tap each, so a thin brief is not stuck bouncing back to
+                Strategy to become completable. */}
+            <div
+              className="touchpoints-quick"
+              role="group"
+              aria-label="Add a surface"
+            >
+              {QUICK_SURFACES.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => addQuickSurface(s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <ul className="touchpoints-list">
+            {touchpointApps.map((id) => {
+              const row = touchpointProofs[id] || {}
+              const note = row.note || ''
+              const done = !!row.done
+              const ready = done || String(note).trim().length > 0
+              return (
+                <li
+                  key={id}
+                  className={`touchpoints-card${ready ? ' is-ready' : ''}`}
+                >
+                  <div className="touchpoints-card-layout">
+                    <TouchpointMockThumb
+                      id={id}
+                      project={activeProject}
+                      palette={
+                        Array.isArray(projectPalette) && projectPalette.length
+                          ? projectPalette
+                          : activeProject?.palette || []
+                      }
+                    />
+                    <div className="touchpoints-card-body">
+                      <div className="touchpoints-card-head">
+                        <h3 className="touchpoints-card-title">
+                          {touchpointLabel(id)}
+                        </h3>
+                        <button
+                          type="button"
+                          className={`btn btn-sm${done ? ' btn-secondary' : ' btn-ghost'}`}
+                          aria-pressed={done}
+                          onClick={() => {
+                            setTouchpointApp(id, { done: !done })
+                            flashMicro?.(
+                              !done
+                                ? `${touchpointLabel(id)} · mock is good`
+                                : `${touchpointLabel(id)} · open again`
+                            )
+                          }}
+                        >
+                          {done ? 'Mock is good' : 'This mock is good'}
+                        </button>
+                      </div>
+                      <label className="field-label" htmlFor={`tp-note-${id}`}>
+                        How it shows up
+                      </label>
+                      <textarea
+                        id={`tp-note-${id}`}
+                        className="field-textarea"
+                        rows={2}
+                        value={note}
+                        onChange={(e) =>
+                          setTouchpointApp(id, { note: e.target.value })
+                        }
+                        placeholder={touchpointCheckHint(id)}
+                      />
+                      {/* ── The finished piece, checked ────────────────────
+                          Phase 6 recorded this half as structurally blocked:
+                          "the banner lives on one asset, not an asset
+                          library". The blocked reasoning assumed the check
+                          needs somewhere to FILE assets. It does not — it
+                          needs somewhere the deliverables are already named,
+                          and this list is exactly that, derived from the
+                          brief. A business card exported from Illustrator
+                          lands on the Business card row because that is the
+                          row the designer is standing on. */}
+                      <ApplicationCheck
+                        check={row.check || null}
+                        palette={checkPalette}
+                        labelFor={roleLabelForHex}
+                        label={touchpointLabel(id).toLowerCase()}
+                        onChecked={(check) => {
+                          setTouchpointApp(id, { check })
+                          flashMicro?.(`${touchpointLabel(id)} · colours read`)
+                        }}
+                        onClear={() => {
+                          const before = row.check
+                          setTouchpointApp(id, { check: null })
+                          /* Undo, not a confirmation dialog. A dialog is a
+                             decision; undo is not — and the reading cost a
+                             file-picker trip to produce. */
+                          offerUndo?.('Check cleared', () =>
+                            setTouchpointApp(id, { check: before })
+                          )
+                        }}
+                      />
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+
       <section
         className="panel step-focus-panel sketch-now"
         key={stepFocusKey}
@@ -773,154 +935,6 @@ export default function SketchView(props) {
         )}
       </div>
 
-      {/* ── Touchpoints ──────────────────────────────────────────────────
-          The reason this stop exists, restored.
-
-          `journey.js` declares this stop as "Touchpoints — where the brand
-          shows up, one note per surface from the brief", and says what enough
-          looks like: "one surface noted or marked looks right." None of that
-          was on the screen. b90e24e overwrote this file — its parent version
-          WAS the Touchpoints screen — with a general step view, and the
-          heading kept reading "Touchpoints" because it comes from
-          `labelForStepId`, so the page named a job it no longer did.
-
-          The consequence was not cosmetic. `touchpointApps` had no writer
-          anywhere in src/, and `journeyProgress.js` gates this stop on it, so
-          the stop could NEVER complete — and the brand book's applications
-          page reads the same field, so it had nothing to draw from. Every
-          check stayed green throughout: no test renders this view, and an
-          empty object is a valid empty object.
-
-          Restored as an addition rather than a revert. The old file predates
-          the layout-pattern reference and the current-step panel, both of
-          which are pinned by e2e (`phase-surfaces`, `offline`), so putting it
-          back wholesale would have traded one loss for another. */}
-      <section className="touchpoints-block" aria-label="Applications">
-        <div className="touchpoints-head">
-          <h2 className="touchpoints-heading">Where the brand shows up</h2>
-          <p className="touchpoints-status" role="status">
-            {statusLine}
-          </p>
-        </div>
-
-        {!hasBriefSurfaces ? (
-          <div className="touchpoints-empty">
-            <p className="touchpoints-empty-title">
-              Name where the brand appears
-            </p>
-            {/* One tap each, so a thin brief is not stuck bouncing back to
-                Strategy to become completable. */}
-            <div
-              className="touchpoints-quick"
-              role="group"
-              aria-label="Add a surface"
-            >
-              {QUICK_SURFACES.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => addQuickSurface(s.id)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <ul className="touchpoints-list">
-            {touchpointApps.map((id) => {
-              const row = touchpointProofs[id] || {}
-              const note = row.note || ''
-              const done = !!row.done
-              const ready = done || String(note).trim().length > 0
-              return (
-                <li
-                  key={id}
-                  className={`touchpoints-card${ready ? ' is-ready' : ''}`}
-                >
-                  <div className="touchpoints-card-layout">
-                    <TouchpointMockThumb
-                      id={id}
-                      project={activeProject}
-                      palette={
-                        Array.isArray(projectPalette) && projectPalette.length
-                          ? projectPalette
-                          : activeProject?.palette || []
-                      }
-                    />
-                    <div className="touchpoints-card-body">
-                      <div className="touchpoints-card-head">
-                        <h3 className="touchpoints-card-title">
-                          {touchpointLabel(id)}
-                        </h3>
-                        <button
-                          type="button"
-                          className={`btn btn-sm${done ? ' btn-secondary' : ' btn-ghost'}`}
-                          aria-pressed={done}
-                          onClick={() => {
-                            setTouchpointApp(id, { done: !done })
-                            flashMicro?.(
-                              !done
-                                ? `${touchpointLabel(id)} · mock is good`
-                                : `${touchpointLabel(id)} · open again`
-                            )
-                          }}
-                        >
-                          {done ? 'Mock is good' : 'This mock is good'}
-                        </button>
-                      </div>
-                      <label className="field-label" htmlFor={`tp-note-${id}`}>
-                        How it shows up
-                      </label>
-                      <textarea
-                        id={`tp-note-${id}`}
-                        className="field-textarea"
-                        rows={2}
-                        value={note}
-                        onChange={(e) =>
-                          setTouchpointApp(id, { note: e.target.value })
-                        }
-                        placeholder={touchpointCheckHint(id)}
-                      />
-                      {/* ── The finished piece, checked ────────────────────
-                          Phase 6 recorded this half as structurally blocked:
-                          "the banner lives on one asset, not an asset
-                          library". The blocked reasoning assumed the check
-                          needs somewhere to FILE assets. It does not — it
-                          needs somewhere the deliverables are already named,
-                          and this list is exactly that, derived from the
-                          brief. A business card exported from Illustrator
-                          lands on the Business card row because that is the
-                          row the designer is standing on. */}
-                      <ApplicationCheck
-                        check={row.check || null}
-                        palette={checkPalette}
-                        labelFor={roleLabelForHex}
-                        label={touchpointLabel(id).toLowerCase()}
-                        onChecked={(check) => {
-                          setTouchpointApp(id, { check })
-                          flashMicro?.(`${touchpointLabel(id)} · colours read`)
-                        }}
-                        onClear={() => {
-                          const before = row.check
-                          setTouchpointApp(id, { check: null })
-                          /* Undo, not a confirmation dialog. A dialog is a
-                             decision; undo is not — and the reading cost a
-                             file-picker trip to produce. */
-                          offerUndo?.('Check cleared', () =>
-                            setTouchpointApp(id, { check: before })
-                          )
-                        }}
-                      />
-                    </div>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
 
       <div className="path-continue-row">
         <button
