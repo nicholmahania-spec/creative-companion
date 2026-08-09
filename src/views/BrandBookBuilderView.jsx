@@ -5,9 +5,6 @@ import {
   bookBuilderFor,
   readPaletteTokens,
   resolvePageBg,
-  mintTokenId,
-  MAX_COLORS,
-  MIN_COLORS,
   EDGE_STOPS,
   EDGE_ORDER,
   nearestEdgeStop,
@@ -775,53 +772,6 @@ function Flipbook({ open, onClose, pages, index, setIndex }) {
   )
 }
 
-/* ------------------------------------------------------- ColorRow */
-
-function ColorRow({ color, onChange, onRemove, canRemove }) {
-  /* <input type="color"> requires #rrggbb; draft typing must not crash it. */
-  const pickerHex = /^#[0-9a-fA-F]{6}$/.test(String(color.hex || ''))
-    ? color.hex
-    : '#888888'
-  return (
-    <div className="bbb-color-row">
-      <input
-        type="color"
-        value={pickerHex}
-        aria-label={`${color.name || 'Colour'} picker`}
-        onChange={(e) => onChange({ ...color, hex: e.target.value })}
-      />
-      <input
-        type="text"
-        value={color.name}
-        aria-label="Colour name"
-        onChange={(e) => onChange({ ...color, name: e.target.value })}
-      />
-      <input
-        type="text"
-        className="bbb-color-row__hex-input"
-        value={String(color.hex || '').toUpperCase()}
-        spellCheck={false}
-        aria-label={`${color.name || 'Colour'} hex`}
-        onChange={(e) => {
-          let v = e.target.value.trim()
-          if (!v.startsWith('#')) v = `#${v}`
-          if (/^#[0-9a-fA-F]{0,6}$/i.test(v)) {
-            onChange({ ...color, hex: v.length === 7 ? v : color.hex })
-          }
-        }}
-      />
-      <button
-        type="button"
-        aria-label="Remove color"
-        onClick={onRemove}
-        disabled={!canRemove}
-        title={canRemove ? undefined : `${MIN_COLORS} colors is the minimum`}
-      >
-        &times;
-      </button>
-    </div>
-  );
-}
 
 /* ============================================================= MAIN */
 
@@ -863,8 +813,6 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
   const currentProjectId = useAppStore((s) => s.currentProjectId)
   const moodItems = useAppStore((s) => s.moodItems)
   const setBookBuilder = useAppStore((s) => s.setBookBuilder)
-  const setPaletteTokens = useAppStore((s) => s.setPaletteTokens)
-  const renameProject = useAppStore((s) => s.renameProject)
 
   const project = activeProject || {}
   const bb = bookBuilderFor(project)
@@ -872,9 +820,6 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
   /* The client IS the project's identity — this box renames the project
      itself rather than keeping a second, competing name for the same thing. */
   const brandName = project.detective?.clientName || project.name || ''
-  const setBrandName = (v) => {
-    if (project.id) renameProject(project.id, v)
-  }
   const tagline = project.tagline || ''
 
   /* Wrappers matching the owner's setter signatures, so the markup below is
@@ -988,16 +933,6 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
       pageOrder: nextOrder,
     })
   }
-
-  const updateColor = (idx, next) =>
-    setPaletteTokens(colors.map((c, i) => (i === idx ? next : c)))
-  const removeColor = (idx) =>
-    setPaletteTokens(colors.filter((_, i) => i !== idx))
-  const addColor = () =>
-    setPaletteTokens([
-      ...colors,
-      { id: mintTokenId(), name: 'New token', hex: '#888888' },
-    ])
 
   /* Page locking and ordering helpers */
   const togglePageLock = (pageId) => {
@@ -1468,10 +1403,21 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
             path stop is already called that, and the heading is the only
             clue to what a section holds. */}
         <Section title="Name &amp; tagline" defaultOpen>
-          <div className="bbb-field">
-            <label htmlFor="bbb-brandName">Brand name</label>
-            <input id="bbb-brandName" type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} />
-          </div>
+          {/* READ-ONLY, AND IT WAS LYING BEFORE. This box read
+              `detective.clientName || project.name` and wrote `project.name` —
+              two different fields. On any project where the client had answered
+              chapter 01 it showed their answer, accepted typing, renamed the
+              project underneath, then re-rendered the client's answer over the
+              top: the edit vanished with no error. The business name is the
+              client's and the brief asks for it, so that is where it is
+              written. (Renaming the PROJECT is a different fact and still
+              lives on the client record.) */}
+          <BookOwnedElsewhere
+            label="Brand name"
+            value={brandName}
+            homeLabel={FIELD_HOMES.clientName.label}
+            onOpen={() => openFieldHome(FIELD_HOMES.clientName.view, null)}
+          />
           <BookOwnedElsewhere
             label="Tagline"
             value={tagline}
@@ -1531,21 +1477,41 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
           );
         })}
 
+        {/* THE PALETTE IS SHOWN HERE AND EDITED ON COLOUR.
+            This was a full second editor for the canonical palette — name, hex,
+            add and remove — sitting on an output surface. It wrote the real
+            `palette`/`paletteTokens` through `setPaletteTokens`, so it was not a
+            duplicate STORE; it was a duplicate AUTHORING HOME, which is the rule
+            this file's own header sets out. Naming was the one thing it could do
+            that Colour could not, so naming moved to Colour rather than being
+            deleted, and the rows are read-only here.
+
+            The swatch and hex stay visible: the book has to show what it will
+            print, and a designer laying out a page needs to see the colours
+            without leaving for them. */}
         <Section title="Colors" defaultOpen>
-          <div className="bbb-color-list">
-            {colors.map((c, i) => (
-              <ColorRow
-                key={c.id}
-                color={c}
-                onChange={(next) => updateColor(i, next)}
-                onRemove={() => removeColor(i)}
-                canRemove={colors.length > MIN_COLORS}
-              />
+          <div className="bbb-color-list bbb-color-list-read">
+            {colors.map((c) => (
+              <div className="bbb-color-read" key={c.id}>
+                <span
+                  className="bbb-color-read-chip"
+                  style={{ background: c.hex }}
+                  aria-hidden="true"
+                />
+                <span className="bbb-color-read-name">{c.name}</span>
+                <span className="bbb-color-read-hex">{c.hex}</span>
+              </div>
             ))}
           </div>
-          <button type="button" className="bbb-btn" onClick={addColor} disabled={colors.length >= MAX_COLORS}>+ add color</button>
-          {/* Deferred: Style presets (Style chips) — not built. Colours are
-              set one token at a time, no starting-point palettes. */}
+          <button
+            type="button"
+            className="text-link bbb-read-link"
+            onClick={() =>
+              openFieldHome(FIELD_HOMES.palette.view, FIELD_HOMES.palette.section)
+            }
+          >
+            {`Edit on ${FIELD_HOMES.palette.label}`}
+          </button>
         </Section>
 
         {/* Prototype kit rail: each fine-tune group is its own collapsed

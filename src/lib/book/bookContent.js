@@ -80,6 +80,19 @@ const identityLabel = (id) =>
 export const FIELD_HOMES = {
   /* The brief — the client's own answers. */
   detective: { view: 'project', label: labelForStepId('define') },
+  /* THE BUSINESS NAME IS THE CLIENT'S, AND THE BRIEF ASKS FOR IT.
+     The book's own "Brand name" box read `detective.clientName || project.name`
+     and wrote `project.name` — two different fields — so on any project where
+     the client had answered chapter 01 the box displayed their answer, accepted
+     typing, renamed the project underneath, and then re-rendered the client's
+     answer over the top. A control that silently discards what you type is
+     worse than a duplicate; this is why it is read-only now. Renaming the
+     PROJECT still lives on the client record, which is a different fact. */
+  clientName: { view: 'project', label: labelForStepId('define') },
+  /* Palette rows are named on the Colour bench, beside the hexes they name.
+     The book listed, added, removed and renamed them — a full second editor
+     for the canonical palette on an output surface. */
+  palette: { view: 'brand', section: 'colors', label: identityLabel('colors') },
   /* Identity: the words live on the direction sheet, which renders on every
      Identity screen, so they all point at the sheet. */
   /* Positioning is the designer's synthesis of the client's "what does your
