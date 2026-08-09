@@ -138,6 +138,21 @@ const ICONS = {
       <path d="M9.5 8.5h5M9.5 12.5h5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
     </>
   ),
+  archive: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="4" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M5.5 8.5v10a1.8 1.8 0 0 0 1.8 1.8h9.4a1.8 1.8 0 0 0 1.8-1.8v-10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M10 12.5h4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M4.5 6.5h15" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M9.5 6.5V4.8a1.3 1.3 0 0 1 1.3-1.3h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+      <path d="M6.5 6.5v12.2a1.8 1.8 0 0 0 1.8 1.8h7.4a1.8 1.8 0 0 0 1.8-1.8V6.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M10.2 10.5v6M13.8 10.5v6" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </>
+  ),
   question: (
     <>
       <circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" strokeWidth="1.75" />
