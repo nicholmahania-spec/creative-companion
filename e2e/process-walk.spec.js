@@ -86,19 +86,20 @@ test.describe('Process walk (artifacts)', () => {
        is still `ideate`, which is why `stepByIdIn` finds it. */
     await stepByIdIn(path, 'ideate').click()
     await expect(headingForStep(page, 'ideate').first()).toBeVisible()
-    await page.getByRole('button', { name: /^Opposite$/i }).click()
+    /* ROUTES ARE MADE, NOT PRE-DRAWN. The screen used to open with three
+       empty A/B/C cards and a prompt tray; it now opens with the evidence and
+       one Add tile, so a walk has to create what it fills. */
+    await page.locator('#dir-add').click()
     await page.locator('#dir-title-a').fill('Quiet editorial')
+    await page.locator('#dir-add').click()
     await page.locator('#dir-title-b').fill('Warm product toolkit')
     // Hyper-focus mask disables pointer events on unfocused cards — blur first
     await page.locator('#dir-title-b').blur()
     await page
       .locator('.ideate-dir-card')
       .first()
-      .getByRole('button', { name: /Choose|Chosen/i })
+      .getByRole('button', { name: /^Choose this$/i })
       .click()
-    /* The "why" field only exists once a direction is chosen — "name first,
-       defend second" in SparkView. This used to fill it before choosing, so
-       it waited on a textarea that had not been rendered yet. */
     const whyA = page.locator('#dir-note-a')
     await expect(whyA).toBeVisible({ timeout: 5000 })
     await whyA.fill('Hierarchy carries calm')

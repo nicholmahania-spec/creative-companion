@@ -270,7 +270,6 @@ export default function SketchView(props) {
     formatDecisionLine(dec) ||
     (fromChosen
       ? formatDecisionLine({
-          label: fromChosen.label,
           title: fromChosen.title,
           why: fromChosen.note,
         })

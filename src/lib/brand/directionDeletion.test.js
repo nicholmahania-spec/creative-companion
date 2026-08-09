@@ -1,9 +1,10 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import useAppStore, {
   DIRECTION_SLOTS,
+  directionLetter,
+  orderedDirections,
   blankDirection,
   blankDirections,
-  directionSlots,
   isDirectionSlot,
 } from '../../store/useAppStore'
 import { pathStepMeetsCondition } from '../journey/journeyProgress'
@@ -30,6 +31,14 @@ import { pathStepMeetsCondition } from '../journey/journeyProgress'
 
 const s = () => useAppStore.getState()
 const cur = () => s().projects.find((p) => p.id === s().currentProjectId)
+
+/* BY ID, NEVER BY INDEX. Routes are only created when the designer asks for
+   one, so `directions[1]` is not "B" — it is whichever route happens to be
+   second in the array. The id is the identity; the letter on screen is derived
+   from position and reflows when a route is deleted. */
+const inDirs = (project, id) =>
+  (project?.directions || []).find((d) => d?.id === id) || null
+const dirOf = (id) => inDirs(cur(), id)
 const ids = (p) => (p.directions || []).map((d) => d.id)
 const titles = (p) =>
   (p.directions || []).map((d) => `${d.id}:${d.title || '∅'}`)
@@ -52,28 +61,33 @@ function threeWritten() {
 describe('slots are a constant; records are data', () => {
   it('names exactly three slots and refuses any other id', () => {
     expect(DIRECTION_SLOTS.map((sl) => sl.id)).toEqual(['a', 'b', 'c'])
-    expect(DIRECTION_SLOTS.map((sl) => sl.label)).toEqual(['A', 'B', 'C'])
+    /* NO LETTER ON THE SLOT. A·B·C are positions among the routes that exist,
+       derived at render — see `directionLetter`. A slot that carried one made
+       the letter identity, and the decision log wrote it down. */
+    expect(DIRECTION_SLOTS.every((sl) => sl.label === undefined)).toBe(true)
+    expect([0, 1, 2].map(directionLetter)).toEqual(['A', 'B', 'C'])
     expect(isDirectionSlot('a')).toBe(true)
     expect(isDirectionSlot('B')).toBe(true)
     expect(isDirectionSlot('d')).toBe(false)
     expect(isDirectionSlot('')).toBe(false)
   })
 
-  it('reports an empty slot as empty rather than inventing a record', () => {
+  it('drops a deleted route from the row rather than drawing it empty', () => {
     threeWritten()
     s().deleteDirection('b')
-    const rows = directionSlots(cur())
-    expect(rows.map((r) => r.id)).toEqual(['a', 'b', 'c'])
-    expect(rows[1].direction).toBeNull()
-    expect(rows[0].direction.title).toBe('Alpha')
-    expect(rows[2].direction.title).toBe('Gamma')
+    const rows = orderedDirections(cur())
+    /* Two routes, two cards. The empty middle slot is not drawn, and the
+       survivor that was C is now shown as B — while its id never moved. */
+    expect(rows.map((r) => r.id)).toEqual(['a', 'c'])
+    expect(rows.map((r) => r.letter)).toEqual(['A', 'B'])
+    expect(rows[1].title).toBe('Gamma')
   })
 
-  it('reports three empty slots for a project with no directions at all', () => {
+  it('draws nothing for a project with no routes at all', () => {
     threeWritten()
     for (const id of ['a', 'b', 'c']) s().deleteDirection(id)
-    expect(directionSlots(cur()).every((r) => r.direction === null)).toBe(true)
-    expect(directionSlots({}).map((r) => r.label)).toEqual(['A', 'B', 'C'])
+    expect(orderedDirections(cur())).toEqual([])
+    expect(orderedDirections({})).toEqual([])
   })
 })
 
@@ -149,8 +163,9 @@ describe('a deleted direction only comes back when the designer writes one', () 
     /* Written last, drawn first — position belongs to the slot, not to the
        order records happen to sit in the array. */
     expect(ids(cur())).toEqual(['a', 'b', 'c'])
-    expect(cur().directions[0].label).toBe('A')
-    expect(cur().directions[0].title).toBe('Alpha again')
+    expect(dirOf('a').label).toBeUndefined()
+    expect(orderedDirections(cur())[0].letter).toBe('A')
+    expect(dirOf('a').title).toBe('Alpha again')
     expect(ids(roundTrip().projects[0])).toEqual(['a', 'b', 'c'])
   })
 
@@ -195,7 +210,10 @@ describe('existing projects still load exactly as they did', () => {
 
   it('seeds three only for a project that has no directions key at all', () => {
     const out = migrate({ moodItems: [], projects: [{ id: 'p1' }] })
-    expect(out.projects[0].directions).toEqual(blankDirections())
+    /* A new project starts with no routes at all now, so "the seed" is an
+       empty list — three pre-drawn cards were a worksheet. */
+    expect(out.projects[0].directions).toEqual([])
+    expect(blankDirections()).toEqual([])
   })
 
   it('does not re-create intentionally deleted directions', () => {
@@ -225,11 +243,11 @@ describe('existing projects still load exactly as they did', () => {
   it('mints a record for one slot without touching the others', () => {
     expect(blankDirection('b')).toEqual({
       id: 'b',
-      label: 'B',
       title: '',
       note: '',
       chosen: false,
       refs: {},
+      evidence: [],
     })
   })
 })

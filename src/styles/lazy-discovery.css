@@ -112,7 +112,16 @@
   font-size: 0.85rem;
   line-height: 1;
   color: var(--text-muted);
+  /* 24px of hit area, per WCAG 2.2 target size — it was a 12px glyph. */
+  min-width: 24px;
+  min-height: 24px;
   padding: 0;
+}
+
+/* Kept, and it says so. A press that leaves no mark is a press the designer
+   has to remember making. */
+.vd-fav.is-on {
+  color: var(--text-primary);
 }
 
 .vd-foot {

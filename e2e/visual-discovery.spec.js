@@ -76,7 +76,9 @@ test('says nothing until the choices support it', async ({ page }) => {
   await expect(page.locator('.vd-read')).toHaveCount(0)
 })
 
-test('favoriting a sample never reaches the client pack', async ({ page }) => {
+test('favoriting a sample keeps it, and keeps it away from the client', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await openBrief(page, 'Discovery Fav')
   await page.locator('.vd-fav').first().click()
@@ -86,6 +88,13 @@ test('favoriting a sample never reaches the client pack', async ({ page }) => {
     const st = raw.state || raw
     return (st.moodItems || []).map((m) => ({ id: m.id, f: !!m.favorite, p: !!m.inPack }))
   })
+  /* THE HEART USED TO DO NOTHING. `toggleFavorite('sample:…')` mapped over
+     mood items looking for an id that no sample could ever have, so this
+     assertion list was empty and the test passed on a feature that did not
+     work. It has to find something now. */
+  const favorites = pins.filter((p) => p.f)
+  expect(favorites).toHaveLength(1)
+  expect(favorites[0].id).toMatch(/^sample:/)
   for (const p of pins) expect(p.p).toBe(false)
 })
 

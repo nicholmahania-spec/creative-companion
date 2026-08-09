@@ -91,13 +91,10 @@ export function latestDecision(log = [], kind = null) {
  */
 export function formatDecisionLine(d) {
   if (!d) return ''
-  const letter = String(d.label || d.directionId || '').toUpperCase()
   const title = String(d.title || '').trim()
   const why = String(d.why || '').trim()
   if (!title && !why) return ''
-  const head = letter
-    ? `Chose ${letter}${title ? `: ${title}` : ''}`
-    : title || 'Decision'
+  const head = title || 'Decision'
   if (why) return `${head} — because ${why}`
   return head
 }
@@ -110,11 +107,31 @@ export function decisionFromDirection(dir = {}) {
   return {
     kind: 'direction',
     directionId: dir.id || '',
-    label: dir.label || dir.id || '',
+    /* NO LETTER. `label` used to carry 'A' | 'B' | 'C' and the line read
+       "Chose B: Loud grotesk". A·B·C are display labels derived from a route's
+       position among the routes that currently exist, so deleting one reflows
+       the rest — and a stored letter then names a route that no longer wears
+       it. `directionId` is the reference and always was; the name is what a
+       human recognises. See `isDirectionEntry` for the readers that still have
+       to cope with letters written before this. */
     title: String(dir.title || '').trim(),
     why: String(dir.note || '').trim(),
     at: Date.now(),
   }
+}
+
+/**
+ * Should this entry's `label` be shown?
+ *
+ * Only for kinds that are not directions. Every direction entry written before
+ * this change carries a frozen letter, and printing it would assert a position
+ * the route may no longer hold — so the readers drop it rather than the data
+ * being migrated. Nothing is rewritten: an old entry keeps its `directionId`
+ * and keeps resolving.
+ */
+export function decisionLabelToShow(entry) {
+  if (!entry || entry.kind === 'direction') return ''
+  return String(entry.label || '').trim()
 }
 
 /** Chosen direction on project, if any. */

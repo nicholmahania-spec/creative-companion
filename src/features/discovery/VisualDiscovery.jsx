@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import useAppStore from '../../store/useAppStore'
+import { isFavorite, samplePinId } from '../../lib/brand/favorites'
 import { nextPair } from '../../lib/discovery/samples'
 import { discoveryObservations, MIN_CHOICES } from '../../lib/discovery/observations'
 import { loadBrandFamilies } from '../../lib/book/fontLoader'
@@ -39,6 +40,7 @@ export default function VisualDiscovery({ project }) {
   const setVerdict = useAppStore((s) => s.setDiscoveryVerdict)
   const clear = useAppStore((s) => s.clearDiscovery)
   const toggleFavorite = useAppStore((s) => s.toggleFavorite)
+  const moodItems = useAppStore((s) => s.moodItems)
   const [category, setCategory] = useState('type')
   const [round, setRound] = useState(0)
 
@@ -70,6 +72,15 @@ export default function VisualDiscovery({ project }) {
     if (!pair || category !== 'type') return
     loadBrandFamilies?.(pair.map((s) => s.family))
   }, [pair, category])
+
+  /* THE HEART HAS TO SHOW. It used to pass a hardcoded `true` with no pressed
+     state and no styling, so a press left no mark anywhere the designer was
+     looking — which for someone who is choosing by reaction is the same as the
+     button not existing. Read the state back and let a second press undo. */
+  const kept = (sample) =>
+    isFavorite(
+      moodItems.find((m) => String(m.id) === samplePinId(sample.id))
+    )
 
   const choose = (picked) => {
     if (!pair) return
@@ -123,12 +134,22 @@ export default function VisualDiscovery({ project }) {
                 <span className="vd-label">{s.label}</span>
               </button>
               {/* Favorite is private evidence, exactly as Phase 1 defined it.
-                  It never puts anything in front of a client. */}
+                  It never puts anything in front of a client — it puts it on
+                  the designer's own wall, where Directions reads it.
+
+                  `dispose` because this screen is the only way back to a pin
+                  it created: pressing the heart twice must leave nothing
+                  behind. On the Research wall the same heart only turns off,
+                  because there the card is visible and deleting it would be a
+                  destructive act reported as a smaller one. */}
               <button
                 type="button"
-                className="vd-fav"
-                aria-label={`Favorite ${s.label}`}
-                onClick={() => toggleFavorite(`sample:${s.id}`, true)}
+                className={`vd-fav${kept(s) ? ' is-on' : ''}`}
+                aria-pressed={kept(s)}
+                aria-label={`${kept(s) ? 'Remove' : 'Keep'} ${s.label}`}
+                onClick={() =>
+                  toggleFavorite(`sample:${s.id}`, undefined, { dispose: true })
+                }
               >
                 ♥
               </button>

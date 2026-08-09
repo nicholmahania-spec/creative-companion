@@ -1,0 +1,270 @@
+/* Creative Companion — Directions evidence (shared sheet)
+ *
+ * IN ITS OWN FILE ON PURPOSE. A `lazy-*.css` sheet arrives with the view that
+ * imports it, not at boot, so a rule in `lazy-ideate.css` is absent until
+ * something has pulled Directions in. `EvidenceFace` renders on Identity too —
+ * inside the "developing" strip — and on a cold load straight to Identity it
+ * would have drawn unstyled. That exact failure has already shipped once here
+ * (`.direction-palette` in one sheet, its children's `flex` in another, colour
+ * swatches 0px wide on a cold load). So the shared component imports its own
+ * sheet, per docs/ONBOARDING.md.
+ */
+
+/* ── The evidence band ─────────────────────────────────────────────────
+   What the designer responded to, above the three routes it feeds. Material
+   first, chrome second: the faces are the largest thing on the row and the
+   A · B · C toggles read as small controls beside them, because the point of
+   the band is to be looked at rather than operated. */
+.dir-ev-band {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+.dir-ev-empty {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+.dir-ev-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+}
+.dir-ev-target {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+.dir-ev-list {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* THE TILE IS THE CONTROL. One target per piece, acting on the open route —
+   not three A·B·C toggles asking a binary question per route per piece. */
+.dir-ev-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  max-width: 18rem;
+  min-height: 44px;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.dir-ev-item.is-in {
+  border-color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--text-primary);
+}
+.dir-ev-item:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+/* Which OTHER routes hold this piece. Letters, never a count — ranking the
+   routes by how much evidence they carry would be an opinion. */
+/* The face is the whole point of a tile — a rendered Aa in the real family, or
+   the actual hex. It carries more than the label does. */
+.dir-ev-face {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+.dir-ev-face.is-type {
+  font-size: 1.15rem;
+}
+.dir-ev-face.is-gone {
+  color: var(--text-muted);
+  border-style: dashed;
+  background: transparent;
+}
+.dir-ev-label {
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.dir-ev-else {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  flex: none;
+}
+.dir-ev-observed {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+}
+.dir-ev-observed span {
+  color: var(--text-muted);
+}
+
+/* The citations inside one route's card. */
+.dir-ev-strip {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.dir-ev-strip.is-empty {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+.dir-ev-cited {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  max-width: 100%;
+}
+.dir-ev-cited .dir-ev-face {
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: 0.7rem;
+}
+.dir-ev-cited .dir-ev-face.is-type {
+  font-size: 0.85rem;
+}
+.dir-ev-cited-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  max-width: 7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dir-ev-drop {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px;
+}
+
+
+@media (max-width: 720px) {
+  .dir-ev-item {
+    max-width: 100%;
+  }
+  /* The label is the least useful part of a tile on a phone — the face says
+     what the thing is. Capping it fits several across instead of one a row. */
+  .dir-ev-label {
+    max-width: 5rem;
+  }
+}
+
+/* ── Which route Identity is being made for ────────────────────────────
+   One letter, one line, and what the route points at. Deliberately not a
+   banner: it sits between the sub-nav and the workspace at the weight of a
+   caption, because it is context for the work rather than a thing to act on
+   first. */
+.dir-developing {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--text-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+.dir-developing-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+.dir-developing-letter {
+  font-weight: 700;
+  font-size: var(--fs-2);
+  letter-spacing: 0.04em;
+}
+.dir-developing-title {
+  font-size: var(--fs-2);
+  color: var(--text-primary);
+}
+.dir-developing-why {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-secondary);
+  max-width: 60ch;
+}
+.dir-developing-ev {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+/* Working size, not a legend. This row is the creative context Identity
+   begins from — a rendered Aa in the real family and the actual hex, big
+   enough to look at while drawing. */
+.dir-developing-ev .dir-ev-face {
+  width: 2rem;
+  height: 2rem;
+}
+.dir-developing-parts {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.dir-developing-part {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 16rem) auto;
+  /* Without this the trailing `auto` track stretches and Develop lands at the
+     far right of a very wide column, adrift from the row it acts on. */
+  justify-content: start;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-1);
+}
+.dir-developing-part-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.dir-developing-part-body {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dir-developing-state {
+  color: var(--text-muted);
+}

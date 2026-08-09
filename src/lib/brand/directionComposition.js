@@ -74,3 +74,33 @@ export function slotSummary(slot, artifact) {
   if (slot === 'palette') return `${(artifact.hexes || []).length} colors`
   return ''
 }
+
+/**
+ * Every snapshot of one kind the project has ever captured.
+ *
+ * SWAP NEEDS SOMETHING TO SWAP TO. "Use current" could only ever point a
+ * direction at the project's palette as it stands right now, so a designer who
+ * captured one palette on A and then edited Color could not give B the earlier
+ * one — the snapshot existed, and nothing could name it. Snapshots are
+ * content-addressed and tiny, so the list is exactly the distinct palettes and
+ * pairings this project has held.
+ */
+export function artifactsOfKind(project, kind) {
+  return Object.values(project?.artifacts || {}).filter((a) => a?.kind === kind)
+}
+
+/**
+ * A label that tells two snapshots apart in a picker.
+ *
+ * `slotSummary` says "5 colors", which is true of every five-colour palette
+ * the project has captured. A picker offering three identical lines is not a
+ * choice, so the first hex and the heading face come along.
+ */
+export function artifactChoiceLabel(kind, artifact) {
+  if (!artifact) return ''
+  if (kind === 'palette') {
+    const hexes = artifact.hexes || []
+    return hexes.length ? `${hexes.length} colors · ${hexes[0]}` : 'Empty palette'
+  }
+  return slotSummary(kind, artifact) || 'Untitled'
+}

@@ -278,7 +278,17 @@ export function pathGapFocusSelector(stepId) {
     case 'research':
       return '.board-upload-btn, .studio-view .btn-primary, #board-note'
     case 'ideate':
-      return '#dir-title-a, .spark-actions .btn-primary'
+      /* THE ADD CONTROL, NOT A CARD. `#dir-title-a` assumed slot A was always
+         drawn; routes are only rendered once they exist, so on a project with
+         none there is nothing to focus. `.spark-actions .btn-primary` was the
+         prompt card, which is gone. `#dir-add` is the one thing always on this
+         screen while a route can still be made; the name field of the first
+         route catches the case where all three are taken.
+
+         This is a FOCUS TARGET, not a condition. Pressing the button it points
+         at does not complete the stop — `pathStepMeetsCondition('ideate')`
+         above is untouched, and still asks for a named route. */
+      return '#dir-add, .ideate-dir-name'
     case 'sketch':
       return '.touchpoints-list textarea, .touchpoints-empty .btn-primary, #desk-capture'
     case 'design':

@@ -55,8 +55,12 @@ const BUDGET = {
      (0.22/0.28/0.3/0.45rem pairs, drift <=0.05rem, all single-use), which is
      what got the count back under a budget it had drifted past. Lowered in the
      same change that earned it — leaving it at 313 would bank slack the next
-     freehand value refills silently. */
-  spacing: 305,
+     freehand value refills silently.
+
+     305 -> 303 on 2026-08-09. Directions lost its rough-idea dump and prompt
+     tray, and the two spacing values only those rules used went with them.
+     Lowered in the same change, for the same reason as above. */
+  spacing: 303,
 }
 
 function allCss() {

@@ -74,7 +74,10 @@ describe('spark / ideate store', () => {
       .getState()
       .projects.find((x) => x.id === p.id)
     expect(proj.decisionLog?.length).toBe(1)
-    expect(proj.decisionLog[0].label).toBe('B')
+    /* The id is the reference; the letter is a position on screen and is not
+       written down. See `decisionFromDirection`. */
+    expect(proj.decisionLog[0].directionId).toBe('b')
+    expect(proj.decisionLog[0].label).toBe('')
     expect(proj.decisionLog[0].why).toBe('calm not cold')
   })
 })

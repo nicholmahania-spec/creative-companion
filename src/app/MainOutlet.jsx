@@ -54,6 +54,11 @@ function wrap(view, node) {
  * @param {object} p — shell props (activeView + everything pages need)
  */
 export default function MainOutlet(p) {
+  /* Directions stopped taking `currentSpark`, `nextSpark`, `oppositeSpark`,
+     `sparksTried`, `addMoodPin` and `addTask`: the prompt card, the spark pin
+     and the "Send · Touchpoints" button are gone, and no other view here reads
+     them. The props still arrive from App and the store actions still exist —
+     only this outlet's destructuring stopped naming them. */
   const {
     activeView,
     navDir,
@@ -119,13 +124,7 @@ export default function MainOutlet(p) {
     setResearchAddOpen,
     // spark
     nextTask,
-    currentSpark,
-    nextSpark,
-    oppositeSpark,
-    addMoodPin,
     updateDirection,
-    sparksTried,
-    addTask,
     // insights
     focusMinutes,
     focusSeconds,
@@ -332,25 +331,12 @@ export default function MainOutlet(p) {
       'spark',
       <SparkView
         setActiveView={setActiveView}
-        nextTask={nextTask}
-        currentSpark={currentSpark}
-        nextSpark={nextSpark}
-        oppositeSpark={oppositeSpark}
-        addMoodPin={addMoodPin}
-        projectPalette={projectPalette}
-        notifyAction={notifyAction}
         directions={activeProject?.directions}
         updateDirection={updateDirection}
         project={activeProject}
-        roughIdeas={activeProject?.roughIdeas || []}
-        decisionLog={activeProject?.decisionLog || []}
-        sparksTried={sparksTried || 0}
         flashMicro={flashMicro}
-        addTask={addTask}
         projectId={activeProjectId}
-        projectGoal={
-          activeProject?.detective?.goal || activeProject?.brief || ''
-        }
+        goSystemSection={goSystemSection}
       />
     )
   }

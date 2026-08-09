@@ -69,7 +69,10 @@ describe('blank workspace defaults', () => {
     const p = createBlankProject('Demo', '')
     expect(p.detective).toEqual(blankDetective())
     expect(p.designVersion).toBe('v1')
-    expect(p.directions).toHaveLength(3)
+    /* NO SEEDED ROUTES. Three empty cards on a project nobody has thought
+       about yet is a worksheet; a record is born when the designer presses
+       "Add a direction". */
+    expect(p.directions).toEqual([])
   })
 
   it('bumpDesignVersion increments vN', () => {

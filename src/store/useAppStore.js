@@ -12,7 +12,25 @@ import { sameProjectId } from '../lib/journey/journeyProgress'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
 import { create } from 'zustand'
-import { isArtifactKind, makeRef, refKey } from '../lib/artifacts/artifactRef'
+import {
+  isArtifactKind,
+  makeRef,
+  parseRefKey,
+  refKey,
+} from '../lib/artifacts/artifactRef'
+import {
+  pinFromSample,
+  samplePinId,
+  samplePinIsDisposable,
+} from '../lib/brand/favorites'
+import { sampleById } from '../lib/discovery/samples'
+import {
+  DIRECTION_SLOT_IDS,
+  directionLetter,
+  firstFreeDirectionSlot,
+  isDirectionSlotId,
+  orderedDirections,
+} from '../lib/brand/directionLetters'
 import {
   paletteSnapshot,
   typePairingSnapshot,
@@ -401,27 +419,28 @@ export function brandIdentityDefaults() {
  *
  * THREE SLOTS EXIST. THREE RECORDS DO NOT HAVE TO.
  *
- * These are not data. They are the shape of the page: Ideate shows three
- * places to put a direction, always, whether or not anything has been written
- * in them. `project.directions` holds only the directions that exist, and it
- * may hold none.
+ * These are not data and they are not cards. They are the three ids a route
+ * may occupy, which is how the shortlist stays a shortlist. `project.directions`
+ * holds only routes that exist, and a new project holds none.
  *
- * The two were the same thing until now, and the cost was that every piece of
- * code that wanted "three positions" reached for `blankDirections()` and
- * assigned the WHOLE array — so a project holding two real directions was read
- * as malformed and replaced with three empty ones. Deleting B did not just
- * bring B back; it took A and C with it. Slots are a constant here so nothing
- * has to manufacture records to draw a grid.
+ * SLOTS WERE ONCE CARDS, and the screen drew all three whether or not anything
+ * had been written in them — an empty worksheet asking to be filled in. They
+ * were also once letters: each slot carried `label: 'A' | 'B' | 'C'`, the
+ * record stored it, and the decision log wrote it down. Delete B and the
+ * surviving routes reflow, so the log then named a position C no longer held.
+ * The id is the identity; `directionLetter` draws the rest.
  */
-export const DIRECTION_SLOTS = Object.freeze([
-  Object.freeze({ id: 'a', label: 'A' }),
-  Object.freeze({ id: 'b', label: 'B' }),
-  Object.freeze({ id: 'c', label: 'C' }),
-])
+export const DIRECTION_SLOTS = Object.freeze(
+  DIRECTION_SLOT_IDS.map((id) => Object.freeze({ id }))
+)
+
+/* Derived in `lib/brand/directionLetters`, re-exported so views keep one
+   import and nothing in a render path has to pull the store in behind it. */
+export { directionLetter, firstFreeDirectionSlot, orderedDirections }
 
 /** True for 'a' | 'b' | 'c' — nothing else may become a direction. */
 export function isDirectionSlot(id) {
-  return DIRECTION_SLOTS.some((sl) => sl.id === String(id || '').toLowerCase())
+  return isDirectionSlotId(id)
 }
 
 /**
@@ -447,8 +466,24 @@ export function blankDirection(slotId) {
   const sl = DIRECTION_SLOTS.find((x) => x.id === slotId)
   /* `refs` holds refKeys and nothing else. A direction owns its label, title,
      why, chosen flag and position; every visual it shows belongs to the
-     workspace that authored it, and is read through a reference. */
-  return { id: sl.id, label: sl.label, title: '', note: '', chosen: false, refs: {} }
+     workspace that authored it, and is read through a reference.
+
+     `evidence` is the same idea in list form: refKeys for the material the
+     designer cited when they named this route — favorited pins and samples.
+     Separate from `refs` because `refs` answers "which mark, which palette"
+     (one artifact per slot) and this answers "what made me think so" (many,
+     unordered, no slots). Collapsing them would need a slot per citation. */
+  /* NO `label`. The displayed letter is derived from position by
+     `orderedDirections`; storing it made the letter identity, which is what
+     the decision log then had to lie about after a deletion. */
+  return {
+    id: sl.id,
+    title: '',
+    note: '',
+    chosen: false,
+    refs: {},
+    evidence: [],
+  }
 }
 
 /**
@@ -521,7 +556,13 @@ export function directionsWithSlot(project, dirId, { create = true } = {}) {
  * already has a directions array, however short that array is.
  */
 export function blankDirections() {
-  return DIRECTION_SLOTS.map((sl) => blankDirection(sl.id))
+  /* NOTHING. A new project has no routes, and drawing three empty cards for
+     routes nobody has formed turns a shortlist into a worksheet. A record is
+     born when the designer presses "Add a direction" and at no other time —
+     the name is kept because four call sites (project creation, two import
+     paths, one migration) describe the same thing: what `directions` starts
+     as. */
+  return []
 }
 
 /**
@@ -1165,6 +1206,113 @@ const useAppStore = create(
         }),
 
       /**
+       * Make a route.
+       *
+       * THE ONLY WAY A RECORD IS BORN, alongside typing into one that already
+       * exists. Pressing this is a designer saying "here is a possibility",
+       * which is exactly the act the three pre-drawn cards used to perform on
+       * their behalf before they had formed one.
+       *
+       * It also opens the new route, because the next thing anyone does after
+       * making a route is put something in it.
+       *
+       * @returns {string} the new route's id, or '' when all three are taken
+       */
+      addDirection: (projectId) => {
+        const state = get()
+        const owner = projectId ?? state.currentProjectId
+        const project = state.projects.find((p) => p.id === owner)
+        const slotId = firstFreeDirectionSlot(project)
+        if (!slotId) return ''
+        set((s2) => ({
+          projects: s2.projects.map((p) => {
+            if (p.id !== owner) return p
+            const found = directionsWithSlot(p, slotId)
+            if (!found) return p
+            return { ...p, directions: found.dirs, activeDirectionId: slotId }
+          }),
+        }))
+        return slotId
+      },
+
+      /**
+       * Cite a piece of collected material on a direction, or stop citing it.
+       *
+       * THE BRIDGE RESEARCH NEVER HAD. Favorites, samples and pins were
+       * collected and then read by nothing; a direction was three text fields
+       * with no visible reason behind them. This is the join: a refKey, so the
+       * direction points at the pin rather than copying its image, its hex or
+       * its note. Delete the pin and the citation resolves to nothing, which
+       * is what `directionEvidence` renders — never the project's current
+       * material standing in for the material this route was built from.
+       *
+       * Adding creates the record, exactly as setting a ref does: citing
+       * something is a designer asking for a direction. Removing does not.
+       *
+       * @param {string} dirId   'a' | 'b' | 'c'
+       * @param {string} key     a refKey — `evidence:17…` or `sample:color:…`
+       */
+      toggleDirectionEvidence: (dirId, key, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const ref = String(key || '')
+          if (!parseRefKey(ref)) return state
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const has = (
+                (p.directions || []).find(
+                  (d) => String(d?.id || '').toLowerCase() === String(dirId).toLowerCase()
+                )?.evidence || []
+              ).includes(ref)
+              const found = directionsWithSlot(p, dirId, { create: !has })
+              if (!found) return p
+              const { dirs, idx } = found
+              const list = Array.isArray(dirs[idx].evidence)
+                ? dirs[idx].evidence
+                : []
+              dirs[idx] = {
+                ...dirs[idx],
+                evidence: has ? list.filter((k) => k !== ref) : [...list, ref],
+              }
+              return { ...p, directions: dirs }
+            }),
+          }
+        }),
+
+      /**
+       * Which direction the designer is currently developing.
+       *
+       * ACTIVE IS NOT CHOSEN. Chosen is the verdict — the route the project is
+       * proceeding with, logged as a decision, one at a time. Active is only
+       * "this is the one I have open", so a designer can develop B for an
+       * afternoon while A is still the chosen route and neither fact
+       * overwrites the other. They were the same flag in every earlier sketch
+       * of this screen, and the cost was that opening a second direction to
+       * look at it silently changed the project's decision.
+       *
+       * Passing the id that is already active clears it: pressing Develop on
+       * the direction you are developing means you are done with it.
+       */
+      setActiveDirection: (dirId, projectId) =>
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const id = String(dirId || '').toLowerCase()
+          const next = isDirectionSlot(id) ? id : null
+          return {
+            projects: state.projects.map((p) =>
+              p.id === owner
+                ? {
+                    ...p,
+                    activeDirectionId:
+                      p.activeDirectionId === next ? null : next,
+                  }
+                : p
+            ),
+          }
+        }),
+
+      /**
        * Remove one Ideate direction. The slot stays; the record does not.
        *
        * A deletion has to survive a reload, an import and every future
@@ -1188,7 +1336,11 @@ const useAppStore = create(
                 (d) => String(d?.id || '').toLowerCase() !== id
               )
               if (next.length === dirs.length) return p
-              return { ...p, directions: next }
+              /* Developing a direction that no longer exists is not a state
+                 any screen can draw honestly. */
+              const activeDirectionId =
+                p.activeDirectionId === id ? null : p.activeDirectionId
+              return { ...p, directions: next, activeDirectionId }
             }),
           }
         }),
@@ -1212,10 +1364,16 @@ const useAppStore = create(
             dirs[idx] = { ...dirs[idx], ...patch }
             // Choosing one un-chooses others + log decision for Sketch resume
             let decisionLog = Array.isArray(p.decisionLog) ? p.decisionLog : []
+            /* CHOOSING OPENS. Having decided which route the project takes,
+               the next act is making it — so the chosen route becomes the one
+               being developed. The dependency runs one way only: opening a
+               route to look at it must never decide anything. */
+            let activeDirectionId = p.activeDirectionId
             if (patch.chosen === true) {
               dirs.forEach((d, i) => {
                 if (i !== idx) d.chosen = false
               })
+              activeDirectionId = dirs[idx].id
               const entry = decisionFromDirection(dirs[idx])
               decisionLog = appendDecision(decisionLog, entry)
             } else if (
@@ -1228,26 +1386,18 @@ const useAppStore = create(
                 decisionFromDirection(dirs[idx])
               )
             }
-            return { ...p, directions: dirs, decisionLog }
+            return { ...p, directions: dirs, decisionLog, activeDirectionId }
           }),
         })),
 
-      /**
-       * Replace Ideate rough-idea dump for the current project.
-       * Cap keeps the list from becoming a second infinite inbox.
-       * @param {string[]} ideas
-       */
-      setRoughIdeas: (ideas) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
-            const list = (Array.isArray(ideas) ? ideas : [])
-              .map((t) => String(t || '').trim())
-              .filter(Boolean)
-              .slice(0, 30)
-            return { ...p, roughIdeas: list }
-          }),
-        })),
+      /* `setRoughIdeas` is gone. The rough-idea dump was the one thing on
+         Directions that authored content, and what it authored reached
+         nothing: `project.roughIdeas` was read by its own screen and by two
+         progress readouts, never by a brand book page, a pack, a case study
+         or Identity. The field, its migration and the `hasRough` branch in
+         `pathStepMeetsCondition` all stay so saved projects keep the state
+         they have — nothing writes it any more.
+      */
 
       /**
        * Manual decision log entry (Ideate why, Sketch note).
@@ -3259,14 +3409,76 @@ const useAppStore = create(
          Type, Mark and Directions consume. Liking something and showing it to
          a client were the same click, so a designer could not keep a reference
          without putting it in front of the client. */
-      toggleFavorite: (id, on) =>
-        set((state) => ({
-          moodItems: state.moodItems.map((m) =>
-            m.id === id
-              ? { ...m, favorite: on == null ? !m.favorite : !!on }
-              : m
-          ),
-        })),
+      /**
+       * Like something, wherever it came from.
+       *
+       * A SAMPLE HAS NOWHERE TO KEEP A FLAG. Visual Discovery's stimuli belong
+       * to the app, not to a project, so `sample:type:fraunces:700` matched no
+       * pin and the heart in that view did nothing at all — the defect the
+       * Phase 4 audit found. Rather than give samples a favorites list of
+       * their own, favoriting one puts it on the wall as a pin whose id is its
+       * reference. One favorite concept, one list, and Directions reads both
+       * kinds of evidence through `favoritePins` without knowing the
+       * difference.
+       *
+       * DISPOSAL IS THE CALLER'S CALL, not the pin's. In Visual Discovery the
+       * heart both created the card and is the only way back to it, so
+       * pressing it twice has to leave the wall as it found it — that is
+       * `dispose: true`. On the Research wall the card is right there in front
+       * of the designer and its heart must behave like every other heart on
+       * that wall: turn off, and leave the card. One control, one meaning, per
+       * surface. Deleting a card someone had arranged, from a button that says
+       * "Remove favorite", is a destructive act reported as a smaller one.
+       *
+       * @param {string|number} id
+       * @param {boolean} [on]  undefined toggles
+       * @param {{projectId?: string, dispose?: boolean}} [opts]
+       */
+      toggleFavorite: (id, on, opts = {}) =>
+        set((state) => {
+          const { projectId, dispose = false } = opts || {}
+          const key = String(id)
+          const existing = state.moodItems.find((m) => String(m.id) === key)
+
+          if (!existing) {
+            /* Only a real sample may conjure a pin. An unknown id is a bug
+               upstream, and inventing a card for it would put a reference to
+               nothing on the research wall. */
+            const sample = sampleById(key.replace(/^sample:/, ''))
+            if (!sample || samplePinId(sample.id) !== key || on === false)
+              return state
+            const owner = projectId ?? state.currentProjectId
+            return {
+              moodItems: [
+                { ...pinFromSample(sample), projectId: owner, boardOrder: 0 },
+                ...state.moodItems.map((m) =>
+                  m.projectId != null && m.projectId !== owner
+                    ? m
+                    : { ...m, boardOrder: (m.boardOrder ?? 0) + 1 }
+                ),
+              ],
+            }
+          }
+
+          const next = on == null ? !existing.favorite : !!on
+          if (
+            !next &&
+            dispose &&
+            samplePinIsDisposable(
+              existing,
+              sampleById(key.replace(/^sample:/, ''))
+            )
+          ) {
+            return {
+              moodItems: state.moodItems.filter((m) => String(m.id) !== key),
+            }
+          }
+          return {
+            moodItems: state.moodItems.map((m) =>
+              String(m.id) === key ? { ...m, favorite: next } : m
+            ),
+          }
+        }),
 
       /* ── Logo concepts ────────────────────────────────────────────────
          Somewhere to put the two or three marks you actually made.

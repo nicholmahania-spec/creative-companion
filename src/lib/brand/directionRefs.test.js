@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import useAppStore, {
+  blankDirection,
   blankDirections,
   directionSlots,
 } from '../../store/useAppStore'
@@ -41,21 +42,67 @@ import {
 const s = () => useAppStore.getState()
 const cur = () => s().projects.find((p) => p.id === s().currentProjectId)
 
+/* BY ID, NEVER BY INDEX. Routes are only created when the designer asks for
+   one, so `directions[1]` is not "B" — it is whichever route happens to be
+   second in the array. The id is the identity; the letter on screen is derived
+   from position and reflows when a route is deleted. */
+const inDirs = (project, id) =>
+  (project?.directions || []).find((d) => d?.id === id) || null
+const dirOf = (id) => inDirs(cur(), id)
+
 function freshProject() {
   s().clearToEmpty()
   s().createNewProject('Directions')
+  /* A NEW PROJECT HAS NO ROUTES. Three blank cards were the old seeding and
+     are gone; a record is born when the designer presses "Add a direction".
+     Most of the cases below are about what a route does once it exists, so
+     they make three the way the screen does. */
+  for (let i = 0; i < 3; i += 1) s().addDirection()
 }
 
-describe('a direction owns its label, title, why, chosen and refs — nothing else', () => {
-  it('starts every slot with an empty refs bag', () => {
-    for (const d of blankDirections()) {
+describe('a direction owns its label, title, why, chosen, refs and citations — nothing else', () => {
+  it('starts every slot with an empty refs bag and no citations', () => {
+    for (const d of ['a', 'b', 'c'].map(blankDirection)) {
       expect(d.refs).toEqual({})
+      expect(d.evidence).toEqual([])
       /* No brand content on the record itself. If a hex or a face name ever
-         appears here, a direction has become a second author. */
+         appears here, a direction has become a second author.
+
+         `evidence` joined this list in Phase 5 and is the same kind of thing
+         `refs` is: pointers, in list form, at material authored elsewhere.
+         `refs` answers "which mark, which palette" — one artifact per named
+         slot; `evidence` answers "what made me think so" — many, unordered,
+         no slots. The test below is what stops the second one drifting into
+         a place to keep copies.
+
+         `label` LEFT this list. A·B·C are positions among the routes that
+         exist, derived at render; stored on the record they made the letter
+         identity, and the decision log wrote it down and then outlived it. */
       expect(Object.keys(d).sort()).toEqual(
-        ['chosen', 'id', 'label', 'note', 'refs', 'title'].sort()
+        ['chosen', 'evidence', 'id', 'note', 'refs', 'title'].sort()
       )
     }
+  })
+
+  it('keeps citations as references and nothing else', () => {
+    s().clearToEmpty()
+    s().createNewProject('Cites')
+    s().addMoodPin({ id: 77, type: 'image', visual: 'data:image/png;base64,AA' })
+    s().toggleDirectionEvidence('a', 'evidence:77')
+
+    const [d] = cur().directions.filter((x) => x.id === 'a')
+    expect(d.evidence).toEqual(['evidence:77'])
+    /* The image bytes stay on the pin. A citation that carried them would be
+       the copy this whole reference grammar exists to prevent. */
+    expect(JSON.stringify(d)).not.toMatch(/data:/)
+  })
+
+  it('refuses a citation that is not a reference', () => {
+    s().clearToEmpty()
+    s().createNewProject('Cites')
+    s().addDirection()
+    s().toggleDirectionEvidence('a', 'just some words')
+    expect(dirOf('a').evidence).toEqual([])
   })
 })
 
@@ -76,7 +123,7 @@ describe('capture points at what exists; it does not duplicate it', () => {
     s().updatePaletteColor(0, '#123456')
     s().captureDirectionFrom('a', 'palette')
 
-    const parts = directionComposition(cur(), cur().directions[0])
+    const parts = directionComposition(cur(), dirOf('a'))
     expect(parts.palette.hexes).toContain('#123456')
     expect(parts.filled).toBe(1)
     expect(parts.empty).toEqual([])
@@ -88,7 +135,7 @@ describe('capture points at what exists; it does not duplicate it', () => {
     s().updateBrandField('typeBody', 'Inter Regular')
     s().captureDirectionFrom('b', 'typePairing')
 
-    const d = cur().directions[1]
+    const d = dirOf('b')
     const parts = directionComposition(cur(), d)
     expect(parts.typePairing.heading).toBe('Fraunces SemiBold')
     expect(slotSummary('typePairing', parts.typePairing)).toBe(
@@ -101,14 +148,14 @@ describe('capture points at what exists; it does not duplicate it', () => {
     const conceptId = cur().logoConcepts[0].id
     s().captureDirectionFrom('a', 'mark', conceptId)
 
-    expect(cur().directions[0].refs.mark).toBe(`markConcept:${conceptId}`)
-    const parts = directionComposition(cur(), cur().directions[0])
+    expect(dirOf('a').refs.mark).toBe(`markConcept:${conceptId}`)
+    const parts = directionComposition(cur(), dirOf('a'))
     expect(parts.mark.id).toBe(conceptId)
     /* The image is read through the concept. Editing the concept's label must
        show up here with nothing to sync. */
     s().updateLogoConcept(conceptId, { label: 'Stamp' })
     expect(
-      directionComposition(cur(), cur().directions[0]).mark.label
+      directionComposition(cur(), dirOf('a')).mark.label
     ).toBe('Stamp')
   })
 
@@ -117,13 +164,13 @@ describe('capture points at what exists; it does not duplicate it', () => {
     s().updateBrandField('typeBody', '')
     s().captureDirectionFrom('a', 'typePairing')
     /* An empty artifact would draw a row that reads as a decided part. */
-    expect(cur().directions[0].refs.typePairing).toBeUndefined()
+    expect(dirOf('a').refs.typePairing).toBeUndefined()
     expect(Object.keys(cur().artifacts || {})).toHaveLength(0)
   })
 
   it('ignores a mark id that is not a concept', () => {
     s().captureDirectionFrom('a', 'mark', 'nope')
-    expect(cur().directions[0].refs.mark).toBeUndefined()
+    expect(dirOf('a').refs.mark).toBeUndefined()
   })
 })
 
@@ -133,12 +180,12 @@ describe('the composition does not rot when the parts move on', () => {
   it('keeps resolving to the palette it was built from after a later edit', () => {
     s().updatePaletteColor(0, '#111111')
     s().captureDirectionFrom('a', 'palette')
-    const before = directionComposition(cur(), cur().directions[0]).palette
+    const before = directionComposition(cur(), dirOf('a')).palette
 
     // The designer keeps working on Color. The direction is history now.
     s().updatePaletteColor(0, '#EEEEEE')
 
-    const after = directionComposition(cur(), cur().directions[0]).palette
+    const after = directionComposition(cur(), dirOf('a')).palette
     expect(after.id).toBe(before.id)
     expect(after.hexes).toEqual(before.hexes)
     expect(after.hexes).not.toContain('#EEEEEE')
@@ -151,7 +198,7 @@ describe('the composition does not rot when the parts move on', () => {
     s().updateBrandField('typeHeading', 'Inter Bold')
 
     expect(
-      directionComposition(cur(), cur().directions[0]).typePairing.heading
+      directionComposition(cur(), dirOf('a')).typePairing.heading
     ).toBe('Fraunces SemiBold')
   })
 
@@ -163,7 +210,7 @@ describe('the composition does not rot when the parts move on', () => {
 
     s().removeLogoConcept(first)
 
-    const parts = directionComposition(cur(), cur().directions[0])
+    const parts = directionComposition(cur(), dirOf('a'))
     expect(parts.mark).toBeNull()
     /* Not the survivor. A stand-in here would show a composition nobody
        assembled, in a place the designer reads as a record of what they did. */
@@ -173,7 +220,7 @@ describe('the composition does not rot when the parts move on', () => {
   })
 
   it('distinguishes never-set from pointed-at-something-gone', () => {
-    const parts = directionComposition(cur(), cur().directions[0])
+    const parts = directionComposition(cur(), dirOf('a'))
     expect(parts.empty).toEqual([])
     expect(COMPOSITION_SLOTS.every((k) => parts[k] === null)).toBe(true)
   })
@@ -187,11 +234,11 @@ describe('swap and shuffle move references, not content', () => {
     const markId = cur().logoConcepts[0].id
     s().captureDirectionFrom('b', 'mark', markId)
 
-    const bRef = cur().directions[1].refs.mark
+    const bRef = dirOf('b').refs.mark
     s().setDirectionRefs('c', { mark: bRef })
 
-    expect(cur().directions[1].refs.mark).toBe(bRef)
-    expect(cur().directions[2].refs.mark).toBe(bRef)
+    expect(dirOf('b').refs.mark).toBe(bRef)
+    expect(dirOf('c').refs.mark).toBe(bRef)
     expect(cur().logoConcepts).toHaveLength(1)
   })
 
@@ -201,7 +248,7 @@ describe('swap and shuffle move references, not content', () => {
     s().captureDirectionFrom('a', 'mark', 'nope')
     s().setDirectionRefs('a', { palette: null })
 
-    expect(cur().directions[0].refs).toEqual({})
+    expect(dirOf('a').refs).toEqual({})
     /* The artifact itself survives — another direction may still name it. */
     expect(Object.keys(cur().artifacts)).toHaveLength(1)
   })
@@ -210,7 +257,7 @@ describe('swap and shuffle move references, not content', () => {
     s().updateDirection('a', { title: 'Stamp-like', chosen: true })
     s().updatePaletteColor(0, '#123456')
     s().captureDirectionFrom('b', 'palette')
-    s().setDirectionRefs('c', { palette: cur().directions[1].refs.palette })
+    s().setDirectionRefs('c', { palette: dirOf('b').refs.palette })
 
     expect(cur().directions.map((d) => d.chosen)).toEqual([true, false, false])
   })
@@ -256,9 +303,9 @@ describe('choosing a direction is not applying it', () => {
     s().updateDirection('b', { title: 'Stamp-like', chosen: true })
 
     const after = cur()
-    expect(after.directions[1].chosen).toBe(true)
-    expect(after.directions[0].chosen).toBe(false)
-    expect(after.directions[2].chosen).toBe(false)
+    expect(inDirs(after, 'b').chosen).toBe(true)
+    expect(inDirs(after, 'a').chosen).toBe(false)
+    expect(inDirs(after, 'c').chosen).toBe(false)
 
     expect(after.logoImage).toBe(snapshot.logoImage)
     expect(after.logoWordmark).toBe(snapshot.logoWordmark)
@@ -271,13 +318,13 @@ describe('choosing a direction is not applying it', () => {
   it('preserves the composition it was chosen with', () => {
     loadedProject()
     s().updateDirection('b', { title: 'Stamp-like', chosen: true })
-    const chosenParts = directionComposition(cur(), cur().directions[1])
+    const chosenParts = directionComposition(cur(), dirOf('b'))
 
     // Weeks of ordinary work on Color and Type afterwards.
     s().updatePaletteColor(0, '#010101')
     s().updateBrandField('typeBody', 'Something Else')
 
-    const still = directionComposition(cur(), cur().directions[1])
+    const still = directionComposition(cur(), dirOf('b'))
     expect(still.palette.id).toBe(chosenParts.palette.id)
     expect(still.typePairing.heading).toBe('Direction Heading')
     expect(still.typePairing.body).toBe('Project Body')
@@ -434,14 +481,12 @@ describe('the v8 migration is additive and idempotent', () => {
     expect(twice.projects[0].directions[1].refs).toEqual({})
   })
 
-  it('gives a project with no directions the three blank slots', () => {
+  it('gives a project with no directions no routes, not three blanks', () => {
     const out = migrate({ moodItems: [], projects: [{ id: 'p1' }] })
-    expect(out.projects[0].directions).toHaveLength(3)
-    expect(out.projects[0].directions.map((d) => d.label)).toEqual([
-      'A',
-      'B',
-      'C',
-    ])
+    /* The migration used to mint three empty records for any project that had
+       none, which put a worksheet in front of every project that predated the
+       feature. An absent array and an empty one now mean the same thing. */
+    expect(out.projects[0].directions).toEqual([])
   })
 })
 
@@ -457,8 +502,8 @@ describe('refs live under the slot model, not around it', () => {
     s().updatePaletteColor(0, '#123456')
     s().captureDirectionFrom('b', 'palette')
     expect(cur().directions.map((d) => d.id)).toEqual(['a', 'b', 'c'])
-    expect(cur().directions[1].refs.palette).toMatch(/^palette:pal_/)
-    expect(cur().directions[1].title).toBe('')
+    expect(dirOf('b').refs.palette).toMatch(/^palette:pal_/)
+    expect(dirOf('b').title).toBe('')
   })
 
   it('does NOT create a record when a reference is cleared on an empty slot', () => {
@@ -508,13 +553,13 @@ describe('refs live under the slot model, not around it', () => {
     expect(out.projects[0].directions[0].refs).toEqual({})
   })
 
-  it('reads an empty slot as an empty composition', () => {
+  it('reads a missing route as an empty composition', () => {
     s().deleteDirection('c')
-    const rows = directionSlots(cur())
-    expect(rows[2].direction).toBeNull()
-    /* The view hands `directionComposition` whatever the slot holds, which for
-       an empty slot is nothing at all. It must not throw and must not invent. */
-    const parts = directionComposition(cur(), rows[2].direction)
+    expect(dirOf('c')).toBeNull()
+    /* Nothing draws a route that does not exist any more, but the resolver is
+       still handed whatever it is given: it must not throw and must not
+       invent. */
+    const parts = directionComposition(cur(), dirOf('c'))
     expect(parts.filled).toBe(0)
     expect(parts.empty).toEqual([])
   })

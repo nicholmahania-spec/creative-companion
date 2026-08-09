@@ -190,7 +190,12 @@ describe('favorites stay what Phase 1 made them', () => {
   beforeEach(fresh)
 
   it('favoriting a sample never puts it in the client pack', () => {
-    s().addMoodPin({ id: 'sample:type:fraunces:700', type: 'image', visual: 'x' })
+    /* No `addMoodPin` here any more, deliberately. This test used to create
+       the pin itself and then favorite it, which quietly asserted the one
+       thing the app could not do: the heart in Visual Discovery called
+       `toggleFavorite('sample:…')` against a pin nothing ever created, so the
+       click did nothing and the test still passed. Phase 5 made the store
+       upsert the pin, so the real path is now what runs here. */
     s().toggleFavorite('sample:type:fraunces:700', true)
     const pin = s().moodItems.find((m) => m.id === 'sample:type:fraunces:700')
     expect(isFavorite(pin)).toBe(true)
