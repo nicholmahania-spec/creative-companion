@@ -2305,6 +2305,7 @@ function App() {
       void syncAllProjects({
         getProjects: () => useAppStore.getState().projects,
         setProjects: (next) => useAppStore.setState({ projects: next }),
+        getDeletedProjects: () => useAppStore.getState().deletedProjects || [],
       })
     }, 3000)
     return () => window.clearTimeout(t)
@@ -2317,6 +2318,7 @@ function App() {
       void syncAllProjects({
         getProjects: () => useAppStore.getState().projects,
         setProjects: (next) => useAppStore.setState({ projects: next }),
+        getDeletedProjects: () => useAppStore.getState().deletedProjects || [],
       })
     }
     window.addEventListener('online', onBack)
