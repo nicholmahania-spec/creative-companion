@@ -22,12 +22,17 @@
  * letter comes from where a route sits among them. Delete one and the rest
  * reflow while every id, reference and decision-log entry stays put.
  *
- * The step id stays `ideate` because saved projects key `pathDone` off it.
+ * THE CARD IS A SPECIMEN, NOT A FORM. Preview first; composition, name, why,
+ * remove and unchoose live behind one Edit disclosure. Choosing does not open
+ * an editor. The step id stays `ideate` because saved projects key `pathDone`
+ * off it.
  */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore, { DIRECTION_SLOTS, orderedDirections } from '../store/useAppStore'
+import useIsMobile from '../lib/useIsMobile'
 import DirectionComposition from '../features/discovery/DirectionComposition'
+import DirectionPreview from '../features/discovery/DirectionPreview'
 import {
   EvidenceBand,
   EvidenceStrip,
@@ -36,6 +41,8 @@ import {
   directionEvidence,
   projectEvidence,
 } from '../lib/brand/directionEvidence'
+import { directionDifferenceLines } from '../lib/brand/directionDifference'
+import { classifyDirectionStart } from '../lib/brand/directionStart'
 import { discoveryObservations } from '../lib/discovery/observations'
 import '../styles/lazy-ideate.css'
 
@@ -59,6 +66,15 @@ export default function SparkView({
   const captureDirectionFrom = useAppStore((s) => s.captureDirectionFrom)
   const setDirectionRefs = useAppStore((s) => s.setDirectionRefs)
   const moodItems = useAppStore((s) => s.moodItems)
+
+  /* Which route's Edit disclosure is open. Independent of open/chosen — the
+     band can fill B while A is chosen, and Edit is only when the designer
+     asks to change the composition, name or why. */
+  const [editingId, setEditingId] = useState(null)
+
+  /* Matches the routes grid breakpoint: one column on phone, multi on desk.
+     Closed cards use DirectionPreview compact; Edit opens the full specimen. */
+  const isPhone = useIsMobile(720)
 
   /* Only what exists, in slot order, each carrying the letter it is drawn
      with. `directions` still arrives as a prop so the view re-renders on a
@@ -85,13 +101,24 @@ export default function SparkView({
   )
   const observations = useMemo(() => discoveryObservations(project), [project])
 
-  const title = labelForStepId('ideate')
+  /* Factual palette comparisons only — empty when close or missing data.
+     Computed once for the shortlist so each card does not re-walk peers. */
+  const differenceLines = useMemo(
+    () =>
+      directionDifferenceLines(project, routes, {
+        moodItems,
+        projectId: projectId ?? project?.id,
+      }),
+    [project, routes, moodItems, projectId]
+  )
 
-  const createRoute = () => {
-    const id = addDirection?.()
-    if (!id) return
-    focusLater(`dir-title-${id}`, 80)
-  }
+  /* How to start: nothing / thin / split offer / ready. Never invents routes. */
+  const start = useMemo(
+    () => classifyDirectionStart(evidence, routes),
+    [evidence, routes]
+  )
+
+  const title = labelForStepId('ideate')
 
   /* Opening is not choosing and never writes a decision. Clicking the route
      that is already open does nothing rather than closing it — there is no
@@ -101,9 +128,24 @@ export default function SparkView({
     setActiveDirection?.(id)
   }
 
+  /* Edit puts the name field in the DOM; callers that need to type a name
+     (create, choose without a title) open it first, then focus. */
+  const openEdit = (id, focusFieldId, ms = 80) => {
+    if (!id) return
+    setEditingId(id)
+    openRouteById(id)
+    if (focusFieldId) focusLater(focusFieldId, ms)
+  }
+
+  const createRoute = () => {
+    const id = addDirection?.()
+    if (!id) return
+    openEdit(id, `dir-title-${id}`, 80)
+  }
+
   const chooseRoute = (route) => {
     if (!String(route.title || '').trim()) {
-      focusLater(`dir-title-${route.id}`, 0)
+      openEdit(route.id, `dir-title-${route.id}`, 0)
       flashMicro?.('Name the route first')
       return
     }
@@ -115,7 +157,7 @@ export default function SparkView({
      back to what you are working on is the likeliest press on this screen. */
   const developRoute = (route) => {
     if (!String(route.title || '').trim()) {
-      focusLater(`dir-title-${route.id}`, 0)
+      openEdit(route.id, `dir-title-${route.id}`, 0)
       flashMicro?.('Name the route first')
       return
     }
@@ -125,7 +167,30 @@ export default function SparkView({
 
   const removeRoute = (route) => {
     deleteDirection?.(route.id)
+    if (editingId === route.id) setEditingId(null)
     flashMicro?.('Route removed')
+  }
+
+  /* Accept the computed split: two empty routes + citations only.
+     Does not name them, does not set palettes, does not write a why. */
+  const acceptSplit = () => {
+    const offer = start.offer
+    if (!offer || routes.length > 0) return
+    const highId = addDirection?.()
+    const lowId = addDirection?.()
+    if (!highId || !lowId) {
+      flashMicro?.('Could not add routes')
+      return
+    }
+    for (const key of offer.highKeys) {
+      toggleDirectionEvidence?.(highId, key)
+    }
+    for (const key of offer.lowKeys) {
+      toggleDirectionEvidence?.(lowId, key)
+    }
+    flashMicro?.(
+      `2 routes · ${offer.highCount} ${offer.highLabel}, ${offer.lowCount} ${offer.lowLabel}`
+    )
   }
 
   return (
@@ -161,24 +226,60 @@ export default function SparkView({
             >
               Open {labelForStepId('define')}
             </button>
+            {' '}
+            (♥ on the wall or in Visual Discovery)
           </>
         }
       />
 
+      {/* START STATES. Facts about what is kept — not process prose, not
+          invented routes. Split is an offer; accepting creates citations only. */}
+      {start.state === 'nothing' && routes.length === 0 ? (
+        <p className="ideate-start-note" role="status">
+          {start.reason}
+        </p>
+      ) : null}
+
+      {start.state === 'thin' ? (
+        <p className="ideate-start-note" role="status">
+          {start.reason}
+        </p>
+      ) : null}
+
+      {start.state === 'split' && start.offer ? (
+        <div className="ideate-split-offer">
+          <p className="ideate-split-summary">{start.offer.summary}</p>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={acceptSplit}
+          >
+            Start from what you kept
+          </button>
+        </div>
+      ) : null}
+
       <section className="ideate-routes" aria-label={`${title} routes`}>
         {routes.map((d) => {
           const isOpen = d.id === openId
-          const hasTitle = Boolean(String(d.title || '').trim())
+          const isEditing = editingId === d.id
+          const name = String(d.title || '').trim()
+          const hasTitle = Boolean(name)
+          const cited = directionEvidence(d, moodItems, projectId)
           return (
             <div
               key={d.id}
               className={`ideate-dir-card${d.chosen ? ' is-chosen' : ''}${
                 isOpen ? ' is-open' : ''
+              }${isEditing ? ' is-editing' : ''}${
+                isPhone && !isEditing ? ' is-compact' : ''
               }`}
               aria-current={isOpen ? 'true' : undefined}
             >
+              {/* 1. Identity: letter + authored name if any. Untitled routes
+                  show letter only — the specimen carries the display line
+                  (project/client fallback), not a second invented title. */}
               <div className="ideate-dir-head">
-                {/* Position, not identity. `d.letter` is derived per render. */}
                 <button
                   type="button"
                   className="ideate-dir-letter"
@@ -188,65 +289,45 @@ export default function SparkView({
                 >
                   {d.letter}
                 </button>
+                {hasTitle ? (
+                  <span className="ideate-dir-title-text">{name}</span>
+                ) : null}
                 {d.chosen ? (
                   <span className="ideate-dir-chosen" title="Chosen">
                     ✓
                   </span>
                 ) : null}
-                <button
-                  type="button"
-                  className="ideate-dir-remove"
-                  aria-label={`Remove route ${d.letter}`}
-                  onClick={() => removeRoute(d)}
-                >
-                  ×
-                </button>
               </div>
 
-              {/* What this route was built from. Resolved through the pin, so
-                  a deleted reference reads as gone rather than being replaced
-                  by whatever the wall holds now. */}
-              <EvidenceStrip
-                items={directionEvidence(d, moodItems, projectId)}
-                letter={d.letter}
-                sayEmpty={evidence.length > 0 && isOpen}
-                onCite={(key) => toggleDirectionEvidence?.(d.id, key)}
-              />
-
-              <DirectionComposition
+              {/* 2. The specimen — same VM. Compact on phone closed cards. */}
+              <DirectionPreview
                 project={project}
                 direction={d}
-                editable={isOpen}
-                onCapture={(kind, value) =>
-                  captureDirectionFrom?.(d.id, kind, value)
+                moodItems={moodItems}
+                projectId={projectId}
+                compact={isPhone && !isEditing}
+              />
+
+              {/* Supporting fact only — never the headline. Empty when axes
+                  are close or this route has no palette material. */}
+              {differenceLines[d.id] ? (
+                <p className="ideate-dir-diff">{differenceLines[d.id]}</p>
+              ) : null}
+
+              {/* 3. What this route was built from. Drop controls only while
+                  Edit is open — closed is material, not a strip of ×. */}
+              <EvidenceStrip
+                items={cited}
+                letter={d.letter}
+                sayEmpty={evidence.length > 0 && isOpen && isEditing}
+                onCite={
+                  isEditing
+                    ? (key) => toggleDirectionEvidence?.(d.id, key)
+                    : undefined
                 }
-                onClear={(kind) => setDirectionRefs?.(d.id, { [kind]: null })}
-                onSwap={(slot, key) => setDirectionRefs?.(d.id, { [slot]: key })}
-                onDevelop={(home) => {
-                  openRouteById(d.id)
-                  /* Develop opens the workspace that OWNS the part, at the
-                     sub-screen that owns it — the route never grows an editor
-                     of its own. */
-                  if (home.view === 'brand' && goSystemSection) {
-                    goSystemSection(home.section)
-                    return
-                  }
-                  setActiveView?.(home.view)
-                }}
               />
 
-              <label className="sr-only" htmlFor={`dir-title-${d.id}`}>
-                Route {d.letter} name
-              </label>
-              <input
-                id={`dir-title-${d.id}`}
-                className="field-input ideate-dir-name"
-                value={d.title || ''}
-                onChange={(e) => updateDirection?.(d.id, { title: e.target.value })}
-                onFocus={() => openRouteById(d.id)}
-                placeholder="Name this route"
-              />
-
+              {/* 4. One primary action. Choosing does not expand the editor. */}
               {d.chosen ? (
                 <button
                   type="button"
@@ -266,16 +347,19 @@ export default function SparkView({
                 </button>
               )}
 
+              {/* 5. Small secondary affordances. Edit holds the form. */}
               <div className="ideate-dir-quiet">
-                {d.chosen ? (
-                  <button
-                    type="button"
-                    className="text-link"
-                    onClick={() => chooseRoute(d)}
-                  >
-                    Unchoose
-                  </button>
-                ) : (
+                <button
+                  type="button"
+                  className="text-link"
+                  aria-expanded={isEditing}
+                  onClick={() =>
+                    isEditing ? setEditingId(null) : openEdit(d.id)
+                  }
+                >
+                  {isEditing ? 'Done' : 'Edit'}
+                </button>
+                {!d.chosen ? (
                   <button
                     type="button"
                     className="text-link"
@@ -283,24 +367,57 @@ export default function SparkView({
                   >
                     Develop
                   </button>
-                )}
+                ) : null}
                 <button
                   type="button"
                   className="text-link"
-                  onClick={() => {
-                    openRouteById(d.id)
-                    focusLater(`dir-note-${d.id}`, 40)
-                  }}
+                  onClick={() => openEdit(d.id, `dir-note-${d.id}`, 40)}
                 >
                   Why
                 </button>
               </div>
 
-              {/* Why is optional and has five readers, so it stays in the
-                  model — it just does not need to occupy the card until the
-                  designer asks for it. */}
-              {String(d.note || '').trim() || isOpen ? (
-                <>
+              {/* ONE DISCLOSURE. Same DirectionComposition, same fields —
+                  just not on the face of the shortlist. */}
+              {isEditing ? (
+                <div className="ideate-dir-edit">
+                  <label className="sr-only" htmlFor={`dir-title-${d.id}`}>
+                    Route {d.letter} name
+                  </label>
+                  <input
+                    id={`dir-title-${d.id}`}
+                    className="field-input ideate-dir-name"
+                    value={d.title || ''}
+                    onChange={(e) =>
+                      updateDirection?.(d.id, { title: e.target.value })
+                    }
+                    onFocus={() => openRouteById(d.id)}
+                    placeholder="Name this route"
+                  />
+
+                  <DirectionComposition
+                    project={project}
+                    direction={d}
+                    editable
+                    onCapture={(kind, value) =>
+                      captureDirectionFrom?.(d.id, kind, value)
+                    }
+                    onClear={(kind) =>
+                      setDirectionRefs?.(d.id, { [kind]: null })
+                    }
+                    onSwap={(slot, key) =>
+                      setDirectionRefs?.(d.id, { [slot]: key })
+                    }
+                    onDevelop={(home) => {
+                      openRouteById(d.id)
+                      if (home.view === 'brand' && goSystemSection) {
+                        goSystemSection(home.section)
+                        return
+                      }
+                      setActiveView?.(home.view)
+                    }}
+                  />
+
                   <label className="sr-only" htmlFor={`dir-note-${d.id}`}>
                     Route {d.letter} why
                   </label>
@@ -314,7 +431,27 @@ export default function SparkView({
                     }
                     placeholder="Why it could work"
                   />
-                </>
+
+                  <div className="ideate-dir-edit-acts">
+                    {d.chosen ? (
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() => chooseRoute(d)}
+                      >
+                        Unchoose
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="text-link ideate-dir-remove-link"
+                      aria-label={`Remove route ${d.letter}`}
+                      onClick={() => removeRoute(d)}
+                    >
+                      Remove route
+                    </button>
+                  </div>
+                </div>
               ) : null}
             </div>
           )
@@ -330,7 +467,13 @@ export default function SparkView({
             <span className="ideate-dir-add-plus" aria-hidden="true">
               +
             </span>
-            {routes.length ? 'Add another' : 'Add a direction'}
+            {routes.length
+              ? 'Add another'
+              : start.state === 'thin'
+                ? 'Start a route'
+                : start.state === 'nothing'
+                  ? 'Add a direction'
+                  : 'Add a direction'}
           </button>
         ) : null}
       </section>
