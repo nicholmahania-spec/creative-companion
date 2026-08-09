@@ -4415,6 +4415,57 @@ function App() {
               >
                 <HeaderIcon name="question" /> Discovery brief
               </button>
+              {/* ARCHIVE AND DELETE, WHERE THE CSS ALREADY SAID THEY WERE.
+                  The sidebar's per-row ⋯ is hidden in the app shell with the
+                  note "Archive and Delete now live in Tools → This project" —
+                  and they did not. The control was removed for a good reason
+                  (a hover-only affordance is invisible at a glance and absent
+                  on touch) but its destination was never built, so on desktop
+                  the two actions were reachable from nowhere at all.
+
+                  They act on the CURRENT project, like Export and Hours above
+                  them, and they call the same handlers the sidebar menu calls
+                  — no second delete path, and the undo toast still comes from
+                  `handleDeleteProjectById`. */}
+              {activeProject && (
+                <>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    tabIndex={-1}
+                    className="more-menu-item"
+                    onClick={() => {
+                      setMoreOpen(false)
+                      const r = archiveProject(activeProject.id)
+                      if (!r.ok) {
+                        flashToast(r.error || 'Could not archive that')
+                      } else if (r.empty) {
+                        flashToast('Archived — no open projects')
+                        setActiveView('create')
+                      } else {
+                        flashToast('Project archived')
+                      }
+                    }}
+                  >
+                    <HeaderIcon name="archive" /> Archive project
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    tabIndex={-1}
+                    className="more-menu-item more-menu-danger"
+                    onClick={() => {
+                      setMoreOpen(false)
+                      handleDeleteProjectById(
+                        activeProject.id,
+                        activeProject.name
+                      )
+                    }}
+                  >
+                    <HeaderIcon name="trash" /> Delete project
+                  </button>
+                </>
+              )}
               </div>
             </div>
           </div>
