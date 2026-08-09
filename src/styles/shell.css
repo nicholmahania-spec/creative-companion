@@ -3826,6 +3826,31 @@ html[data-reduce-motion='true'] *::after {
   padding: 0;
 }
 
+/* The colour's NAME, beside its hex — the pair the brand book and the handoff
+   CSS both print. Naming used to exist only inside the brand book, which made
+   an output surface the only authoring home for a brand fact.
+
+   Same shell as the hex field so the row reads as one control strip, but not
+   tabular-nums and not 600: a name is words, and the hex beside it is the
+   thing that should stay monospaced and scannable. */
+.palette-name-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.875rem;
+  background: var(--bg-warm);
+  color: var(--text-primary);
+}
+
+.palette-name-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
 .palette-hex-input {
   width: 100%;
   min-width: 0;

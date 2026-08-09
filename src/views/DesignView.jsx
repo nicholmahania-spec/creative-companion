@@ -30,6 +30,7 @@ import { familyByName, parseLabel } from '../lib/book/fontCatalog'
 import AlignmentBars from '../components/AlignmentBars'
 import AxisTagger from '../components/AxisTagger'
 import { strategyProfile } from '../lib/brand/alignment'
+import { readPaletteTokens } from '../lib/book/bookBuilder'
 import { DEFAULT_LOGO_DONTS } from '../lib/brandSystem'
 import { axesForPalette, vetoBreaches } from '../lib/brand/colourAxes'
 import { contrastTargetFor } from '../lib/contrast/contrastMatrix'
@@ -133,6 +134,11 @@ export default function DesignView({
   const setProjectPalette = useAppStore((s) => s.setProjectPalette)
   const updatePaletteColor = useAppStore((s) => s.updatePaletteColor)
   const addPaletteColor = useAppStore((s) => s.addPaletteColor)
+  /* The single writer for named colour rows. Naming used to exist ONLY inside
+     the brand book, which made an output surface the sole authoring home for a
+     brand fact — the thing bookContent.js's own header forbids. The book reads
+     these now; this is where they are written. */
+  const setPaletteTokens = useAppStore((s) => s.setPaletteTokens)
   const removePaletteColor = useAppStore((s) => s.removePaletteColor)
   const bumpDesignVersion = useAppStore((s) => s.bumpDesignVersion)
   const bumpDesignVersionIfV1 = useAppStore((s) => s.bumpDesignVersionIfV1)
@@ -183,6 +189,24 @@ export default function DesignView({
   const contrastTarget = useMemo(
     () => contrastTargetFor(activeProject?.detective),
     [activeProject?.detective?.accessibilityNeeds]
+  )
+
+  /* Names live positionally beside `palette`; `readPaletteTokens` is the one
+     reader that pairs them, so the book and this bench cannot disagree about
+     which name belongs to which hex. */
+  const paletteRows = useMemo(
+    () => readPaletteTokens(activeProject || {}),
+    [activeProject]
+  )
+  const renameColor = useCallback(
+    (index, name) => {
+      const rows = readPaletteTokens(activeProject || {})
+      if (!rows[index]) return
+      setPaletteTokens(
+        rows.map((r, i) => (i === index ? { ...r, name } : r))
+      )
+    },
+    [activeProject, setPaletteTokens]
   )
 
   const concepts = Array.isArray(activeProject?.logoConcepts)
@@ -1281,6 +1305,17 @@ export default function DesignView({
                               }}
                             />
                           </label>
+                          {/* The colour's job, in words. Roles below say what
+                              it DOES; this is what it is called in the book
+                              and in the handoff CSS. */}
+                          <input
+                            type="text"
+                            className="palette-name-input"
+                            value={paletteRows[index]?.name || ''}
+                            onChange={(e) => renameColor(index, e.target.value)}
+                            spellCheck={false}
+                            aria-label={`Color ${index + 1} name`}
+                          />
                           <input
                             type="text"
                             className="palette-hex-input"
