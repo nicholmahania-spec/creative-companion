@@ -18,6 +18,7 @@
  * witnesses is a file transfer.
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { labelForStepId } from '../../lib/journey/journey'
 import { clientFacingError } from '../../lib/client/clientFacingError'
 import { bestTextOn, DEFAULT_PALETTE } from '../../lib/color'
 import {
@@ -203,7 +204,7 @@ export default function PublicBrandReveal({ portalId }) {
           ) : null}
         </header>
 
-        <section className="reveal-book" aria-label="Brand book">
+        <section className="reveal-book" aria-label={labelForStepId('book')}>
           {pack ? (
             <Suspense
               fallback={

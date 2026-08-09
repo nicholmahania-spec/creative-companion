@@ -33,9 +33,13 @@ import { labelForStepId } from '../journey/journey'
 /* Where a fact came from, named by the screen the designer would open to
    change it — and DERIVED from the journey declaration rather than spelled,
    so a renamed stop renames its provenance too. Anything not a stage (the
-   brief, the decision log) is its own name and has no other source. */
+   decision log) is its own name and has no other source.
+
+   `brief` was the exception and is not one any more: stop 1 is called Brief
+   as of 2026-08-09, so the one spelled entry became a copy of a declared
+   label and now derives with the others. */
 const SOURCE = {
-  brief: 'Brief',
+  brief: labelForStepId('define'),
   decisions: 'Decision log',
   research: labelForStepId('research'),
   ideate: labelForStepId('ideate'),

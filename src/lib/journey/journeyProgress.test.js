@@ -200,13 +200,19 @@ describe('pathStepHasContent', () => {
         learnings: 'yay',
         directions: [{ id: 'a', title: 'Quiet', note: 'Fits the goal' }],
         touchpointApps: { website: { note: 'Hero uses wordmark' } },
+        /* Directions and Brand book are stops now, so a fixture claiming to be
+           a fully-worked project has to carry their content too. `directions`
+           above already satisfied Directions — it was there for the Tools
+           screen — and `bookBuilder` is what the builder writes on first
+           touch. */
+        bookBuilder: { print: { pageSize: 'a4' } },
       },
       moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'ref' }],
       tasks: [],
       sparkIndex: 3,
       palette: ['#111', '#222'],
     })
-    expect(rows).toHaveLength(5)
+    expect(rows).toHaveLength(JOURNEY_STEPS.length)
     expect(rows.every((r) => r.done)).toBe(true)
   })
 
@@ -218,13 +224,11 @@ describe('pathStepHasContent', () => {
       sparkIndex: 0,
       palette: [],
     })
-    expect(missing.length).toBe(5)
-    expect(missing).toContain('Research')
-    expect(missing).toContain('Strategy')
-    expect(missing).toContain('Identity')
-    expect(missing).toContain('Touchpoints')
-    expect(missing).toContain('Assets')
-    expect(missing).not.toContain('Ideate')
+    /* An empty project is missing everything, so this is the whole path.
+       Derived rather than listed: the point is "every stop is reported", and
+       spelling the labels here made it a copy that went stale the moment two
+       of them were renamed. */
+    expect(missing).toEqual(JOURNEY_STEPS.map((s) => s.label))
   })
 
   it('pathFirstGap returns earliest incomplete path step', () => {
@@ -243,7 +247,7 @@ describe('pathStepHasContent', () => {
       tasks: [],
       sparkIndex: 0,
     })
-    // Path order: Strategy → Research → … Strategy is filled, next gap is Research
+    // Path order: Brief → Research → … Brief is filled, next gap is Research
     expect(gap?.id).toBe('research')
     expect(gap?.view).toBe('studio')
   })

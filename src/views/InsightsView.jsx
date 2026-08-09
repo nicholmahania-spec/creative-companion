@@ -1,3 +1,4 @@
+import { labelForStepId } from '../lib/journey/journey'
 /** Focus timer — off-path tool. ADHD: one instrument, short CTAs. */
 import '../styles/lazy-sketch.css'
 
@@ -117,8 +118,13 @@ export default function InsightsView(props) {
         {sessionComplete && !forcedBreak && (
           <div className="session-done">
             <p className="session-done-line">
+              {/* Named the stop and claimed it was under Tools. Directions is
+                  a path stop as of 2026-08-09, so the second half was simply
+                  false; the label is derived now and the location claim is
+                  gone rather than corrected — the button below says where it
+                  goes, which is the only part that was doing any work. */}
               {fromResearch
-                ? 'Timer finished. Ideate is under Tools — or stay on Research.'
+                ? `Timer finished. Next up is ${labelForStepId('ideate')} — or stay on ${labelForStepId('research')}.`
                 : 'Done'}
             </p>
             {fromResearch && (
@@ -128,7 +134,7 @@ export default function InsightsView(props) {
                   className="btn btn-secondary"
                   onClick={() => go('spark')}
                 >
-                  {'Next · Ideate'}
+                  {`Next · ${labelForStepId('ideate')}`}
                 </button>
               </div>
             )}

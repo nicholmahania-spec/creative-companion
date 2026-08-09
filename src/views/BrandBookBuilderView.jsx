@@ -1458,7 +1458,11 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
 
       <div className="bbb-body">
         <div className="bbb-panel">
-        <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
+        {/* Derived. This is a path stop now, so its heading is its stop label —
+            the same way every other stop announces itself, and the thing
+            `headingForStep` looks for. The old "— source of truth" appositive
+            went with it: it explained the screen to someone already on it. */}
+        <h1 className="bbb-panel__title">{labelForView('book')}</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
             path stop is already called that, and the heading is the only

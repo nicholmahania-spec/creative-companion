@@ -49,10 +49,16 @@ export const RESTORABLE_VIEWS = Object.freeze(
   Object.keys(lazyViews).filter((id) => id !== 'clientRecord')
 )
 
-/** Path stops prefetched after unlock (not Tools). */
+/**
+ * Path stops prefetched after unlock (not Tools).
+ *
+ * Must match what `warmPathViewChunks` actually imports. `book` is a path stop
+ * and is deliberately absent from both — see the note there.
+ */
 export const PATH_WARM_VIEWS = [
   'project',
   'studio',
+  'spark',
   'brand',
   'flow',
   'finish',
@@ -65,8 +71,9 @@ export function skeletonLabelForView(view) {
   if (view === 'clients') return 'Loading clients…'
   if (view === 'clientRecord') return 'Loading client…'
   if (view === 'desk') return 'Loading this project…'
-  if (view === 'create' || view === 'spark') return 'Loading…'
-  if (view === 'book') return 'Loading brand book…'
+  /* `spark` used to be here too. It is the Directions stop now, so it names
+     itself through labelForView below like every other stop. */
+  if (view === 'create') return 'Loading…'
   if (view === 'assets') return 'Loading asset library…'
   if (view === 'review') return 'Loading Review…'
   if (view === 'settings') return 'Loading settings…'
@@ -90,6 +97,8 @@ export function pathStepIdForView(view) {
       return 'deliver'
     case 'spark':
       return 'ideate'
+    case 'book':
+      return 'book'
     case 'review':
       return 'review'
     default:
@@ -103,4 +112,10 @@ export function warmPathViewChunks() {
   void import('../views/ResearchView')
   void import('../views/DesignView')
   void import('../views/DeliverView')
+  void import('../views/SparkView')
+  /* BrandBookBuilderView is deliberately NOT warmed. It is the largest view in
+     the app (~77KB of source, plus the font data the book loads), and warming
+     it on idle would pull that down for every project including the logo jobs
+     whose type never shows the stop. It lazy-loads on first visit like any
+     other heavy screen. */
 }

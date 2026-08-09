@@ -10,15 +10,22 @@
  * spine; the owner chose modular on 2026-08-05, and modular subsumes it —
  * the full stage set simply becomes the Brand Identity default.
  *
- * HONEST LIMIT, stated rather than papered over: the path today has five
- * coarse stops (Strategy, Research, Identity, Touchpoints, Assets), so
- * several types below resolve to the SAME set. Logo Package, Brand
- * Identity, Refresh and Rebrand differ in the spec at a finer grain
- * (exploration vs design vs documentation, and an audit step for the two
- * that start from an existing brand) and those stages do not exist yet.
- * The mechanism is what this phase delivers; the finer stages are the next
- * one. Faking a distinction by removing a stop a type genuinely needs
- * would be worse than admitting the sets currently coincide.
+ * TWO OF THE FINER STAGES NOW EXIST (2026-08-09). This header used to record
+ * an honest limit: the path had five coarse stops, so Logo Package, Brand
+ * Identity, Refresh and Rebrand all resolved to the same set, and the finer
+ * grain the spec asks for — "exploration vs design vs documentation" — had
+ * nowhere to live. Directions (exploration) and Brand book (documentation)
+ * are declared stops now, and they arrive here for free: every type below
+ * whose `stepIds` is ALL_STEP_IDS picks them up, while `logo` and `expansion`
+ * name their stages explicitly and are untouched. A £500 logo still walks
+ * four stops.
+ *
+ * WHAT IS STILL COARSE, so the next reader is not misled twice: Logo Package
+ * and Brand Identity continue to resolve to the identical set, and
+ * `startsFromExisting` on Refresh and Rebrand still has no consumer. Splitting
+ * those is a product decision about scope, not a routing one, and inventing a
+ * distinction during a routing phase would be exactly the faked difference the
+ * previous version of this note warned against.
  */
 import { JOURNEY_STEPS } from './journey.js'
 

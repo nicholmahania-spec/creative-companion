@@ -73,9 +73,15 @@ describe('one tick, one meaning — the flag counts everywhere', () => {
   it('is skipped by the next-gap jump', () => {
     // A gap-finder that argues back gets ignored, and it is the app's main
     // task-initiation mechanism.
+    /* Derived, not listed. Spelled out as four ids this silently stopped
+       meaning "everything except design" the moment the path grew — Directions
+       was simply absent from the map, so it read as an unreached gap and the
+       assertion failed for a reason that had nothing to do with the flag. */
     const onlyDesignLeft = {
       project: {
-        pathReached: { define: true, research: true, sketch: true, deliver: true },
+        pathReached: Object.fromEntries(
+          JOURNEY_STEPS.filter((s) => s.id !== 'design').map((s) => [s.id, true])
+        ),
         pathDone: { design: true },
       },
       moodItems: [],

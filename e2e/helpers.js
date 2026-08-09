@@ -173,10 +173,12 @@ export function labelForStep(id) {
 /**
  * Open a view that lives on the Tools menu.
  *
- * Ideate and Review used to be path stops 3 and 6. They are Tools now, so
- * specs that walked to them through the step nav could not reach them at
- * all. Routing through Tools keeps that coverage instead of deleting it —
- * the screens still exist and still hold real fields.
+ * Review only, now. Ideate and Review were both path stops, then both Tools;
+ * on 2026-08-09 Ideate went back on the path as Directions (and Brand book
+ * joined it), so those two are reached with `stepByIdIn` like any other stop
+ * and their Tools entries are gone. Review is genuinely off-path — it acts on
+ * the client relationship rather than producing a stage artifact — so this is
+ * still how a spec gets to it.
  */
 export async function openTool(page, name) {
   await page.getByRole('button', { name: 'Tools' }).first().click()

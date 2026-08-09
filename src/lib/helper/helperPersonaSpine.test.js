@@ -35,13 +35,30 @@ describe('the Helper knows the actual journey', () => {
 
   it('carries no retired stop names', () => {
     /* These were real once. A model told about "Ideate" will send the user
-       looking for a page that does not exist, which reads as the user
-       failing to find it rather than the app not having it. */
-    for (const gone of ['Ideate', 'Sketch', 'Deliver', 'Define']) {
+       looking for a page that does not exist, which reads as the user failing
+       to find it rather than the app not having it.
+
+       WHOLE WORDS, not substrings. Stop 7 was renamed "Assets" → "Delivery"
+       on 2026-08-09, and a plain `toContain('Deliver')` fails on the current
+       label because the retired name is a prefix of it — the guard reporting
+       a stale spine on a spine that is exactly right. "Assets" is not on this
+       list for the same class of reason in reverse: it is still the Library
+       Tool's business, and only the STOP stopped being called that. */
+    for (const gone of ['Ideate', 'Sketch', 'Deliver', 'Define', 'Strategy']) {
       expect(
         PROCESS_SPINE,
         `"${gone}" is not a current stop — the spine is restating a copy`
-      ).not.toContain(gone)
+      ).not.toMatch(new RegExp(`\\b${gone}\\b`))
+    }
+  })
+
+  it('the retired list does not overlap the live one', () => {
+    /* Guards the guard: if a future rename brings a name back, the loop above
+       would fail against a correct spine and the obvious fix would be to
+       delete the assertion. Catch it here instead, where the cause is named. */
+    const live = new Set(JOURNEY_STEPS.map((s) => s.label))
+    for (const gone of ['Ideate', 'Sketch', 'Deliver', 'Define', 'Strategy']) {
+      expect(live.has(gone), `"${gone}" is a current label again`).toBe(false)
     }
   })
 

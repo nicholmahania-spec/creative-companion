@@ -9,7 +9,7 @@
  * half-checked scan to a stray backdrop click is the abandonment case.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { JOURNEY_STEPS } from '../../lib/journey/journey'
+import { portalPushableSteps } from '../../lib/journey/journey'
 import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/brief/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../../lib/book/exportFiles'
 import { groupMessagesByDay } from '../../lib/client/messageDayLabel'
@@ -544,8 +544,16 @@ function PortalMode({
           <p className="discovery-brief-hint">
             Turn a stop on when there is something on it worth looking at.
           </p>
+          {/* The stops that can actually be SHOWN, not every stop on the path.
+              Directions and Brand book are path stops now, but the portal
+              renders a label and two buttons with nothing to look at — pushing
+              them would be an approval attached to a bare stage name, which
+              DESIGN_GRAMMAR G10.5 forbids, and `respond_client_portal_step`
+              would reject `book` outright because it is not in the RPC's
+              allowlist. They join this list when the portal can show the
+              composition and the book. */}
           <div className="overview-share-steps">
-            {JOURNEY_STEPS.map((step) => {
+            {portalPushableSteps().map((step) => {
               const on = !!portal?.step_visibility?.[step.id]
               const status = portal?.step_status?.[step.id]?.status
               return (
@@ -566,10 +574,10 @@ function PortalMode({
               )
             })}
           </div>
-          {JOURNEY_STEPS.some((s) => portal?.step_status?.[s.id]?.note) && (
+          {portalPushableSteps().some((s) => portal?.step_status?.[s.id]?.note) && (
             <div className="overview-share-notes">
               <p className="client-portal-subhead">Client notes</p>
-              {JOURNEY_STEPS.filter((s) => portal?.step_status?.[s.id]?.note).map((s) => (
+              {portalPushableSteps().filter((s) => portal?.step_status?.[s.id]?.note).map((s) => (
                 <p key={s.id} className="discovery-brief-hint">
                   <strong>{s.label}:</strong> {portal.step_status[s.id].note}
                 </p>

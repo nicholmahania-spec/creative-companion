@@ -91,18 +91,30 @@ test('a stage that is off stays visible and one click brings it back', async ({
      stage must be NAMED, and reachable without hunting through Settings. */
   const off = page.locator('.step-rail-off')
   await expect(off).toBeVisible()
-  const missing = JOURNEY_STEPS.find(
+  const offStages = JOURNEY_STEPS.filter(
     (s) => !activeStepIds({ projectType: 'logo' }).includes(s.id)
   )
-  await expect(off).toContainText(missing.label)
+  for (const stage of offStages) await expect(off).toContainText(stage.label)
 
   await off.getByRole('button', { name: /turn on/i }).first().click()
   await page.waitForTimeout(400)
 
   const rail = await pathNav(page)
   await expect(rail.locator('.step-rail-step')).toHaveCount(LOGO_STOP_COUNT + 1)
-  // and the line is gone, because nothing is off any more
-  await expect(page.locator('.step-rail-off')).toHaveCount(0)
+
+  /* One stage came back, so the line survives if others are still off. This
+     used to assert the line was GONE, which only held while a logo job had
+     exactly one off stage; it has three now that Directions and Brand book
+     are stops, and the assertion was testing the old arithmetic rather than
+     the behaviour. What must be true either way: the stage just turned on is
+     no longer named as off, and the line disappears only when nothing is. */
+  const stillOff = offStages.length - 1
+  if (stillOff === 0) {
+    await expect(page.locator('.step-rail-off')).toHaveCount(0)
+  } else {
+    await expect(off).toBeVisible()
+    await expect(off).not.toContainText(offStages[0].label)
+  }
 })
 
 test('keyboard shortcuts never reach a stage the rail does not show', async ({

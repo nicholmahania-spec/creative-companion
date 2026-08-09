@@ -99,6 +99,34 @@ export function stopEstablished(stepId, ctx = {}) {
           : plural(apps.length, 'surface', 'surfaces'),
       }
     }
+    case 'ideate': {
+      /* Says what is on the stop, never how close to finished it is — the
+         rule this whole module exists for. A titled route is the unit; the
+         rough dump is the thing you have before you have one. */
+      const named = (project.directions || []).filter((d) =>
+        clean(d?.title)
+      ).length
+      if (named) {
+        const chosen = (project.directions || []).some(
+          (d) => d?.chosen && clean(d?.title)
+        )
+        return {
+          line: `${plural(named, 'route', 'routes')}${chosen ? ', one chosen' : ''}`,
+        }
+      }
+      const rough = (project.roughIdeas || []).filter((r) =>
+        clean(typeof r === 'string' ? r : r?.text || r?.title)
+      ).length
+      if (rough) return { line: `${plural(rough, 'rough idea', 'rough ideas')}` }
+      return { line: 'No routes yet' }
+    }
+    case 'book': {
+      /* `bookBuilder` is written the first time the builder is touched, so
+         its presence is the honest signal that the book has been shaped
+         rather than merely derivable from the project. */
+      const built = project.bookBuilder && typeof project.bookBuilder === 'object'
+      return { line: built ? 'Laid out' : 'Not laid out yet' }
+    }
     case 'deliver': {
       if (clean(project.handoffNote) || clean(project.learnings))
         return { line: 'Handed off' }
