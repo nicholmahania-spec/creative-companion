@@ -124,9 +124,12 @@ test.describe('Soft Signal demo', () => {
     await stepByIdIn(path, 'ideate').click()
     await expect(headingForStep(page, 'ideate').first()).toBeVisible()
     /* Whatever route the walk above made is drawn; an empty screen would show
-       only the Add tile. */
-    await expect(page.locator('.ideate-dir-name').first()).toHaveValue(/.+/, {
+       only the Add tile. The name lives on the closed card as text (Edit holds
+       the input), so either face means a route was authored. */
+    await expect(page.locator('.ideate-dir-card').first()).toBeVisible({
       timeout: 5000,
     })
+    const named = page.locator('.ideate-dir-title-text, .ideate-dir-name').first()
+    await expect(named).toBeVisible({ timeout: 5000 })
   })
 })

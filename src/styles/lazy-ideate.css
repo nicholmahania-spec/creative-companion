@@ -234,6 +234,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 .ideate-dir-letter {
   font-weight: 700;
@@ -247,20 +248,22 @@
   min-width: 24px;
   min-height: 24px;
   text-align: left;
+  flex: none;
+}
+/* Authored name only — never an input on the closed card. */
+.ideate-dir-title-text {
+  font-size: var(--fs-2);
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ideate-dir-chosen {
   color: var(--accent-growth, #565656);
   font-size: 0.9rem;
-}
-.ideate-dir-remove {
   margin-left: auto;
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  line-height: 1;
-  min-width: 24px;
-  min-height: 24px;
+  flex: none;
 }
 .ideate-dir-name {
   font-size: var(--fs-2);
@@ -273,8 +276,126 @@
 }
 .ideate-dir-quiet {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
   font-size: var(--fs-1);
+}
+/* Form chrome only when Edit is open — the closed card is the specimen. */
+.ideate-dir-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.ideate-dir-edit .dir-comp {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.ideate-dir-edit-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--fs-1);
+}
+.ideate-dir-remove-link {
+  color: var(--text-muted);
+}
+/* Preview is the card's main surface. */
+.ideate-dir-card .dir-preview {
+  margin: 0;
+}
+/* Factual comparison under the specimen — smaller and quieter so it never
+   competes with the type on paper. */
+.ideate-dir-diff {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Start states — honest counts, not process paragraphs. */
+.ideate-start-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+  max-width: 42rem;
+  line-height: 1.45;
+}
+.ideate-split-offer {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+.ideate-split-summary {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* ── Phone closed cards (~390px) ───────────────────────────────────────
+   Same hierarchy as desktop: specimen first, fact line, CTA, secondary.
+   Tighter packing only — no second design system, no horizontal scroll. */
+@media (max-width: 720px) {
+  .ideate-dir-card {
+    gap: var(--space-1);
+    padding: var(--space-2);
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .ideate-dir-card.is-compact .ideate-dir-diff {
+    font-size: var(--fs-1);
+  }
+
+  /* Closed: faces only on the evidence strip so the row stays short. */
+  .ideate-dir-card.is-compact .dir-ev-cited-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .ideate-dir-card.is-compact .dir-ev-strip {
+    gap: var(--space-1);
+  }
+  .ideate-dir-card.is-compact .dir-ev-cited {
+    gap: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .ideate-dir-card.is-compact .dir-ev-face {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .ideate-dir-go {
+    min-height: 2.75rem;
+  }
+
+  /* Edit open: restore full strip labels and room for the form. */
+  .ideate-dir-card.is-editing {
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
 }
 
 /* The add tile sits IN the row, so the shortlist reads as "two routes and room

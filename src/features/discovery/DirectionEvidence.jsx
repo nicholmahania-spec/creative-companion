@@ -210,14 +210,18 @@ export function EvidenceStrip({ items, letter, onCite, sayEmpty = true }) {
         <li className="dir-ev-cited" key={item.key}>
           <EvidenceFace item={item} />
           <span className="dir-ev-cited-label">{evidenceSummary(item)}</span>
-          <button
-            type="button"
-            className="dir-ev-drop"
-            aria-label={`Remove ${evidenceSummary(item)} from route ${letter}`}
-            onClick={() => onCite?.(item.key)}
-          >
-            ×
-          </button>
+          {/* Drop is optional so a closed card can show material without a
+             control on every tile — Edit hands the same `onCite` back. */}
+          {onCite ? (
+            <button
+              type="button"
+              className="dir-ev-drop"
+              aria-label={`Remove ${evidenceSummary(item)} from route ${letter}`}
+              onClick={() => onCite(item.key)}
+            >
+              ×
+            </button>
+          ) : null}
         </li>
       ))}
     </ul>

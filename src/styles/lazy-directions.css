@@ -268,3 +268,59 @@
 .dir-developing-state {
   color: var(--text-muted);
 }
+
+/* ── Direction preview (paper + two rungs + mark) ──────────────────────
+   Shared sheet: Identity may eventually host the same preview; keep styles
+   with the component that draws them, not only on the Directions view. */
+.dir-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  min-width: 0;
+  overflow: hidden;
+}
+.dir-preview-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.dir-preview-line {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dir-preview-line.is-fallback {
+  opacity: 0.45;
+}
+.dir-preview-mark {
+  display: block;
+  max-width: 4.5rem;
+  max-height: 3rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  align-self: flex-start;
+}
+.dir-preview-mark.is-text {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  opacity: 0.7;
+  max-width: none;
+}
+
+/* Phone closed cards — same paper and mark, less vertical run. */
+.dir-preview.is-compact {
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+.dir-preview.is-compact .dir-preview-type {
+  gap: 0;
+}
+.dir-preview.is-compact .dir-preview-mark {
+  max-width: 3.25rem;
+  max-height: 2.25rem;
+}
