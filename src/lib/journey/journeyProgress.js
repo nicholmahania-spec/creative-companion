@@ -178,6 +178,13 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
         project.feedbackNotes?.trim() ||
         (project.tagline?.trim() && mood.some((m) => m.inPack))
       )
+    case 'book': {
+      /* The builder writes `bookBuilder` the first time it is touched. Every
+         other signal the book could read — palette, type, mark — belongs to
+         Identity and would tick this stop for work done three stops earlier,
+         which is the auto-tick bug Touchpoints already shipped once. */
+      return !!(project.bookBuilder && typeof project.bookBuilder === 'object')
+    }
     case 'deliver': {
       /* Handoff or learnings = a real close. Brand-word checkboxes live under
          collapsed “Brand words” on Assets and must not silently gate the

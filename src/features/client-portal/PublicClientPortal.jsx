@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { clientFacingError } from '../../lib/client/clientFacingError'
-import { JOURNEY_STEPS } from '../../lib/journey/journey'
+import { portalPushableSteps } from '../../lib/journey/journey'
 import ClientBriefFields from '../brief/ClientBriefFields'
 import {
   fetchClientPortal,
@@ -303,7 +303,13 @@ export default function PublicClientPortal({ portalId }) {
     )
   }
 
-  const visibleSteps = JOURNEY_STEPS.filter((s) => portal.stepVisibility?.[s.id])
+  /* Pushable stops only, then visibility. Belt and braces on purpose: a
+     studio row saved before this filter existed could carry visibility for a
+     stop the portal must not offer, and the client is the one person who
+     cannot be told "ignore that button". */
+  const visibleSteps = portalPushableSteps().filter(
+    (s) => portal.stepVisibility?.[s.id]
+  )
 
   return (
     <div className="public-fill-page">

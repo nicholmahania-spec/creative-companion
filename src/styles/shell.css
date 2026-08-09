@@ -6314,6 +6314,24 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   grid-area: sidebar;
 }
 
+/* ONE PATH RENDERER PER VIEWPORT.
+   The sidebar's step list and the header's `.step-rail` both draw `pathSteps`
+   with the same ticks, and on desktop both were on screen at once — two maps
+   of one path, which DESIGN_GRAMMAR G3 bans and which got worse with seven
+   stops. Owner's call (2026-08-09): the rail is the persistent desktop path;
+   this list stays as the mobile/contextual one inside the drawer, where the
+   rail collapses to a single active pill and a full list is genuinely useful.
+   Below 768px the drawer rule wins and the list is visible again.
+
+   Only the list. The "This project" heading and the Desk row it sits above
+   stay on desktop — the heading still labels something, and Desk is the one
+   project destination the rail does not carry. */
+@media (min-width: 768px) {
+  .app-shell > .journey-sidebar .journey-bar-list {
+    display: none;
+  }
+}
+
 .app-shell > .main {
   grid-area: main;
 }

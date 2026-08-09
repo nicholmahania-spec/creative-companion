@@ -3464,11 +3464,30 @@ function App() {
         <DeployNotice />
       </header>
 
-      {/* Step rail — desktop only (CSS-hidden below 768px, where the drawer
-          still carries the step list). Answers "where am I" by position, and
-          the one button names its own destination so the seven-way choice
-          collapses to a zero-decision default. */}
-      {journeyActive && (
+      {/* THE PATH, DRAWN ONCE. Answers "where am I" by position, and the one
+          button names its own destination so the choice collapses to a
+          zero-decision default.
+
+          Two renderers of one list used to sit on screen together on desktop:
+          this rail and the sidebar's `.journey-bar-list`, both mapping
+          `pathSteps`, both drawing ticks. Owner's call (2026-08-09): the rail
+          is the persistent path, the bar-list is mobile/contextual. So the
+          bar-list is hidden from 768px up (shell.css) and this rail is no
+          longer gated on being ON a path view — otherwise hiding the other one
+          would leave the Desk with no map at all, which is the exact failure
+          `stopEstablished.js`'s header records having already been fixed once.
+
+          It follows the project, not the stage: path stops, the Desk and the
+          off-path Tools screens all keep it. Home, Clients and Settings are
+          studio-level and get nothing, because there is no project whose path
+          it could describe.
+
+          (Note for the next reader: the old comment here said "desktop only,
+          CSS-hidden below 768px". That was never true — the max-width:767px
+          block sets `display: flex !important` and moves it to the `hud` row,
+          showing the active pill. Mobile has always had both.) */}
+      {activeProject &&
+        (journeyActive || activeView === 'desk' || isToolsMenuView(activeView)) && (
         <nav className="step-rail" aria-label="Process position">
           <ol className="step-rail-list">
             {pathSteps.map((step) => {
@@ -3514,8 +3533,17 @@ function App() {
               (adhd-executive-function-advisor, 2026-08-05.) */}
           {offSteps.length > 0 && (
             <p className="step-rail-off">
+              {/* "A and B and C" was fine while a project could realistically
+                  have one or two stages off. With seven stops a logo job has
+                  three, and the bare `join(' and ')` read as a run-on. Comma
+                  list, final "and". */}
               <span className="step-rail-off-text">
-                {offSteps.map((s) => s.label).join(' and ')}{' '}
+                {offSteps.length === 1
+                  ? offSteps[0].label
+                  : `${offSteps
+                      .slice(0, -1)
+                      .map((s) => s.label)
+                      .join(', ')} and ${offSteps[offSteps.length - 1].label}`}{' '}
                 {offSteps.length === 1 ? 'is' : 'are'} off
               </span>
               {offSteps.map((s) => (
@@ -3668,6 +3696,21 @@ function App() {
             >
               <HeaderIcon name="people" />
               {toolsLabelForView('clients')}
+            </button>
+            {/* Library is cross-project — the same scope as Home, Calendar and
+                Clients above it — so it sits with them rather than inside the
+                project-scoped Tools drawer it used to live in. A move, not an
+                addition: the Tools entry is gone. */}
+            <button
+              type="button"
+              className="journey-goto-row"
+              onClick={() => {
+                setActiveView('assets')
+                setNavOpen(false)
+              }}
+            >
+              <HeaderIcon name="library" />
+              {toolsLabelForView('assets')}
             </button>
             <button
               type="button"
@@ -3873,9 +3916,17 @@ function App() {
                   palette: projectPalette,
                 }
                 const hasContent = pathStepHasContent(step.id, pathCtx)
+                /* `pathSteps`, not JOURNEY_STEPS. `idx` comes from the FILTERED
+                   list this loop is drawing, and indexing the unfiltered
+                   declaration with it reads a different array whenever a
+                   project type switches a stage off: an `expansion` project
+                   renders [Brief, Touchpoints, Delivery] but lit Touchpoints'
+                   connector from JOURNEY_STEPS[0] and Delivery's from
+                   JOURNEY_STEPS[1] — Research, a stage that project does not
+                   have. Invisible while most types resolved to the full set;
+                   adding Directions and Brand book widened the divergence. */
                 const prevLit =
-                  idx > 0 &&
-                  pathStepHasContent(JOURNEY_STEPS[idx - 1].id, pathCtx)
+                  idx > 0 && pathStepHasContent(pathSteps[idx - 1].id, pathCtx)
                 return (
                   <li
                     key={step.id}
@@ -4298,30 +4349,18 @@ function App() {
                 <p className="more-menu-group-label" id="tools-group-goto">
                   Go to
                 </p>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('book')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="book" /> {toolsLabelForView('book')}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('assets')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="library" /> {toolsLabelForView('assets')}
-              </button>
+              {/* BRAND BOOK AND IDEATE LEFT THIS MENU BECAUSE THEY ARE STOPS.
+                  Both were reachable only from here — the Brand Book Builder
+                  from this single call site in the whole app, while Assets
+                  exported its PDF without ever offering the screen that shapes
+                  it. They are declared in JOURNEY_STEPS now, so the path is
+                  their door and a second one here would be the duplicate entry
+                  point this menu already suffers from.
+
+                  Library left too, for a different reason: it is cross-project
+                  like Home and Clients, so it belongs in the sidebar's Studio
+                  band beside them rather than in a project-scoped drawer. It is
+                  still a Tool, not a stop — see TOOLS_MENU_VIEWS. */}
               <button
                 type="button"
                 role="menuitem"
@@ -4333,18 +4372,6 @@ function App() {
                 }}
               >
                 <HeaderIcon name="timer" /> Timer
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('spark')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="ideate" /> Ideate
               </button>
               <button
                 type="button"

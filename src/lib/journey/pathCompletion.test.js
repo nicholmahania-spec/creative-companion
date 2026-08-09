@@ -1,9 +1,9 @@
 /**
  * Finishing the path must be possible.
  *
- * The completion gates hard-coded `>= 7` — the step count from before Ideate
- * and Review moved under Tools — while the rows they counted came from
- * JOURNEY_STEPS, which has five. So `doneCount` topped out at 5 against a
+ * The completion gates hard-coded `>= 7` — a literal that happened to match
+ * an older stop count — while the rows they counted came from JOURNEY_STEPS,
+ * which had five at the time. So `doneCount` topped out at 5 against a
  * threshold of 7: `pathFull` and `packReady` were unreachable, the home badge
  * could only ever read "Next", and a finished project displayed 5/7.
  *
@@ -24,9 +24,15 @@ import { pathProgressSummary } from './journeyProgress'
  * real rules in journeyProgress.js, not guessed:
  *   define    all required brief fields filled (getDetectiveProgress)
  *   research  every starred pin has a "why"
+ *   ideate    a titled direction, a rough idea, or a spark pin
  *   design    a craft signal (wordmark) beyond the stock palette
  *   sketch    at least one touchpointApps note or “looks right”
+ *   book      the builder has been touched (`bookBuilder` exists)
  *   deliver   a handoff note or learnings
+ *
+ * `ideate` and `book` joined the path on 2026-08-09. The fixture gained the
+ * two fields their rules read; nothing else about this file changed, which is
+ * the point of asserting the relationship rather than the number.
  */
 const everythingDone = {
   project: {
@@ -39,8 +45,10 @@ const everythingDone = {
       deliverablesPicked: ['logo'],
       brandWords: 'warm, coastal',
     },
+    directions: [{ id: 'a', title: 'Harbor light' }],
     logoWordmark: 'Harbor',
     touchpointApps: { website: { note: 'Hero uses the wordmark' } },
+    bookBuilder: { print: { pageSize: 'a4' } },
     handoffNote: 'Everything is in the pack.',
   },
   tasks: [],

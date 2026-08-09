@@ -86,8 +86,11 @@ describe('journey is single-source', () => {
     }
   })
 
-  it('labels the Tools stages the path lists alongside its stops', () => {
-    expect(labelForStepId('ideate')).toBe('Ideate')
+  it('labels Review, the one stage that is still a Tool', () => {
+    /* `ideate` used to be asserted here too. It is a path stop now (labelled
+       "Directions", id unchanged so saved `pathDone.ideate` still resolves),
+       so its label comes from JOURNEY_STEPS and journey.test.js pins it.
+       Review is the only id left that labelForStepId answers from TOOL_IDS. */
     expect(labelForStepId('review')).toBe('Review')
   })
 
@@ -126,6 +129,34 @@ describe('journey is single-source', () => {
      exemption is listed rather than pattern-matched so that adding a stop to
      the path cannot silently widen it. */
   const NOT_PATH_STOPS = new Set(['views/ReviewView.jsx'])
+
+  /**
+   * A rendered loop must index the list it is rendering.
+   *
+   * The sidebar's flow-link read `JOURNEY_STEPS[idx - 1]` while `idx` came
+   * from the FILTERED `pathSteps` the loop was drawing. Those are different
+   * arrays for any project whose type switches a stage off: an `expansion`
+   * project renders [Brief, Touchpoints, Delivery] and lit Delivery's
+   * connector from JOURNEY_STEPS[1] — Research, a stage it does not have.
+   *
+   * It stayed invisible because most types resolved to the full set, so the
+   * two arrays agreed. Adding Directions and Brand book widened the gap, and
+   * the next stage added would widen it again — hence a guard rather than a
+   * one-line fix. Reading JOURNEY_STEPS by a computed index is banned; read
+   * the filtered list, or find by id.
+   */
+  it('no module indexes JOURNEY_STEPS with a loop counter', () => {
+    const offenders = []
+    for (const { rel, text } of files) {
+      const c = code(text)
+      const hit = /JOURNEY_STEPS\s*\[\s*(?!\d+\s*\])/.exec(c)
+      if (hit) offenders.push(`${rel}: ${c.slice(hit.index, hit.index + 40)}`)
+    }
+    expect(
+      offenders,
+      'Index the list being rendered (pathSteps), not the declaration.'
+    ).toEqual([])
+  })
 
   it('no path-continue button hardcodes where it goes', () => {
     const offenders = []

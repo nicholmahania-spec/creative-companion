@@ -1458,7 +1458,11 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
 
       <div className="bbb-body">
         <div className="bbb-panel">
-        <h1 className="bbb-panel__title">Brand book &mdash; source of truth</h1>
+        {/* Derived. This is a path stop now, so its heading is its stop label —
+            the same way every other stop announces itself, and the thing
+            `headingForStep` looks for. The old "— source of truth" appositive
+            went with it: it explained the screen to someone already on it. */}
+        <h1 className="bbb-panel__title">{labelForView('book')}</h1>
 
         {/* Named for what's inside rather than "Identity": the app's third
             path stop is already called that, and the heading is the only
@@ -1843,7 +1847,22 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
         </Section>
         </div>
 
-        <div className="bbb-canvas">
+        {/* Focusable, because it scrolls. `.bbb-canvas` scrolls on both axes
+            and had no keyboard access at all, so the pages were reachable by
+            mouse or trackpad only — axe `scrollable-region-focusable`, serious,
+            WCAG 2.1.1 and 2.1.3.
+
+            It is not a new defect; it is a newly VISIBLE one. axe-path walks
+            the path stops, and until the Brand book became one this screen had
+            never been audited. Same treatment `ReviewView` already gives its
+            scrolling pack preview: a named region that takes focus, so arrow
+            keys reach the pages. */}
+        <div
+          className="bbb-canvas"
+          role="region"
+          aria-label={`${labelForView('book')} pages`}
+          tabIndex={0}
+        >
           {canvasPages}
         </div>
       </div>

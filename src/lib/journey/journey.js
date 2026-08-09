@@ -1,12 +1,33 @@
 /**
- * Primary path — five stops using brand-identity process language
+ * Primary path — the stops using brand-identity process language
  * (Wheeler / Logo Design Love), ordered for ADHD: brief first, then research.
  *
- *   Strategy → Research → Identity → Touchpoints → Assets
+ *   Brief → Research → Directions → Identity → Touchpoints → Brand book → Delivery
  *
- * Step ids (define/research/sketch/design/deliver) stay stable for
- * pathStepHasContent + detective history; labels are user-facing.
- * Ideate (spark) and Review are Tools, not path siblings.
+ * Step ids stay stable for pathStepHasContent + detective history; labels are
+ * user-facing. IDS ARE DATA AND LABELS ARE UI — the same rule detectiveBrief.js
+ * states at the top, and the reason four of these ids no longer read like their
+ * label:
+ *
+ *   define   → "Brief"        (was "Strategy"; owner, 2026-08-09)
+ *   ideate   → "Directions"   (was a Tool called "Ideate")
+ *   sketch   → "Touchpoints"
+ *   deliver  → "Delivery"     (was "Assets"; owner, 2026-08-09)
+ *
+ * Renaming an id orphans `pathDone` / `pathReached` verdicts on every saved
+ * project, the `decisions.stage` values in `20260805140000`, and the SQL
+ * allowlist in `20260728021200`. Do not "fix" an id toward its label.
+ *
+ * WHY DIRECTIONS AND BRAND BOOK ARE STOPS NOW (owner, 2026-08-09). Both screens
+ * already existed and were reachable only from the Tools overlay — the Brand
+ * Book Builder from exactly one call site in the whole app. Neither is a new
+ * view; this declaration is the whole of their promotion, and `projectTypes.js`
+ * decides which projects see them, so a logo job still walks four stops.
+ * `projectTypes.js`'s own header asked for exactly this ("the finer stages are
+ * the next one").
+ *
+ * Review stays a Tool. It operates on the client relationship rather than
+ * producing a stage artifact, and it has no place in the production sequence.
  */
 
 export const JOURNEY_STEPS = [
@@ -14,7 +35,7 @@ export const JOURNEY_STEPS = [
     id: 'define',
     view: 'project',
     num: '1',
-    label: 'Strategy',
+    label: 'Brief',
     process: 'Clarifying strategy',
     plain:
       'Who is this for, and what should the brand do? Client brief — one clear goal is enough to continue.',
@@ -31,13 +52,30 @@ export const JOURNEY_STEPS = [
     plain:
       'Gather refs and notes. Star up to 6 for the client shortlist — that is your direction.',
     enough: 'Enough: a few pins, or starred pins that each say why.',
+    nextView: 'spark',
+    nextLabel: 'Go to Directions',
+  },
+  {
+    /* Was the Tools view `spark`, labelled "Ideate". The id is unchanged
+       because it is already stored: `pathDone.ideate` on saved projects,
+       `runningTodoStages`, `processGuide`, `journeyProgress`'s condition, and
+       the SQL allowlist in 20260728021200 all key off it. Only the label and
+       its position in this list are new. */
+    id: 'ideate',
+    view: 'spark',
+    num: '3',
+    label: 'Directions',
+    process: 'Exploring directions',
+    plain:
+      'Name two or three routes. Rough list first, then the ones worth drawing.',
+    enough: 'Enough: one titled route. Three is the point, one is a start.',
     nextView: 'brand',
     nextLabel: 'Go to Identity',
   },
   {
     id: 'design',
     view: 'brand',
-    num: '3',
+    num: '4',
     label: 'Identity',
     process: 'Designing identity',
     plain:
@@ -49,27 +87,80 @@ export const JOURNEY_STEPS = [
   {
     id: 'sketch',
     view: 'flow',
-    num: '4',
+    num: '5',
     label: 'Touchpoints',
     process: 'Creating touchpoints',
     plain:
       'Where the brand shows up — one note per surface from the brief.',
     enough: 'Enough: one surface noted or marked looks right. Rest is optional.',
+    nextView: 'book',
+    nextLabel: 'Go to Brand book',
+  },
+  {
+    /* The Brand Book Builder, which had one entry point in the entire app
+       (the Tools overlay) while Assets exported its PDF without ever offering
+       the screen that shapes it. New id, and the only one here that is new —
+       nothing had ever stored a `book` step, so nothing is orphaned by it.
+
+       IT IS DELIBERATELY NOT PUSHABLE TO A CLIENT YET. `book` is absent from
+       the SQL allowlist in 20260728021200, so `respond_client_portal_step`
+       would reject an approval on it and the client would be told their link
+       is invalid. Adding it there is a migration, and this phase makes none —
+       see PORTAL_PUSHABLE_STEP_IDS below, which is what the portal reads. */
+    id: 'book',
+    view: 'book',
+    num: '6',
+    label: 'Brand book',
+    process: 'Documenting the system',
+    plain: 'Lay out the book from what the project already holds.',
+    enough: 'Enough: the pages read in order and say the right things.',
     nextView: 'finish',
-    nextLabel: 'Go to Assets',
+    nextLabel: 'Go to Delivery',
   },
   {
     id: 'deliver',
     view: 'finish',
-    num: '5',
-    label: 'Assets',
-    process: 'Managing assets',
+    num: '7',
+    label: 'Delivery',
+    process: 'Delivering the brand',
     plain: 'Preview the pack, write a handoff, download. One ship job.',
     enough: 'Enough: download the right files; handoff says what is included.',
     nextView: null,
     nextLabel: null,
   },
 ]
+
+/**
+ * The stops a studio may push to a client for approval.
+ *
+ * NOT simply "every stop", and the difference is load-bearing in two ways.
+ *
+ * 1. THE DATABASE. `respond_client_portal_step` validates the incoming step
+ *    against a hardcoded list (`20260728021200_harden_portal_rpcs.sql`). A stop
+ *    the path declares but the RPC rejects means the client clicks Approve and
+ *    is told "This link isn't valid" — a failure that points nowhere near its
+ *    cause. `book` is not on that list, and adding it is a migration.
+ *
+ * 2. THE PRODUCT RULE. Approval attaches to a showable artifact, never to a
+ *    bare stage name (DESIGN_GRAMMAR G10.5). The portal today renders a label
+ *    and two buttons with nothing to look at; promoting two more stops into
+ *    that would have doubled down on the defect rather than routing around it.
+ *    Directions and Brand book earn their place here when the portal can show
+ *    the composition and the book — which is the next phase's work, not this
+ *    one's.
+ *
+ * Derived from the ids rather than written out, so a stop removed from the
+ * path cannot linger here.
+ */
+const NOT_PUSHABLE = new Set(['ideate', 'book'])
+export const PORTAL_PUSHABLE_STEP_IDS = Object.freeze(
+  JOURNEY_STEPS.map((s) => s.id).filter((id) => !NOT_PUSHABLE.has(id))
+)
+
+/** The steps a studio may push, in path order. */
+export function portalPushableSteps() {
+  return JOURNEY_STEPS.filter((s) => PORTAL_PUSHABLE_STEP_IDS.includes(s.id))
+}
 
 /** One-line job + enough for path page status (never restate labels elsewhere). */
 export function pathJobLines(stepId) {
@@ -101,8 +192,9 @@ export function toolsLabelForView(view) {
   switch (view) {
     case 'home':
       return 'Home'
-    case 'spark':
-      return 'Ideate'
+    /* `spark` and `book` are path stops now — labelForView finds them in
+       JOURNEY_STEPS before it ever reaches here, so cases for them would be
+       unreachable copies of a label declared above. */
     case 'review':
       return 'Review'
     case 'insights':
@@ -111,8 +203,6 @@ export function toolsLabelForView(view) {
       return 'Calendar'
     case 'clients':
       return 'Clients'
-    case 'book':
-      return 'Brand book'
     case 'assets':
       /* "Library", not "Asset library".
          Path stop 5 is labelled **Assets** (view `finish`), and this Tool is
@@ -137,16 +227,20 @@ export function toolsLabelForView(view) {
  * The sidebar "Tools · …" pill must only show here — never "Tools · Home".
  */
 export const TOOLS_MENU_VIEWS = [
-  'spark',
   'review',
   'insights',
-  'book',
-  /* A Tool, deliberately not a sixth path stop. Every stop carries a
-     completion tick, and a library is never finished — a tick on it would be
-     a permanent open loop in the one place a designer stores finished work.
-     It is also a reference surface entered with a question rather than a
-     stage you pass through, and it is the mid-project return point, so it
-     must be reachable from anywhere rather than sitting at the end. */
+  /* A Tool, deliberately not a path stop. Every stop carries a completion
+     tick, and a library is never finished — a tick on it would be a permanent
+     open loop in the one place a designer stores finished work. It is also a
+     reference surface entered with a question rather than a stage you pass
+     through, and it is the mid-project return point, so it must be reachable
+     from anywhere rather than sitting at the end.
+
+     It is no longer in the Tools *menu* either: Library is cross-project, like
+     Home and Clients, so it sits in the sidebar's Studio band beside them. It
+     stays in this list because this list answers "is this view off-path",
+     which it still is — the sidebar pill and the return-to-path chrome both
+     read it. */
   'assets',
   'concept',
 ]
@@ -214,6 +308,8 @@ export function labelForView(view) {
 export function labelForStepId(id) {
   const step = JOURNEY_STEPS.find((s) => s.id === id)
   if (step) return step.label
-  const TOOL_IDS = { ideate: 'Ideate', review: 'Review' }
+  /* `ideate` is a path stop now, so the lookup above resolves it and an entry
+     here would be an unreachable second name for it. */
+  const TOOL_IDS = { review: 'Review' }
   return TOOL_IDS[id] || id || 'Work'
 }

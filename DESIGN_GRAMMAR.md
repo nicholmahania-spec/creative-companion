@@ -13,23 +13,42 @@ If a screen fights these, the screen is wrong — not the grammar.
 
 ---
 
-## G1 — Path (five stops)
+## G1 — Path (seven stops)
 
-| # | Label | View | Job |
-|---|--------|------|-----|
-| 1 | **Strategy** | `project` | Client + brief. Form-only — no mood board. |
-| 2 | **Research** | `studio` | One wall of refs; ★ up to 6 for the pack. |
-| 3 | **Identity** | `brand` | Persistent editable artboard + Mark · Color · Type · Handover. |
-| 4 | **Touchpoints** | `flow` | Applications from the brief; note or “looks right”. |
-| 5 | **Assets** | `finish` | Preview leave-behind → one download + handoff. |
+| # | Label | Step id | View | Job |
+|---|--------|---------|------|-----|
+| 1 | **Brief** | `define` | `project` | Client + brief. Form-only — no mood board. |
+| 2 | **Research** | `research` | `studio` | One wall of refs; ★ up to 6 for the pack. |
+| 3 | **Directions** | `ideate` | `spark` | Rough dump → A/B/C routes. Composition by reference, never a copy. |
+| 4 | **Identity** | `design` | `brand` | Persistent editable artboard + Mark · Color · Type · Handover. |
+| 5 | **Touchpoints** | `sketch` | `flow` | Applications from the brief; note or “looks right”. |
+| 6 | **Brand book** | `book` | `book` | Lay out the document from what the project already holds. |
+| 7 | **Delivery** | `deliver` | `finish` | Preview leave-behind → one download + handoff. |
 
-**The Tool called `assets` is *Library*, not "Asset library".** Stop 5 is
-**Assets** (view `finish`) and the Tool is view `assets` — the ids run the
-opposite way to the labels, so two nav entries a word apart were unreadable.
-The stop's label is settled and client-facing; the Tool moved.
+**IDS ARE DATA, LABELS ARE UI.** Four ids no longer read like their label —
+`define`→Brief, `ideate`→Directions, `sketch`→Touchpoints, `deliver`→Delivery.
+Renaming an id orphans `pathDone`/`pathReached` on every saved project, the
+`decisions.stage` values in `20260805140000`, and the SQL allowlist in
+`20260728021200`. Fix the label; leave the key. (Same rule as
+`detectiveBrief.js`.)
+
+**The Tool called `assets` is *Library*.** Stop 7 was called **Assets** until
+2026-08-09, one word from the Library Tool, with the view ids running the
+opposite way to the labels. Renaming the stop to **Delivery** dissolves the
+collision — the stop and the Tool now share no word at all.
+
+**Which stops a project walks is `projectTypes.js`, not this table.** Seven is
+the full Brand Identity path; a logo job walks four. Never show all stops as an
+unfinished list — show where you are and what is next (`PHASES.md`, Weick).
+
+**Not every stop is client-pushable.** Directions and Brand book are withheld
+(`PORTAL_PUSHABLE_STEP_IDS`): the portal cannot yet render their artifact, and
+G10.5 forbids an approval attached to a bare stage name. `book` is also absent
+from the RPC allowlist, so pushing it would tell the client their link is
+invalid.
 
 **Derive, never restate.** Use `JOURNEY_STEPS`, `labelForStepId`, `labelForView`, `PATH_STEP_COUNT`.  
-Ideate (`spark`) and Review are **Tools**, not path siblings. Timer, Calendar, Clients, Settings, Brand Book Builder — Tools.
+Review is a **Tool**, not a path sibling. Timer, Calendar, Clients, Settings, Library — Tools.
 
 **G1.1 One job per path page** — writing / wall / artboard / applications / ship. No Desk density on writing surfaces.  
 **G1.2 Full main width** — shell `.main` fills the grid cell on every view (no 780px island). Reading measure lives on form/prose columns inside the page, not on `.main`.  
@@ -84,15 +103,23 @@ Icon-only is a **closed list** (close, nav, arrows when paged thing is named, se
 
 | Surface | Recipe |
 |---------|--------|
-| **Strategy** | Title · quiet status · brief form · path continue |
+| **Brief** | Title · quiet status · brief form · path continue |
 | **Research** | Title · framed wall / drop plane · pack stars |
+| **Directions** | Title · rough dump · A/B/C cards · continue |
 | **Identity** | Subnav · artboard (left on wide, FIRST on mobile) beside one tool screen · continue |
 | **Touchpoints** | Title · application cards · continue |
-| **Assets** | Title · preview (full page fit) · download + handoff · secondary below |
+| **Brand book** | Title · page preview beside its controls |
+| **Delivery** | Title · preview (full page fit) · download + handoff · secondary below |
 | **Desk** | Artboard + pack pins + brief · rail: client · path gap primary · resume secondary if different |
 | **Tools** | One tool job; return to path via chrome |
 
 **Ban:** second map of the same chapters, start-here chip ramps that jump to the first field, scoreboards (“0 of 35”), dual equal Next.
+
+**One path renderer per viewport.** `.step-rail` is the persistent desktop
+path — it follows the project across stops, the Desk and Tools screens, not
+just path views. `.journey-bar-list` is the mobile/contextual one and is hidden
+from 768px up. Both read `pathSteps`; drawing both at once was the banned
+second map.
 
 ---
 

@@ -414,7 +414,7 @@ export default function DeskView({
             )}
           </section>
 
-          <section className="desk-panel desk-brief" aria-label="Brief">
+          <section className="desk-panel desk-brief" aria-label={labelForStepId('define')}>
             <div className="desk-panel-head">
               <span className="desk-eyebrow">
                 {labelForStepId('define')} · the brief

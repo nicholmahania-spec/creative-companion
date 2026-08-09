@@ -5,6 +5,7 @@ import {
   skipIfCloud,
   stepByIdIn,
   unlockAndOnboard,
+  labelForStep,
 } from './helpers.js'
 
 /**
@@ -22,11 +23,12 @@ import {
  * whether its controls are wired to something real.
  */
 
-/* The path is FIVE steps, not seven, and they are not called what the older
-   specs assume: Strategy / Research / Identity / Touchpoints / Assets. A
-   completed step's button name gains a "✓" prefix, hence the loose regex.
-   `path-smoke.spec.js` still looks for "Step 1: Define" and a 7-step nav,
-   which is why it fails on main as well as here. */
+/* Step buttons are matched by their CURRENT label, derived — never typed.
+   This comment used to assert "the path is FIVE steps ... Strategy / Research
+   / Identity / Touchpoints / Assets" and the calls below spelled those words,
+   so the 2026-08-09 rename (Strategy→Brief, Assets→Delivery) broke them while
+   the app was correct. A completed step's button name gains a "✓" prefix,
+   hence the loose match rather than an exact one. */
 async function openStep(page, pattern) {
   await page.getByRole('button', { name: pattern }).first().click()
   await page.waitForTimeout(700)
@@ -112,7 +114,7 @@ test.describe('phase surfaces render and respond', () => {
   }) => {
     const gate = await unlockAndOnboard(page, { name: 'Deliver Project' })
     skipIfCloud(test, gate)
-    await openStep(page, /Assets/i)
+    await openStep(page, new RegExp(labelForStep('deliver'), 'i'))
 
     const details = page.locator('.deliver-case-study')
     await expect(details).toBeVisible()

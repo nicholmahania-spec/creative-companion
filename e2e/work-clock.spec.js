@@ -86,13 +86,20 @@ test('the clock stops on a view that is not a project stage', async ({
 
   /* A tool is not a stage. STAGE_VIEWS is derived from JOURNEY_STEPS, so this
      is the boundary the clock actually draws: time in a tool is not stage
-     work, and the chip goes with it. */
-  await openTool(page, 'Ideate')
+     work, and the chip goes with it.
+
+     REVIEW, not Ideate. This used to open Ideate, which was a Tool and is a
+     path stop as of 2026-08-09 — so the clock now correctly KEEPS RUNNING
+     there and the old vehicle no longer demonstrates the boundary at all.
+     Review is genuinely off-path (it acts on the client relationship, not on
+     a stage artifact), so it is the honest example. */
+  await openTool(page, 'Review')
   await expect(chip(page)).toHaveCount(0)
 
   /* And it comes back on return — the clock resumes rather than being spent.
-     Back via the keyboard shortcut, not the rail: a tool view does not render
-     the process rail, so there is nothing there to click. */
+     Via the keyboard shortcut. (The rail is rendered on Tools views now too,
+     so the rail would also work; the shortcut is left as-is because it is the
+     narrower dependency.) */
   await goToStepByKey(page, 'sketch')
   await expect(chip(page)).toBeVisible({ timeout: 10000 })
 })

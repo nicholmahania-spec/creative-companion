@@ -3,7 +3,6 @@ import {
   headingForStep,
   openBriefFieldChapter,
   openIdentitySubstep,
-  openTool,
   pathNav,
   skipIfCloud,
   stepByIdIn,
@@ -119,10 +118,11 @@ test.describe('Soft Signal demo', () => {
       page.locator('.research-grid .research-pin-card').first()
     ).toBeVisible({ timeout: 8000 })
 
-    /* Ideate is a Tool now, not stop 3 — reached through the Tools menu so
-       this keeps testing the screen instead of dropping it. */
-    await openTool(page, /^Ideate$/i)
-    await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
+    /* Back on the path as stop 3 (2026-08-09), so it is reached the way every
+       other stop is and its Tools entry is gone. Reuses the `path` locator
+       this test already opened above. */
+    await stepByIdIn(path, 'ideate').click()
+    await expect(headingForStep(page, 'ideate').first()).toBeVisible()
     await expect(page.locator('#dir-title-a')).toHaveValue(/.+/, {
       timeout: 5000,
     })

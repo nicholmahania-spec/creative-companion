@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, skipIfCloud } from './helpers.js'
+import {
+  pathNav,
+  skipIfCloud,
+  stepByIdIn,
+  unlockAndOnboard,
+} from './helpers.js'
 
 /**
  * The brand book "Flip through it" overlay must have a keyboard way out.
@@ -16,8 +21,10 @@ test('the flipbook overlay traps focus and closes on Escape', async ({
   const gate = await unlockAndOnboard(page, { name: 'Flipbook Keyboard' })
   skipIfCloud(test, gate)
 
-  await page.locator('#tools-menu-button').click()
-  await page.getByRole('menuitem', { name: /Brand book/i }).click()
+  /* The Brand book is path stop 6 as of 2026-08-09, not a Tools entry — that
+     menu item is gone, along with the only door it used to have. */
+  const path = await pathNav(page)
+  await stepByIdIn(path, 'book').click()
 
   const flip = page.getByRole('button', { name: /Flip through it/i })
   await expect(flip).toBeVisible({ timeout: 15000 })

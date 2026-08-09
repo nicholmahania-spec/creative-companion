@@ -1,6 +1,9 @@
 /**
- * Ideate (Tools) — diverge first: volume and range over quality.
+ * Directions (path stop 3) — diverge first: volume and range over quality.
  * Shortlist A/B/C only after many rough ideas. Not a single “winning” concept page.
+ *
+ * Was the Tools view "Ideate". Promoted to a path stop 2026-08-09; the step id
+ * stays `ideate` because saved projects key `pathDone` off it.
  */
 import { useState, useEffect } from 'react'
 import { labelForStepId } from '../lib/journey/journey'
@@ -53,7 +56,9 @@ export default function SparkView({
   const chosen = dirs.find((d) => d.chosen && String(d.title || '').trim())
   const canSend = !!chosen
   const phase = getProcessPhase('ideate')
-  const title = 'Ideate'
+  /* Derived, never restated — this screen is a path stop now and its name is
+     declared in journey.js. It read 'Ideate' while the rail said 'Directions'. */
+  const title = labelForStepId('ideate')
   const goalLine = String(projectGoal || '').trim()
 
   // Persisted diverge dump (project.roughIdeas) — only the draft line is session-local

@@ -58,21 +58,23 @@ describe('processGuide — 5 path steps + Tools coaching', () => {
   })
 })
 
-describe('journey — five path stops', () => {
-  it('has five path stops', () => {
-    expect(JOURNEY_STEPS).toHaveLength(5)
-    /* Order is a product decision that changes (Strategy moved ahead of
-       Research in v1.53.7). What must hold is that the path is five distinct,
-       well-formed stops — not one particular sequence. */
+describe('journey — path stops are distinct and well-formed', () => {
+  it('every stop has a unique id, a view and a label', () => {
+    /* Deliberately NOT a count. Order and length are both product decisions
+       that have now changed twice — Strategy moved ahead of Research in
+       v1.53.7, and Directions and Brand book joined the path on 2026-08-09 —
+       and this file's job is the shape of a stop, not the size of the set.
+       journey.test.js owns the exact sequence, in one place. */
     const ids = JOURNEY_STEPS.map((s) => s.id)
-    expect(new Set(ids).size).toBe(5)
+    expect(new Set(ids).size).toBe(JOURNEY_STEPS.length)
     expect(ids.every((id) => typeof id === 'string' && id)).toBe(true)
     expect(JOURNEY_STEPS.every((s) => s.view && s.label)).toBe(true)
   })
 
-  it('maps path views; Ideate/Review are off-path', () => {
+  it('maps path views; Review and the utilities stay off-path', () => {
     expect(journeyIdForView('project')).toBe('define')
-    expect(journeyIdForView('spark')).toBe(null)
+    /* `spark` is on the path now — it is Directions. */
+    expect(journeyIdForView('spark')).toBe('ideate')
     expect(journeyIdForView('review')).toBe(null)
     expect(journeyIdForView('insights')).toBeNull()
   })

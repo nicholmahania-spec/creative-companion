@@ -53,7 +53,8 @@ const HELPER_FALLBACK = BODY_SRC || FAB_SRC
 
 /**
  * Design buddy — UI/UX & graphic design coach (scripted system persona).
- * Process: Define → Research → Ideate → Sketch → Design → Review → Deliver.
+ * Process: the spine is derived from JOURNEY_STEPS (see PROCESS_SPINE) — do
+ * not restate the stops here; this comment has been wrong twice already.
  * Break Kit: meds, todos, tasks packed into forced-break windows.
  */
 /** Map process phase ids → app views */

@@ -79,11 +79,13 @@ test.describe('Process walk (artifacts)', () => {
     await star.click()
     await expect(star).toHaveAttribute('aria-pressed', 'true')
 
-    // 3 Ideate — A/B titles + why, choose the winner
-    /* Ideate is a Tool now, not stop 3 — reached through the Tools menu so
-       this keeps testing the screen instead of dropping it. */
-    await openTool(page, /^Ideate$/i)
-    await expect(page.getByRole('heading', { name: 'Ideate' })).toBeVisible()
+    // 3 Directions — A/B titles + why, choose the winner
+    /* Back on the path as stop 3 (2026-08-09), so it is reached the way every
+       other stop is. It was a Tool for a while and this walked the Tools menu
+       to get to it; that route is gone, along with the menu entry. The step id
+       is still `ideate`, which is why `stepByIdIn` finds it. */
+    await stepByIdIn(path, 'ideate').click()
+    await expect(headingForStep(page, 'ideate').first()).toBeVisible()
     await page.getByRole('button', { name: /^Opposite$/i }).click()
     await page.locator('#dir-title-a').fill('Quiet editorial')
     await page.locator('#dir-title-b').fill('Warm product toolkit')

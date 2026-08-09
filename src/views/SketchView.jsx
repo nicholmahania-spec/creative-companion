@@ -11,7 +11,11 @@ import {
   useRef,
   useEffect,
 } from 'react'
-import { labelForStepId } from '../lib/journey/journey'
+import {
+  JOURNEY_STEPS,
+  PATH_STEP_COUNT,
+  labelForStepId,
+} from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/journey/processGuide'
 import { formatShortDate, urgencyLabel } from '../lib/dates'
@@ -508,8 +512,11 @@ export default function SketchView(props) {
 
         {ideateDirs.length > 0 && (
           <details className="sketch-ideate-details">
-            <summary>From Ideate ({ideateDirs.length})</summary>
-            <div className="sketch-ideate-strip" aria-label="From Ideate">
+            <summary>{`From ${labelForStepId('ideate')} (${ideateDirs.length})`}</summary>
+            <div
+              className="sketch-ideate-strip"
+              aria-label={`From ${labelForStepId('ideate')}`}
+            >
               {ideateDirs.map((d) => (
                 <button
                   key={d.id}
@@ -661,9 +668,14 @@ export default function SketchView(props) {
                 Got it
               </button>
             </div>
+            {/* Derived. This sentence was a hand-typed copy of the path —
+                "Five path stops: Strategy → … → Assets. Ideate and Review live
+                under Tools." — and by 2026-08-09 every clause of it was wrong:
+                the count, two of the names, and the claim about where Ideate
+                lives. It named retired labels, so the single-source guard,
+                which only knows current ones, never saw it. */}
             <p className="product-card-title" style={{ marginBottom: 0 }}>
-              Five path stops: Strategy → Research → Identity → Touchpoints →
-              Assets. Ideate and Review live under Tools.
+              {`${PATH_STEP_COUNT} path stops: ${JOURNEY_STEPS.map((s) => s.label).join(' → ')}. ${labelForStepId('review')} lives under Tools.`}
             </p>
           </section>
         )}
