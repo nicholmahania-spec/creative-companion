@@ -1431,7 +1431,12 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
         {/* Sheet / Edge space / print-shop bleed — the three controls the
             top-bar summary states as a sentence. Named stops replace the old
             free-typed margin percent ("named stops, not number fields"). */}
-        <Section title="Setup" defaultOpen>
+        {/* Closed on arrival. The top bar already states this as a sentence
+            — "A4 · Roomy edge · no bleed" — so an open panel repeating it in
+            three controls is the summary and the controls competing for the
+            same 320px. Open it when you are changing the sheet, which is once
+            a project, not once a visit. */}
+        <Section title="Setup">
           <ChipRow
             label="Sheet"
             value={printSettings.pageSize}
@@ -1663,7 +1668,12 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
 
         {/* Book spine: which pages are in / not yet. Starts open so the map
             of the book is not hidden behind a bare label. */}
-        <Section title="In this book" defaultOpen>
+        {/* Closed on arrival. This is a 15-row list of the pages, and the
+            pages themselves are the thing filling the canvas to the right —
+            so open by default it was the tallest item in the rail and a second
+            copy of what the document already shows. It stays for reordering
+            and locking, one click away. */}
+        <Section title="In this book">
           <ul className="bbb-pagelist">
             {effectiveOrder.map((id, index) => {
               const el = pageElementMap.get(id)
