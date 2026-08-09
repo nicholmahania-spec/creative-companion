@@ -155,6 +155,19 @@ test.describe('Process walk (artifacts)', () => {
     await page
       .locator('#handoff-note')
       .fill('Brand book PDF + mark direction. Contact for questions.')
+    /* Learned is behind a disclosure now — it is ship polish, not required to
+       deliver (`coreGaps` filters it out), so it sits with the other optional
+       blocks instead of always-open at package weight.
+
+       Opened via the element rather than a click on its summary. This test is
+       about the deliver FIELDS accepting content; clicking the summary at the
+       bottom of a long page makes it also a test of sticky-chrome geometry,
+       and it failed that way — the summary resolved visible and stable while
+       the footer row and the header's work-clock chip took the pointer in
+       turn. `phase-surfaces` already covers opening a disclosure by click. */
+    await page.locator('#deliver-learned').evaluate((el) => {
+      el.open = true
+    })
     await page
       .locator('#learnings-note')
       .fill('What worked: detective sheet first. Next: more real photos.')

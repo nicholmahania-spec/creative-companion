@@ -120,6 +120,11 @@ export default function DeliverView({
       return
     }
     if (c.id === 'learnings') {
+      /* Open the disclosure first. `learnings` is not in `coreGaps`, so no
+         current call site reaches this — but a closed <details> hides its
+         content from focus entirely, and a gap button that silently does
+         nothing is the failure mode this whole screen exists to avoid. */
+      document.getElementById('deliver-learned')?.setAttribute('open', '')
       focusPathGapTarget('#learnings-note')
       return
     }
@@ -183,6 +188,46 @@ export default function DeliverView({
           </p>
         )}
 
+        {/* THE REST OF THE GAPS, BESIDE THE VERDICT THAT COUNTS THEM.
+            "Still thin · +3 more" names the first gap at the top; this is the
+            rest of that sentence, and it used to render AFTER the package
+            tree — so "what else is missing" sat below the whole file listing,
+            several screens from the line that said how many there were. The
+            order the screen has to read in is ready → gaps → ship. */}
+        {coreGaps.length > 1 && (
+          <div className="deliver-gaps assets-gaps">
+            <p className="field-label assets-gaps-label">Also open</p>
+            <ul className="pack-ready-list deliver-gap-list">
+              {coreGaps.slice(1, 6).map((c) => (
+                <li key={c.id} className="is-miss">
+                  <button
+                    type="button"
+                    className="pack-ready-fix deliver-gap-btn"
+                    onClick={() => jumpGap(c)}
+                  >
+                    {c.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="path-continue-row deliver-primary-ship">
+          <button
+            type="button"
+            className="btn btn-primary work-path-next"
+            onClick={() => runExport(logoOnly ? 'mark' : 'pdf')}
+          >
+            {logoOnly ? 'Download logo files' : 'Download brand book PDF'}
+          </button>
+        </div>
+
+        {/* BELOW THE BUTTON IT DESCRIBES, NOT BETWEEN THE VERDICT AND IT.
+            This is still the only moment the credit is visible, which is the
+            whole reason it was pulled out of the collapsed "Page setup" block,
+            and both of its states are unchanged. It simply no longer stands
+            between "is this ready" and the control that ships it. */}
         {/* The credit, next to the button that sends it — the only moment it
             is ever visible. It used to live inside the collapsed "Page setup ·
             print size" block below, labelled "Footer credit", where the owner
@@ -235,15 +280,6 @@ export default function DeliverView({
           )}
         </div>
 
-        <div className="path-continue-row deliver-primary-ship">
-          <button
-            type="button"
-            className="btn btn-primary work-path-next"
-            onClick={() => runExport(logoOnly ? 'mark' : 'pdf')}
-          >
-            {logoOnly ? 'Download logo files' : 'Download brand book PDF'}
-          </button>
-        </div>
 
         <div className="field-block deliver-note-block">
           <label className="field-label" htmlFor="handoff-note">
@@ -288,24 +324,6 @@ export default function DeliverView({
           flashToast={flashToast}
         />
 
-        {coreGaps.length > 1 && (
-          <div className="deliver-gaps assets-gaps">
-            <p className="field-label assets-gaps-label">Also open</p>
-            <ul className="pack-ready-list deliver-gap-list">
-              {coreGaps.slice(1, 6).map((c) => (
-                <li key={c.id} className="is-miss">
-                  <button
-                    type="button"
-                    className="pack-ready-fix deliver-gap-btn"
-                    onClick={() => jumpGap(c)}
-                  >
-                    {c.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </section>
 
       {/* The delivery moment. Sits directly under the ship ticket because it
@@ -372,27 +390,53 @@ export default function DeliverView({
           </div>
         </details>
 
-        <div className="field-block deliver-note-block">
-          <label className="field-label" htmlFor="learnings-note">
-            Learned
-          </label>
-          <textarea
-            id="learnings-note"
-            className="field-textarea deliver-focus-field deliver-note"
-            rows={2}
-            value={activeProject?.learnings || ''}
-            onChange={(e) => updateBrandField('learnings', e.target.value)}
-            placeholder="What worked · what next"
-          />
-        </div>
+        {/* Collapsed, because this file already says it is not required to
+            ship: `coreGaps` filters out `handoff` and `learnings` as "ship
+            polish". The rule existed and the layout contradicted it — a bare
+            always-open textarea sitting at the same weight as the package.
+            Same `deliver-advanced` disclosure the four blocks around it use.
+
+            ON THE JUMP-TO-GAP ROUTE: content inside a CLOSED <details> is not
+            focusable, so `focusPathGapTarget('#learnings-note')` would land on
+            nothing. That is unreachable today — every `jumpGap` call site
+            reads `coreGaps`, which filters `learnings` out — so this is a
+            latent trap rather than a live bug, and `jumpGap` opens the panel
+            before focusing so it stays that way. */}
+        <details className="deliver-advanced" id="deliver-learned">
+          <summary>Learned</summary>
+          <div className="field-block deliver-note-block">
+            <label className="field-label sr-only" htmlFor="learnings-note">
+              Learned
+            </label>
+            <textarea
+              id="learnings-note"
+              className="field-textarea deliver-focus-field deliver-note"
+              rows={2}
+              value={activeProject?.learnings || ''}
+              onChange={(e) => updateBrandField('learnings', e.target.value)}
+              placeholder="What worked · what next"
+            />
+          </div>
+        </details>
 
         <CaseStudyExport
           activeProject={activeProject}
           flashToast={flashToast}
         />
 
-        <section className="assets-stationery" aria-label="Stationery">
-          <h2 className="assets-secondary-title">Stationery</h2>
+        {/* Collapsed. This was the only always-open block left in the
+            secondary column and by far the tallest — four contact fields, the
+            contacts list, and four preview cards with their own downloads,
+            several screens of it, sitting at the same weight as the package
+            it comes after. Five of its six siblings were already behind a
+            `deliver-advanced` summary; this is the sixth.
+
+            The heading becomes the summary rather than being duplicated by
+            it. StationeryKit itself is untouched, its lazy Suspense boundary
+            still wraps it, and Address / Phone / Email / Website keep exactly
+            the ownership they had — see the note in the PR. */}
+        <details className="deliver-advanced assets-stationery">
+          <summary>Stationery</summary>
           <Suspense fallback={<div className="panel-hint">Loading…</div>}>
             <StationeryKit
               activeProject={activeProject}
@@ -404,7 +448,7 @@ export default function DeliverView({
               flashToast={flashToast}
             />
           </Suspense>
-        </section>
+        </details>
 
         {brandWordList.length > 0 && (
           <details className="deliver-advanced">
