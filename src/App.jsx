@@ -2988,8 +2988,14 @@ function App() {
    * has to return the whole situation, not just the state.
    */
   const handleDeleteProjectById = (id, name) => {
-    if (!id) return
-    const wasActive = id === activeProjectId
+    /* `id == null`, not `!id`. A project whose id is 0, '' or NaN is falsy,
+       and the old guard returned here — no deletion, no toast, no undo, no
+       error. The button did nothing at all and said nothing about it, which
+       is indistinguishable from a broken app. Only a genuinely absent id is
+       nothing to act on; every other value goes to the store, which reports
+       honestly when it cannot find the project. */
+    if (id == null) return
+    const wasActive = sameProjectId(id, activeProjectId)
     const prevView = activeView
     const result = deleteProject(id)
     if (!result.ok) {

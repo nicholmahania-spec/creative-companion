@@ -8,6 +8,7 @@ import {
 import { attributesFromBrief } from '../lib/brand/strategySeed'
 import { BRAND_ROLE_KEYS } from '../lib/color'
 import { liftMeasuredRows } from './workLogSeparation'
+import { sameProjectId } from '../lib/journey/journeyProgress'
 import { revisionSummary, roundCharge } from '../lib/revisions'
 import { FOCUS_MASK_MIN_PCT, deviceTheme } from '../lib/uiPrefs'
 import { create } from 'zustand'
@@ -2514,7 +2515,13 @@ const useAppStore = create(
        */
       deleteProject: (id) => {
         const { projects, tasks, moodItems, currentProjectId } = get()
-        const remaining = projects.filter((p) => p.id !== id)
+        /* `sameProjectId`, not `!==`. Ids arrive as numbers on old projects
+           and strings on new ones, and a round trip through import or a
+           `<select>` can change which. Strict inequality made `NaN !== NaN`
+           true as well, so a project whose id had gone bad could never be
+           removed — the filter kept it and this reported "not found".
+           One comparison rule for the whole app; see journeyProgress.js. */
+        const remaining = projects.filter((p) => !sameProjectId(p.id, id))
         if (remaining.length === projects.length) {
           return { ok: false, error: 'Project not found' }
         }
@@ -2539,23 +2546,22 @@ const useAppStore = create(
           set({
             projects: [],
             currentProjectId: null,
-            tasks: tasks.filter((t) => t.projectId !== id),
-            moodItems: moodItems.filter((m) => m.projectId !== id),
+            tasks: tasks.filter((t) => !sameProjectId(t.projectId, id)),
+            moodItems: moodItems.filter((m) => !sameProjectId(m.projectId, id)),
           })
           return { ok: true, empty: true, restore }
         }
-        const nextId =
-          currentProjectId === id
-            ? (remaining.find((p) => !p.archived) || remaining[0]).id
-            : currentProjectId
+        const nextId = sameProjectId(currentProjectId, id)
+          ? (remaining.find((p) => !p.archived) || remaining[0]).id
+          : currentProjectId
         set({
           projects: remaining.map((p) => ({
             ...p,
-            active: p.id === nextId,
+            active: sameProjectId(p.id, nextId),
           })),
           currentProjectId: nextId,
-          tasks: tasks.filter((t) => t.projectId !== id),
-          moodItems: moodItems.filter((m) => m.projectId !== id),
+          tasks: tasks.filter((t) => !sameProjectId(t.projectId, id)),
+          moodItems: moodItems.filter((m) => !sameProjectId(m.projectId, id)),
         })
         return { ok: true, empty: false, restore }
       },
@@ -3798,8 +3804,10 @@ const useAppStore = create(
           breakKit: Array.isArray(persisted.breakKit)
             ? persisted.breakKit
             : [],
+          /* Empty is valid here too: a migration may add what an old record
+             lacks, it may not decide that "no projects" is damage. */
           projects:
-            Array.isArray(persisted.projects) && persisted.projects.length
+            Array.isArray(persisted.projects)
               ? persisted.projects.map((p) => ({
                   ...p,
                   /* v5: the work clock used to write into `timeLog`, the
@@ -3894,7 +3902,12 @@ const useAppStore = create(
             })
             state.moodItems = next
           }
-          if (!Array.isArray(state.projects) || !state.projects.length) {
+          /* EMPTY IS VALID DATA — the same rule the direction slots follow.
+             A zero-length array is a designer who deleted their last project,
+             not a malformed workspace, and reseeding it put a blank "My
+             project" on the desk they had just cleared. Only an ABSENT or
+             non-array value is repaired. */
+          if (!Array.isArray(state.projects)) {
             const blank = blankWorkspaceState()
             state.projects = blank.projects
             state.currentProjectId = blank.currentProjectId
