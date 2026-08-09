@@ -123,7 +123,9 @@ test.describe('Soft Signal demo', () => {
        this test already opened above. */
     await stepByIdIn(path, 'ideate').click()
     await expect(headingForStep(page, 'ideate').first()).toBeVisible()
-    await expect(page.locator('#dir-title-a')).toHaveValue(/.+/, {
+    /* Whatever route the walk above made is drawn; an empty screen would show
+       only the Add tile. */
+    await expect(page.locator('.ideate-dir-name').first()).toHaveValue(/.+/, {
       timeout: 5000,
     })
   })

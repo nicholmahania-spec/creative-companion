@@ -13,6 +13,7 @@
 import { useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import { DELIVERABLE_OPTIONS } from '../lib/brief/detectiveBrief'
+import { decisionLabelToShow } from '../lib/decisionLog'
 import { downloadBlob, slugifyFilename } from '../lib/book/exportFiles'
 import {
   buildCaseStudy,
@@ -114,7 +115,9 @@ export default function CaseStudyExport({ activeProject, flashToast }) {
                     {d.breaksRule ? '◆' : '◇'}
                   </span>
                   <span className="case-study-decision-text">
-                    {[d.label, d.title].filter(Boolean).join(' · ')}
+                    {[decisionLabelToShow(d), d.title]
+                      .filter(Boolean)
+                      .join(' · ')}
                     {d.why ? ` — ${d.why}` : ''}
                   </span>
                 </button>

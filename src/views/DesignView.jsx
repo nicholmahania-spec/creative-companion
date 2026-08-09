@@ -63,6 +63,10 @@ import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import ReadabilityRows from '../features/palette/ReadabilityRows'
 import MarkColourCheck from '../features/brand/MarkColourCheck'
 import TypeSpecimen from '../features/brand/TypeSpecimen'
+import DirectionInDevelopment, {
+  DirectionPartOffer,
+} from '../features/discovery/DirectionInDevelopment'
+import { directionComposition } from '../lib/brand/directionComposition'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
@@ -568,6 +572,15 @@ export default function DesignView({
     window.scrollTo({ top: 0, behavior: 'auto' })
   }, [identitySubstep])
 
+  /* What the route being developed points at. Resolved, never copied — and a
+     reference the designer deleted resolves to null rather than to whatever
+     Identity happens to hold now. */
+  const routeParts = useMemo(() => {
+    const id = activeProject?.activeDirectionId
+    const dir = (activeProject?.directions || []).find((d) => d?.id === id)
+    return dir ? directionComposition(activeProject, dir) : null
+  }, [activeProject])
+
   const paletteRoles = useMemo(
     () => mapPaletteRoles(projectPalette),
     [projectPalette]
@@ -828,6 +841,17 @@ export default function DesignView({
                 )
               })}</nav>
 
+            {/* Which route this is being made for. Small and contextual on
+                purpose — the answer is one letter and one line, and the
+                designer should not have to hold it in their head across the
+                move from Directions to here. Renders nothing at all when no
+                direction is being developed. */}
+            <DirectionInDevelopment
+              project={activeProject}
+              flashMicro={flashMicro}
+              onOpenDirections={() => setActiveView?.('spark')}
+            />
+
             <div className="design-workspace">
             {/* THE ARTBOARD IS THE WORKSPACE, not a preview of it.
                 Persistent on every tool screen, and editable: the words a
@@ -890,6 +914,24 @@ export default function DesignView({
                 <h2 className="design-section-title">Mark</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
+
+              {/* The route's mark, offered beside the concepts it would be
+                  chosen from. Writes through `chooseLogoConcept` — the action
+                  this screen already uses — so nothing gains a second home. */}
+              <DirectionPartOffer
+                project={activeProject}
+                slot="mark"
+                label={routeParts?.mark?.label || (routeParts?.mark ? 'a mark' : '')}
+                inUse={routeParts?.mark?.chosen === true}
+                onUse={() => {
+                  chooseLogoConcept(routeParts.mark.id)
+                  flashMicro?.('Mark from this route')
+                }}
+              >
+                {routeParts?.mark?.image ? (
+                  <img className="dir-offer-mark" src={routeParts.mark.image} alt="" />
+                ) : null}
+              </DirectionPartOffer>
 
               {/* ADD A CONCEPT IS THE FIRST CONTROL ON THE SCREEN.
                   It used to be a file input at the very bottom, under six
@@ -1662,6 +1704,30 @@ export default function DesignView({
                 <h2 className="design-section-title">Type</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
+
+              <DirectionPartOffer
+                project={activeProject}
+                slot="type"
+                label={
+                  routeParts?.typePairing
+                    ? [routeParts.typePairing.heading, routeParts.typePairing.body]
+                        .filter(Boolean)
+                        .join(' + ')
+                    : ''
+                }
+                inUse={
+                  !!routeParts?.typePairing &&
+                  String(routeParts.typePairing.heading || '') ===
+                    String(activeProject?.typeHeading || '') &&
+                  String(routeParts.typePairing.body || '') ===
+                    String(activeProject?.typeBody || '')
+                }
+                onUse={() => {
+                  updateBrandField('typeHeading', routeParts.typePairing.heading || '')
+                  updateBrandField('typeBody', routeParts.typePairing.body || '')
+                  flashMicro?.('Type from this route')
+                }}
+              />
 
               {/* The font check comes FIRST and is the useful part here. A
                   specimen set in a substitute misleads the client rather

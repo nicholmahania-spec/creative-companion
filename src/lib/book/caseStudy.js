@@ -30,6 +30,8 @@
  *      relative share say more about how work went and invite no arithmetic.
  */
 
+import { decisionLabelToShow } from '../decisionLog'
+
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
 
 const clean = (v) => String(v || '').trim()
@@ -93,7 +95,7 @@ export function buildCaseStudy({ project = {}, deliverableLabels = {} } = {}) {
   const process = (Array.isArray(project.decisionLog) ? project.decisionLog : [])
     .filter((e) => e && (clean(e.title) || clean(e.why)))
     .map((e) => ({
-      label: clean(e.label),
+      label: decisionLabelToShow(e),
       title: clean(e.title),
       why: clean(e.why),
       /* Marked after the fact, never asked for at capture. See
@@ -182,6 +184,9 @@ export function caseStudyMarkdown(cs) {
   if (cs.process.length) {
     out.push('## How I got there', '')
     for (const p of cs.process) {
+      /* `label` is empty for every direction entry now, and dropped for the
+         ones written before that — a stored letter names a position the route
+         may no longer hold. */
       const head = [p.label, p.title].filter(Boolean).join(' · ')
       /* The rule-breaking article's actual principle: every example breaks a
          convention BECAUSE breaking it is the message. So a marked decision

@@ -187,25 +187,44 @@
   outline-offset: 1px;
 }
 
-/* Ideate A/B/C direction cards */
-
-.ideate-directions {
+/* ── Routes ────────────────────────────────────────────────────────────
+   Only routes that exist are drawn, plus one add tile, so the row is a
+   shortlist rather than a worksheet. `auto-fit` keeps two routes at a
+   comfortable width instead of stretching them into the space three would
+   have taken. */
+.ideate-routes {
+  /* ONE COLUMN ON A PHONE. `auto-fit` with a zero floor kept three routes side
+     by side at 390px — three 110px columns of clipped controls. */
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.65rem;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  align-items: start;
+}
+@media (min-width: 721px) {
+  .ideate-routes {
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  }
 }
 
 .ideate-dir-card {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   background: var(--bg-muted);
 }
 
+/* OPEN AND CHOSEN ARE DIFFERENT FACTS, so they are different marks. Open is
+   the route the evidence band is filling — a heavy leading edge. Chosen is the
+   decision — a ring and a tick. A route can be both. */
+.ideate-dir-card.is-open {
+  border-left-width: 3px;
+  border-left-color: var(--text-primary);
+  background: var(--bg-surface);
+}
 .ideate-dir-card.is-chosen {
   border-color: var(--accent-growth, #565656);
   box-shadow: 0 0 0 1px var(--accent-growth, #565656);
@@ -214,14 +233,74 @@
 .ideate-dir-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
-
 .ideate-dir-letter {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   letter-spacing: 0.02em;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0;
+  min-width: 24px;
+  min-height: 24px;
+  text-align: left;
+}
+.ideate-dir-chosen {
+  color: var(--accent-growth, #565656);
+  font-size: 0.9rem;
+}
+.ideate-dir-remove {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  min-width: 24px;
+  min-height: 24px;
+}
+.ideate-dir-name {
+  font-size: var(--fs-2);
+}
+.ideate-dir-why {
+  font-size: var(--fs-1);
+}
+.ideate-dir-go {
+  width: 100%;
+}
+.ideate-dir-quiet {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--fs-1);
+}
+
+/* The add tile sits IN the row, so the shortlist reads as "two routes and room
+   for one more" rather than as a list with a button under it. */
+.ideate-dir-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 7rem;
+  padding: var(--space-3);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+.ideate-dir-add:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+.ideate-dir-add-plus {
+  font-size: var(--fs-4);
+  line-height: 1;
 }
 
 .ideate-progress {
@@ -269,191 +348,13 @@
   line-height: 1.35;
 }
 
-.ideate-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 65fr) minmax(12rem, 35fr);
-  gap: 0.85rem;
-  align-items: start;
-}
+/* Removed with the old Directions workflow: `.ideate-layout`,
+   `.ideate-directions.is-locked-3`, `.ideate-shortlist`, `.ideate-spark-tray`,
+   `.spark-card-stem`, `.ideate-rough*`, `.ideate-send*`. They styled a
+   two-column screen with a rough-idea dump and a prompt tray — a creativity
+   framework the designer had to operate before reaching a direction. The route
+   row above replaces all of it. */
 
-.ideate-directions.is-locked-3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.35rem;
-}
-
-.ideate-directions.is-locked-3 .ideate-dir-card {
-  min-height: 100%;
-  background: var(--ts-panel, #FFFFFF);
-  border: 1px solid var(--ts-border, #E7E7E7);
-  border-radius: var(--radius);
-  padding: 0.65rem;
-  transition: opacity 0.15s ease, border-color 0.15s ease;
-}
-
-.ideate-directions.is-locked-3 .ideate-dir-card.is-chosen {
-  border-color: var(--dopamine);
-  border-width: 1.5px;
-}
-
-.ideate-directions.is-locked-3 .ideate-dir-card.has-title:not(.is-chosen) {
-  border-color: #D3D3D3;
-}
-
-.ideate-dir-letter {
-  display: inline-grid;
-  place-items: center;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  padding: 0 0.25rem;
-  border-radius: var(--radius-sm) !important;
-  background: var(--ts-canvas, #F5F5F5);
-  color: var(--ts-ink, #1A1A1A);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.ideate-directions:focus-within .ideate-dir-card:not(:focus-within) {
-  opacity: 0.25 !important;
-  filter: none !important;
-}
-
-.ideate-directions:focus-within .ideate-dir-card:focus-within {
-  opacity: 1 !important;
-  border-color: var(--ts-focus) !important;
-  box-shadow: none !important;
-}
-
-.ideate-spark-tray {
-  margin: 0;
-  position: sticky;
-  top: 4.5rem;
-  background: var(--ts-panel, #FFFFFF);
-  border: 1px solid var(--ts-border, #E7E7E7);
-  border-radius: var(--radius);
-  box-shadow: none;
-}
-
-.ideate-spark-tray .spark-card {
-  border-radius: var(--radius);
-  border: 1px solid var(--ts-border, #E7E7E7);
-  background: var(--ts-canvas, #F5F5F5);
-  max-height: 8rem;
-  overflow: hidden;
-}
-
-.ideate-spark-tray .spark-card p {
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.4;
-  color: var(--ts-ink, #1A1A1A);
-}
-
-.ideate-spark-tray .spark-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.65rem;
-}
-
-@media (max-width: 900px) {
-.ideate-layout {
-    grid-template-columns: 1fr;
-  }
-
-.ideate-spark-tray {
-    position: relative;
-    top: auto;
-    order: 2;
-  }
-
-.ideate-shortlist {
-    order: 1;
-  }
-
-.ideate-directions.is-locked-3 {
-    grid-template-columns: 1fr;
-  }
-}
-
-.spark-card-stem p {
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.35;
-  margin: 0;
-  color: var(--ts-ink, #1A1A1A);
-}
-.ideate-spark-tray .brand-section-label {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-
-/* Ideate diverge → shortlist */
-.ideate-rough {
-  margin: 0 0 var(--space-5);
-  padding: var(--space-4);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--bg-elevated);
-}
-.ideate-rough-label {
-  margin: 0 0 0.2rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
-.ideate-rough-hint {
-  margin: 0 0 var(--space-3);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-.ideate-rough-list {
-  list-style: none;
-  margin: 0 0 var(--space-3);
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-.ideate-rough-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--bg-muted);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-}
-.ideate-rough-add {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-.ideate-send-help {
-  margin: 0.35rem 0 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-.ideate-send-help.is-ready {
-  color: var(--positive, #15803d);
-  font-weight: 600;
-}
-.ideate-spark-tray {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  padding: var(--space-3);
-  background: transparent;
-}
 .ideate-progress {
   font-size: 0.9rem;
   font-weight: 600;
@@ -463,6 +364,25 @@
    Three rows: what this direction is made of. The parts are references to
    artifacts that live elsewhere, so every row carries "Open" to the workspace
    that owns it rather than an editor of its own. */
+/* Closed: what the route is made of, at a glance. */
+.dir-comp.is-quiet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+}
+.dir-quiet-part {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.dir-quiet-part.is-gone {
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
 .dir-comp {
   margin-top: var(--space-3);
   padding-top: var(--space-3);
@@ -523,7 +443,30 @@
 }
 .dir-slot-pick {
   font-size: var(--fs-1);
-  max-width: 9rem;
+  max-width: 100%;
+  /* A <select> refuses to shrink below its widest option unless told to, and
+     a face pairing is a long option. Without this it burst out of the card
+     and sat on top of the next direction. */
+  min-width: 0;
+}
+
+/* THREE CARDS SIDE BY SIDE LEAVE ABOUT 200px EACH. A slot's label, its
+   artifact and its controls cannot share one line at that width — the picker
+   overflowed the card and the rows collided. Inside the shortlist the
+   controls get their own row; the wide single-column layout above still
+   reads left to right. */
+.ideate-dir-card .dir-slot {
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  row-gap: var(--space-1);
+}
+.ideate-dir-card .dir-slot-acts {
+  grid-column: 2;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: 0.7rem;
+}
+.ideate-dir-card .dir-slot-label {
+  font-size: 0.7rem;
 }
 
 @media (max-width: 640px) {
@@ -533,4 +476,12 @@
   .dir-slot-acts {
     grid-column: 2;
   }
+}
+
+/* Developing is not chosen, so it must not look chosen. Chosen keeps the
+   ring; developing gets a leading edge — a different signal for a different
+   fact, rather than two weights of the same one. */
+.ideate-dir-card.is-developing {
+  border-left-width: 3px;
+  border-left-color: var(--text-primary);
 }

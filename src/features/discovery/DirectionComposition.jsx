@@ -1,6 +1,9 @@
+import { makeRef, refKey } from '../../lib/artifacts/artifactRef'
 import {
   COMPOSITION_SLOTS,
   SLOT_HOME,
+  artifactChoiceLabel,
+  artifactsOfKind,
   directionComposition,
   slotSummary,
 } from '../../lib/brand/directionComposition'
@@ -11,8 +14,15 @@ import {
  * CHOOSE, DEVELOP, SWAP are separate on purpose. Choosing a direction marks
  * the route — it does not overwrite the project's mark, faces or palette, so a
  * designer can compare three compositions without one of them silently
- * becoming the brand. Developing opens the workspace that owns the part.
- * Swapping repoints a reference. This component only does the last two.
+ * becoming the brand. Developing opens the workspace that owns the part, at
+ * the sub-screen that owns it. Swapping repoints a reference and creates no
+ * content. This component only does the last two.
+ *
+ * SWAP USED TO BE HALF A VERB. Every slot could be pointed at the project's
+ * mark by id, but palette and type could only ever be pointed at whatever the
+ * project held at that moment — so a snapshot captured on A could not be given
+ * to B. The picker below lists the snapshots the project already has, which is
+ * a swap; "Use current" still takes a new one, which is a capture.
  */
 
 const LABEL = { mark: 'Mark', typePairing: 'Type', palette: 'Color' }
@@ -40,15 +50,21 @@ function Filled({ slot, artifact }) {
 export default function DirectionComposition({
   project,
   direction,
+  editable = true,
   onCapture,
   onClear,
-  onOpen,
+  onSwap,
+  onDevelop,
 }) {
   const parts = directionComposition(project, direction)
   const marks = project?.logoConcepts || []
   /* Nothing made yet is not a composition — see captureDirectionFrom. The
      button is disabled rather than hidden so the row still says what it is
-     waiting for, and "Open" next to it is the way to go and make it. */
+     waiting for, and "Develop" next to it is the way to go and make it. */
+  const snapshots = {
+    palette: artifactsOfKind(project, 'palette'),
+    typePairing: artifactsOfKind(project, 'typePairing'),
+  }
   const canCapture = {
     palette: (project?.palette || []).length > 0,
     typePairing: !!(
@@ -57,8 +73,32 @@ export default function DirectionComposition({
     ),
   }
 
+  /* A CLOSED CARD IS FOR COMPARING, NOT EDITING. Three labelled rows with a
+     picker, a capture link and a Develop link apiece is thirteen controls per
+     card and nine of them belong to a route the designer is not working on.
+     Closed, the composition is what it looks like; the controls come back the
+     moment the route is opened. */
+  if (!editable) {
+    if (!parts.filled && !parts.empty.length) return null
+    return (
+      <div className="dir-comp is-quiet" aria-label="What this route is made of">
+        {COMPOSITION_SLOTS.map((slot) =>
+          parts[slot] ? (
+            <span className="dir-quiet-part" key={slot}>
+              <Filled slot={slot} artifact={parts[slot]} />
+            </span>
+          ) : parts.empty.includes(slot) ? (
+            <span className="dir-quiet-part is-gone" key={slot}>
+              {LABEL[slot]} no longer there
+            </span>
+          ) : null
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div className="dir-comp" role="group" aria-label={`Direction ${direction.label} composition`}>
+    <div className="dir-comp" role="group" aria-label="Composition">
       {COMPOSITION_SLOTS.map((slot) => {
         const artifact = parts[slot]
         const lost = parts.empty.includes(slot)
@@ -83,7 +123,7 @@ export default function DirectionComposition({
               {slot === 'mark' ? (
                 <select
                   className="dir-slot-pick"
-                  aria-label={`Mark for direction ${direction.label}`}
+                  aria-label="Mark for this route"
                   value={artifact?.id || ''}
                   onChange={(e) =>
                     e.target.value
@@ -99,30 +139,43 @@ export default function DirectionComposition({
                   ))}
                 </select>
               ) : (
-                <button
-                  type="button"
-                  className="text-link"
-                  disabled={!canCapture[slot]}
-                  onClick={() => onCapture?.(slot)}
-                >
-                  Use current
-                </button>
-              )}
-              {artifact && slot !== 'mark' && (
-                <button
-                  type="button"
-                  className="text-link"
-                  onClick={() => onClear?.(slot)}
-                >
-                  Clear
-                </button>
+                <>
+                  {snapshots[slot].length > 0 && (
+                    <select
+                      className="dir-slot-pick"
+                      aria-label={`${LABEL[slot]} for this route`}
+                      value={artifact?.id || ''}
+                      onChange={(e) =>
+                        e.target.value
+                          ? onSwap?.(slot, refKey(makeRef(slot, e.target.value)))
+                          : onClear?.(slot)
+                      }
+                    >
+                      <option value="">—</option>
+                      {snapshots[slot].map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {artifactChoiceLabel(slot, a)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    type="button"
+                    className="text-link"
+                    disabled={!canCapture[slot]}
+                    onClick={() => onCapture?.(slot)}
+                  >
+                    Use current
+                  </button>
+                </>
               )}
               <button
                 type="button"
                 className="text-link"
-                onClick={() => onOpen?.(SLOT_HOME[slot].view)}
+                aria-label={`Develop ${LABEL[slot]}`}
+                onClick={() => onDevelop?.(SLOT_HOME[slot])}
               >
-                Open
+                Develop
               </button>
             </span>
           </div>

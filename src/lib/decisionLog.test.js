@@ -47,13 +47,31 @@ describe('appendDecision', () => {
 })
 
 describe('formatDecisionLine', () => {
-  it('formats chose + because', () => {
+  it('names the route and says why', () => {
+    const line = formatDecisionLine({ title: 'Quiet teal', why: 'calm clinic' })
+    expect(line).toBe('Quiet teal — because calm clinic')
+  })
+
+  it('never prints the A/B/C letter, even from old stored entries', () => {
+    /* THE LETTER IS A POSITION, NOT A NAME. It is derived from where a route
+       sits among the routes that exist, so deleting one reflows the rest — and
+       a line reading "Chose B" then names a place C no longer holds. Entries
+       written before this carry a frozen `label`; the reader drops it rather
+       than the data being migrated, so an old log reads correctly too. */
     const line = formatDecisionLine({
       label: 'B',
+      directionId: 'b',
       title: 'Quiet teal',
       why: 'calm clinic',
     })
-    expect(line).toBe('Chose B: Quiet teal — because calm clinic')
+    expect(line).toBe('Quiet teal — because calm clinic')
+    expect(line).not.toMatch(/\bChose\b|\bB\b/)
+  })
+
+  it('falls back to the title alone, never to the id', () => {
+    expect(formatDecisionLine({ directionId: 'c', title: 'Warm paper' })).toBe(
+      'Warm paper'
+    )
   })
 })
 

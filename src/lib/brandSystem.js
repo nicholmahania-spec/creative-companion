@@ -363,11 +363,9 @@ export function decisionLineFromPack(pack = {}) {
   if (fromLog) return fromLog
   const chosen = (pack.directions || []).find((d) => d.chosen)
   if (chosen) {
-    return formatDecisionLine({
-      label: chosen.label,
-      title: chosen.title,
-      why: chosen.note,
-    })
+    /* No `label`. The A·B·C letter is a position on the Directions screen, not
+       a name — and it reflows when a route is deleted. */
+    return formatDecisionLine({ title: chosen.title, why: chosen.note })
   }
   return ''
 }

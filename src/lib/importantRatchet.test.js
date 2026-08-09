@@ -59,7 +59,10 @@ const BUDGET = {
   'src/styles/lazy-define.css': 18,
   'src/styles/lazy-deliver.css': 18,
   'src/styles/lazy-mood.css': 7,
-  'src/styles/lazy-ideate.css': 8,
+  /* 8 → 2: the rough-idea dump and the prompt tray took six overrides with
+     them when the Directions workflow was cut back to evidence and routes.
+     The budget only moves DOWN. */
+  'src/styles/lazy-ideate.css': 2,
   // All six are inside `prefers-reduced-motion` — an accessibility override
   // that has to beat whatever animation it is switching off. These are the
   // legitimate use and are not a reduction target.
