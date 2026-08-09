@@ -452,6 +452,32 @@ export function blankDirection(slotId) {
 }
 
 /**
+ * Is this project id tombstoned?
+ *
+ * A DELETION IS A FACT, AND IT HAS TO BE STORED AS ONE. Removing the project
+ * from `projects` records only that this device does not have it, which is
+ * indistinguishable from "this device has not received it yet" — and that
+ * ambiguity is exactly what the sync resolved in the project's favour, pulling
+ * it back from a remote row that nothing ever deletes.
+ *
+ * Compared with `sameProjectId` because ids arrive as numbers on old projects
+ * and strings on new ones, and the cloud round trip goes through JSON.
+ */
+export function isTombstoned(deletedProjects, id) {
+  return (Array.isArray(deletedProjects) ? deletedProjects : []).some((d) =>
+    sameProjectId(d?.id, id)
+  )
+}
+
+/** Add a tombstone, unless one is already there. `{ id, at }` and nothing
+ *  else — the project's contents are being deleted, not archived here. */
+export function withTombstone(deletedProjects, id, at) {
+  const list = Array.isArray(deletedProjects) ? deletedProjects : []
+  if (isTombstoned(list, id)) return list
+  return [...list, { id, at: at || new Date().toISOString() }]
+}
+
+/**
  * A project's directions as a mutable copy, with `dirId`'s record guaranteed
  * to exist — created in slot order when the slot is empty.
  *
@@ -603,6 +629,7 @@ export function blankWorkspaceState() {
     currentProjectId: project.id,
     tasks: [],
     moodItems: [],
+    deletedProjects: [],
     breakKit: [],
     theme: deviceTheme(),
     /* 'auto' until the user actually toggles. Without this there is no way
@@ -748,10 +775,17 @@ export const PERSISTED_KEYS = [
      a workspace without them. Notes about a client are exactly the kind of
      thing nobody notices is gone until they need it. */
   'clientRecords',
+  /* Tombstones. Deleting a project has to mean deleting it everywhere, and
+     the only durable record that a deletion HAPPENED is this list — the
+     project itself is gone, so absence cannot be told apart from "this
+     device has not seen it yet". Persisted, and therefore carried between
+     devices by the same workspace payload everything else travels in. */
+  'deletedProjects',
 ]
 
 const PERSIST_DEFAULTS = {
   breakKit: [],
+  deletedProjects: [],
   oppositeIndex: 0,
   sparksTried: 0,
   portalSeen: {},
@@ -2361,6 +2395,7 @@ const useAppStore = create(
           portalSeen: s.portalSeen || {},
           themeSource: s.themeSource,
           clientRecords: s.clientRecords || {},
+          deletedProjects: s.deletedProjects || [],
         }
       },
 
@@ -2405,11 +2440,29 @@ const useAppStore = create(
           if (!base.designVersion) base.designVersion = 'v1'
           return base
         })
+        /* TOMBSTONES UNION, THEY DO NOT REPLACE.
+           A pull is not a restore. Replacing the list with the payload's copy
+           would silently drop a tombstone this device made while offline —
+           the incoming workspace simply predates that deletion — and the
+           project would come straight back. Deletion is sticky in one
+           direction only: an explicit undo lifts it, a sync never does. */
+        const mergedDeleted = (Array.isArray(data.deletedProjects)
+          ? data.deletedProjects
+          : []
+        ).reduce(
+          (acc, d) => (d?.id == null ? acc : withTombstone(acc, d.id, d.at)),
+          Array.isArray(get().deletedProjects) ? get().deletedProjects : []
+        )
+        /* …and a project the payload still carries but this device has
+           tombstoned does not come back in through the front door either. */
+        const kept = projects.filter((p) => !isTombstoned(mergedDeleted, p.id))
+        const live = kept.length ? kept : projects
+
         const currentProjectId =
           data.currentProjectId &&
-          projects.some((p) => p.id === data.currentProjectId)
+          live.some((p) => p.id === data.currentProjectId)
             ? data.currentProjectId
-            : projects[0].id
+            : live[0].id
         const sparkIndex =
           typeof data.sparkIndex === 'number' ? data.sparkIndex : 0
         const oppositeIndex =
@@ -2417,11 +2470,12 @@ const useAppStore = create(
         const sparksTried =
           typeof data.sparksTried === 'number' ? data.sparksTried : 0
         set({
-          projects: projects.map((p) => ({
+          projects: live.map((p) => ({
             ...p,
-            active: p.id === currentProjectId,
+            active: sameProjectId(p.id, currentProjectId),
           })),
           currentProjectId,
+          deletedProjects: mergedDeleted,
           tasks: data.tasks,
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
           breakKit: Array.isArray(data.breakKit) ? data.breakKit : [],
@@ -2514,7 +2568,8 @@ const useAppStore = create(
        * was safe.
        */
       deleteProject: (id) => {
-        const { projects, tasks, moodItems, currentProjectId } = get()
+        const { projects, tasks, moodItems, currentProjectId, deletedProjects } =
+          get()
         /* `sameProjectId`, not `!==`. Ids arrive as numbers on old projects
            and strings on new ones, and a round trip through import or a
            `<select>` can change which. Strict inequality made `NaN !== NaN`
@@ -2532,15 +2587,24 @@ const useAppStore = create(
         const prevTasks = tasks
         const prevMoodItems = moodItems
         const prevCurrentId = currentProjectId
+        /* The fourth slice. This closure's own docstring said deletion touched
+           exactly three and that it must grow if that changed — it has.
+           Undo is the ONE explicit "restore a deleted project" action the app
+           has (`restoreVersion` cannot: it requires the version's project to
+           be the current one, and a deleted project cannot be current). So
+           undo lifts the tombstone; nothing else ever does. */
+        const prevDeleted = deletedProjects
         const restore = () => {
           set({
             projects: prevProjects,
             tasks: prevTasks,
             moodItems: prevMoodItems,
             currentProjectId: prevCurrentId,
+            deletedProjects: prevDeleted,
           })
           return { ok: true }
         }
+        const nextDeleted = withTombstone(deletedProjects, id)
 
         if (remaining.length === 0) {
           set({
@@ -2548,6 +2612,7 @@ const useAppStore = create(
             currentProjectId: null,
             tasks: tasks.filter((t) => !sameProjectId(t.projectId, id)),
             moodItems: moodItems.filter((m) => !sameProjectId(m.projectId, id)),
+            deletedProjects: nextDeleted,
           })
           return { ok: true, empty: true, restore }
         }
@@ -2562,6 +2627,7 @@ const useAppStore = create(
           currentProjectId: nextId,
           tasks: tasks.filter((t) => !sameProjectId(t.projectId, id)),
           moodItems: moodItems.filter((m) => !sameProjectId(m.projectId, id)),
+          deletedProjects: nextDeleted,
         })
         return { ok: true, empty: false, restore }
       },
@@ -3754,7 +3820,7 @@ const useAppStore = create(
           }
         },
       },
-      version: 8,
+      version: 9,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
@@ -3803,6 +3869,13 @@ const useAppStore = create(
           moodItems,
           breakKit: Array.isArray(persisted.breakKit)
             ? persisted.breakKit
+            : [],
+          /* v9: additive. A workspace that predates tombstones has deleted
+             nothing THAT WE KNOW OF — absent means no record, which is []. It
+             does not mean "no deletions ever happened", and nothing here
+             pretends otherwise: an empty list simply blocks nothing. */
+          deletedProjects: Array.isArray(persisted.deletedProjects)
+            ? persisted.deletedProjects
             : [],
           /* Empty is valid here too: a migration may add what an old record
              lacks, it may not decide that "no projects" is damage. */
@@ -3883,6 +3956,9 @@ const useAppStore = create(
           })
           if (!Array.isArray(state.moodItems)) state.moodItems = []
           if (!Array.isArray(state.breakKit)) state.breakKit = []
+          /* Only a missing list is filled in. A tombstone list that is there
+             is never touched on load — a reload is not a restore. */
+          if (!Array.isArray(state.deletedProjects)) state.deletedProjects = []
           // Normalize boardOrder for pins that predate board drag
           if (state.moodItems?.length) {
             const byProject = new Map()

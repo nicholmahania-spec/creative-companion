@@ -134,7 +134,11 @@ let queued = false
  * @param {(projects: Array<object>) => void} deps.setProjects  replace them
  * @returns {Promise<{ok: boolean, pushed: number, pulled: number, conflicts: number, reason?: string}>}
  */
-export async function syncAllProjects({ getProjects, setProjects }) {
+export async function syncAllProjects({
+  getProjects,
+  setProjects,
+  getDeletedProjects = () => [],
+}) {
   if (!isSupabaseConfigured() || !supabase) {
     return {
       ok: false,
@@ -159,7 +163,7 @@ export async function syncAllProjects({ getProjects, setProjects }) {
     let result
     do {
       queued = false
-      result = await runSync({ getProjects, setProjects })
+      result = await runSync({ getProjects, setProjects, getDeletedProjects })
     } while (queued)
     return result
   } finally {
@@ -167,7 +171,7 @@ export async function syncAllProjects({ getProjects, setProjects }) {
   }
 }
 
-async function runSync({ getProjects, setProjects }) {
+async function runSync({ getProjects, setProjects, getDeletedProjects }) {
   const counts = { pushed: 0, pulled: 0, conflicts: 0 }
 
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -206,8 +210,24 @@ async function runSync({ getProjects, setProjects }) {
   let nextProjects = [...locals]
   let projectsChanged = false
 
-  // Every id either side knows about.
-  const ids = new Set([...localById.keys(), ...remoteByLocalId.keys()])
+  /* A DELETED PROJECT IS NOT A CANDIDATE FOR ANYTHING.
+     The set below used to be the plain union of both sides, and that is the
+     whole bug: a project deleted locally is `local = null, remote = present`,
+     which `decideSyncAction` reads as "the cloud has something this desk has
+     not seen" and pulls straight back in. Nothing deletes a project row, so
+     the remote copy is permanent and it came back on every sync, for ever.
+
+     Filtering the RESULT would have fixed the pull and left the push: a stale
+     copy on another device would keep re-uploading the project. Taking the id
+     out of the work set removes it as a candidate in both directions at once,
+     which is the property that actually has to hold. */
+  const deleted = (getDeletedProjects?.() || []).map((d) => String(d?.id))
+  const tombstoned = new Set(deleted.filter((id) => id && id !== 'undefined'))
+  const ids = new Set(
+    [...localById.keys(), ...remoteByLocalId.keys()].filter(
+      (id) => !tombstoned.has(String(id)),
+    ),
+  )
 
   for (const id of ids) {
     const local = localById.get(id) || null

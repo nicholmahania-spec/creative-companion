@@ -76,6 +76,7 @@ export default function SettingsView(props) {
     syncAllProjects({
       getProjects: () => useAppStore.getState().projects,
       setProjects: (next) => useAppStore.setState({ projects: next }),
+      getDeletedProjects: () => useAppStore.getState().deletedProjects || [],
     })
 
   /* Retained versions — the losing side of every conflict, recoverable.
