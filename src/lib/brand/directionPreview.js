@@ -126,7 +126,7 @@ export function directionPreview(project, direction, opts = {}) {
   const projectId = opts.projectId ?? project?.id
   const cited = directionEvidence(direction, opts.moodItems, projectId)
 
-  let hexes = []
+  let hexes
   let paletteSource = 'none'
   if (Array.isArray(parts.palette?.hexes) && parts.palette.hexes.length) {
     hexes = parts.palette.hexes.map((h) => normalizeHex(h)).filter(Boolean)
@@ -135,6 +135,7 @@ export function directionPreview(project, direction, opts = {}) {
     hexes = hexesFromEvidence(cited)
     if (hexes.length) paletteSource = 'evidence'
   }
+  if (!hexes) hexes = []
 
   let typeHeading = ''
   let typeBody = ''
