@@ -97,9 +97,25 @@ export async function elementToPdf(
   return downloadBlob(blob, name)
 }
 
-/** Render an off-DOM element to a downloadable PNG (email signature). */
-export async function elementToPng(el, filename) {
+/**
+ * Render an off-DOM element to a PNG.
+ *
+ * Same engine path StationeryKit uses for the email signature. Pass a
+ * filename string for the classic download, or an options object with
+ * `returnBlobOnly: true` when Touchpoints needs packageAssets bytes
+ * (same contract as elementToPdf).
+ *
+ * @param {HTMLElement} el
+ * @param {string|{ filename?: string, returnBlobOnly?: boolean }} [filenameOrOpts]
+ * @returns {Promise<{ ok: boolean, error?: string, blob?: Blob, filename?: string, method?: string }>}
+ */
+export async function elementToPng(el, filenameOrOpts = {}) {
   if (!el) return { ok: false, error: 'Nothing to render' }
+  const opts =
+    typeof filenameOrOpts === 'string'
+      ? { filename: filenameOrOpts, returnBlobOnly: false }
+      : filenameOrOpts || {}
+  const { filename = 'export.png', returnBlobOnly = false } = opts
   const [, html2canvasMod] = await loadEngines()
   const html2canvas = html2canvasMod.default || html2canvasMod
   const canvas = await html2canvas(el, {
@@ -109,9 +125,13 @@ export async function elementToPng(el, filename) {
     backgroundColor: '#ffffff',
     logging: false,
   })
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      resolve(downloadBlob(blob, safeFilename(filename)))
-    }, 'image/png')
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/png')
   })
+  if (!blob) return { ok: false, error: 'Could not render PNG' }
+  const name = safeFilename(filename)
+  if (returnBlobOnly) {
+    return { ok: true, blob, filename: name }
+  }
+  return downloadBlob(blob, name)
 }
