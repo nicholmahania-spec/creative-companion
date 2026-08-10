@@ -138,3 +138,52 @@ describe('activeDirectionWorkingMaterial', () => {
     expect(activeDirectionWorkingMaterial({ ...p, activeDirectionId: null })).toBeNull()
   })
 })
+
+describe('incomplete type / mark hierarchy inputs', () => {
+  it('type none has empty samples and missing part state', () => {
+    const w = directionWorkingMaterial(projectBase(), dir(), [])
+    expect(w.type.source).toBe('none')
+    expect(w.type.samples).toEqual([])
+    expect(w.parts.type.state).toBe('missing')
+    expect(w.mark.source).toBe('none')
+    expect(w.parts.mark.state).toBe('missing')
+  })
+
+  it('type evidence exposes samples without inventing a pairing', () => {
+    const d = dir({
+      evidence: [refKey(makeRef('sample', 'type:fraunces:700'))],
+    })
+    const w = directionWorkingMaterial(projectBase(), d, [])
+    expect(w.type.source).toBe('evidence')
+    expect(w.type.heading).toBe('')
+    expect(w.type.body).toBe('')
+    expect(w.type.samples.length).toBeGreaterThan(0)
+    expect(w.parts.type.state).toBe('evidence')
+  })
+
+  it('type ref is captured and projectView overlays display only', () => {
+    const p = projectBase()
+    const d = dir({
+      refs: { typePairing: refKey(makeRef('typePairing', 'type_a')) },
+    })
+    const w = directionWorkingMaterial(p, d, [])
+    expect(w.type.source).toBe('ref')
+    expect(w.parts.type.state).toBe('captured')
+    const view = projectViewForDirectionMaterial(p, w)
+    expect(view.typeHeading).toBe('Fraunces SemiBold')
+    expect(p.typeHeading).toBe('Plus Jakarta Sans Bold')
+  })
+
+  it('mark ref is captured; absent mark stays missing', () => {
+    const withMark = directionWorkingMaterial(
+      projectBase(),
+      dir({ refs: { mark: refKey(makeRef('markConcept', 'm1')) } }),
+      []
+    )
+    expect(withMark.mark.source).toBe('ref')
+    expect(withMark.parts.mark.state).toBe('captured')
+    const without = directionWorkingMaterial(projectBase(), dir(), [])
+    expect(without.mark.source).toBe('none')
+    expect(without.parts.mark.state).toBe('missing')
+  })
+})

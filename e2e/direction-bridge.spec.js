@@ -275,6 +275,53 @@ test('Develop grounds Identity in chosen route material without overwriting the 
   expect(after.logo).toBe(before.logo)
   expect(after.palette).toBe(before.palette)
   expect(after.active).toBe('a')
+
+  /* Incomplete Type/Mark: L1 owns attention; L3 brand system secondary. */
+  await page.locator('.identity-subnav-btn', { hasText: 'Type' }).click()
+  await page.waitForTimeout(300)
+  const typeLead = page.locator('[data-testid="dir-route-type"]')
+  await expect(typeLead).toBeVisible({ timeout: 8000 })
+  await expect(typeLead).toContainText(
+    /No type on this route|Sample reactions|signals/i
+  )
+  await expect(page.locator('[data-testid="dir-route-type-tool"]')).toBeVisible()
+  await expect(page.locator('[data-testid="dir-type-canonical"]')).toBeVisible()
+  /* Canonical type still default after Develop. */
+  expect(await identityFields()).toMatchObject({
+    heading: before.heading,
+    body: before.body,
+  })
+
+  /* Color: L2 draft from route evidence; L3 factory separate; Set promotes. */
+  await page.locator('.identity-subnav-btn', { hasText: 'Color' }).click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('[data-testid="dir-route-colour"]')).toBeVisible()
+  await expect(page.locator('[data-testid="dir-colour-develop"]')).toBeVisible()
+  await expect(page.locator('[data-testid="dir-colour-canonical"]')).toBeVisible()
+  const paletteBefore = before.palette
+  /* Draft edits must not write project.palette. */
+  const addBtn = page.getByRole('button', { name: 'Add color', exact: true })
+  if (await addBtn.isEnabled()) {
+    await addBtn.click()
+    await page.waitForTimeout(200)
+  }
+  expect((await identityFields()).palette).toBe(paletteBefore)
+  const setBrand = page.locator('[data-testid="dir-set-brand-palette"]')
+  await expect(setBrand).toBeVisible()
+  if (await setBrand.isEnabled()) {
+    await setBrand.click()
+    await page.waitForTimeout(400)
+    const afterSet = await identityFields()
+    expect(afterSet.palette).not.toBe(paletteBefore)
+  }
+
+  await page.locator('.identity-subnav-btn', { hasText: 'Mark' }).click()
+  await page.waitForTimeout(300)
+  const markLead = page.locator('[data-testid="dir-route-mark"]')
+  await expect(markLead).toBeVisible()
+  await expect(markLead).toContainText(/No mark on this route/i)
+  await expect(page.locator('[data-testid="dir-route-mark-tool"]')).toBeVisible()
+  expect((await identityFields()).logo).toBe(before.logo)
 })
 
 test('the strip is absent when nothing is being developed', async ({ page }) => {

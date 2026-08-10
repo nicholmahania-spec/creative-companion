@@ -66,12 +66,22 @@ import TypeSpecimen from '../features/brand/TypeSpecimen'
 import DirectionInDevelopment, {
   DirectionPartOffer,
   DirectionPartGap,
+  DirectionPartLead,
+  DirectionTypeEvidence,
+  DirectionRouteTool,
 } from '../features/discovery/DirectionInDevelopment'
 import { directionComposition } from '../lib/brand/directionComposition'
 import {
   activeDirectionWorkingMaterial,
   projectViewForDirectionMaterial,
 } from '../lib/brand/directionWorkingMaterial'
+import {
+  colourDraftSeed,
+  draftReplaceAt,
+  draftAddHex,
+  draftRemoveAt,
+  draftDiffersFromProject,
+} from '../lib/brand/identityColourDraft'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
@@ -594,6 +604,33 @@ export default function DesignView({
     [activeProject, moodItems]
   )
 
+  /* Colour L2 draft: component state only. Seeded from route material when a
+     direction is active. project.palette stays L3 until "Set as brand palette". */
+  const colourSeed = useMemo(
+    () => colourDraftSeed(directionWorking),
+    [directionWorking]
+  )
+  const [colourDraftHexes, setColourDraftHexes] = useState(null)
+  const [colourDraftKey, setColourDraftKey] = useState(null)
+
+  useEffect(() => {
+    if (!colourSeed.active) {
+      setColourDraftHexes(null)
+      setColourDraftKey(null)
+      return
+    }
+    if (colourSeed.key !== colourDraftKey) {
+      setColourDraftHexes([...colourSeed.hexes])
+      setColourDraftKey(colourSeed.key)
+    }
+  }, [colourSeed, colourDraftKey])
+
+  const isColourDraftMode = colourDraftHexes !== null && colourSeed.active
+  /* Working surface for the Color editor: route-seeded draft, or project. */
+  const workingPalette = isColourDraftMode
+    ? colourDraftHexes
+    : projectPalette
+
   /* Sheet shows the route's type/mark when captured so starter defaults do
      not masquerade as the chosen direction. Editable brief/designer words
      still bind to the real project. */
@@ -602,19 +639,23 @@ export default function DesignView({
     [activeProject, directionWorking]
   )
 
-  /* Paper on the sheet: prefer route colour material when developing, so the
-     default stone palette is not presented as "Warm editorial". Canonical
-     Color editor still edits projectPalette. */
+  /* Paper: development surface when drafting; else route material; else project. */
   const artboardPalette = useMemo(() => {
+    if (isColourDraftMode && workingPalette?.length) return workingPalette
     if (directionWorking?.colour?.hexes?.length) {
       return directionWorking.colour.hexes
     }
     return projectPalette
-  }, [directionWorking, projectPalette])
+  }, [
+    isColourDraftMode,
+    workingPalette,
+    directionWorking,
+    projectPalette,
+  ])
 
   const paletteRoles = useMemo(
-    () => mapPaletteRoles(projectPalette),
-    [projectPalette]
+    () => mapPaletteRoles(isColourDraftMode ? workingPalette : projectPalette),
+    [isColourDraftMode, workingPalette, projectPalette]
   )
 
   /* hex → the job that hex holds, so the mark check can say "Uses your
@@ -667,19 +708,64 @@ export default function DesignView({
   const handleHexChange = (index, raw) => {
     setHexDrafts((d) => ({ ...d, [index]: raw }))
     const n = normalizeHex(raw)
-    if (n) updatePaletteColor(index, n)
+    if (!n) return
+    if (isColourDraftMode) {
+      setColourDraftHexes((prev) => draftReplaceAt(prev || [], index, n))
+      return
+    }
+    updatePaletteColor(index, n)
   }
 
   const commitHex = (index) => {
     const draft = hexDrafts[index]
     if (draft == null) return
     const n = normalizeHex(draft)
-    if (n) updatePaletteColor(index, n)
+    if (n) {
+      if (isColourDraftMode) {
+        setColourDraftHexes((prev) => draftReplaceAt(prev || [], index, n))
+      } else {
+        updatePaletteColor(index, n)
+      }
+    }
     setHexDrafts((d) => {
       const next = { ...d }
       delete next[index]
       return next
     })
+  }
+
+  const setWorkingColorAt = (index, hex) => {
+    if (isColourDraftMode) {
+      setColourDraftHexes((prev) => draftReplaceAt(prev || [], index, hex))
+      return
+    }
+    updatePaletteColor(index, hex)
+  }
+
+  const addWorkingColor = (hex) => {
+    if (isColourDraftMode) {
+      setColourDraftHexes((prev) => draftAddHex(prev || [], hex))
+      return
+    }
+    addPaletteColor(hex)
+  }
+
+  const removeWorkingColor = (index) => {
+    if (isColourDraftMode) {
+      setColourDraftHexes((prev) => draftRemoveAt(prev || [], index))
+      return
+    }
+    removePaletteColor(index)
+  }
+
+  const setBrandPaletteFromDraft = () => {
+    if (!isColourDraftMode || !colourDraftHexes?.length) return
+    const before = projectPalette
+    const owner = activeProject?.id
+    setProjectPalette([...colourDraftHexes], owner)
+    setHexDrafts({})
+    offerUndo?.('Brand palette set', () => setProjectPalette(before, owner))
+    flashMicro?.('Brand palette set')
   }
 
   /* A typeface name is typed one letter at a time, and every letter used to be
@@ -756,6 +842,34 @@ export default function DesignView({
       if (src.image) bits.push(`${src.image} image`)
       flashMicro?.(
         `Palette from ${starredPinCount ? '★ pins' : 'pins'} · ${result.colors.length} colors${bits.length ? ` (${bits.join(', ')})` : ''}`
+      )
+    } finally {
+      setExtractingPins(false)
+    }
+  }
+
+  /* Pins into L2 draft only — never project.palette until Set as brand palette. */
+  const applyFromPinsToDraft = async () => {
+    if (!pinCount) {
+      flashToast?.('Add Research pins first (color, gradient, or image).')
+      return
+    }
+    setExtractingPins(true)
+    try {
+      const result = await extractPaletteFromPins(deskMood, {
+        max: 6,
+        preferStarred: true,
+      })
+      if (result.empty || result.colors.length < 2) {
+        flashToast?.(
+          'Could not pull colors from pins — try solid hex pins or image uploads.'
+        )
+        return
+      }
+      setColourDraftHexes([...result.colors])
+      setHexDrafts({})
+      flashMicro?.(
+        `Draft from ${starredPinCount ? '★ pins' : 'pins'} · not brand yet`
       )
     } finally {
       setExtractingPins(false)
@@ -956,24 +1070,29 @@ export default function DesignView({
               {/* The route's mark, offered beside the concepts it would be
                   chosen from. Writes through `chooseLogoConcept` — the action
                   this screen already uses — so nothing gains a second home. */}
-              <DirectionPartOffer
-                project={activeProject}
-                slot="mark"
-                label={routeParts?.mark?.label || (routeParts?.mark ? 'a mark' : '')}
-                inUse={routeParts?.mark?.chosen === true}
-                onUse={() => {
-                  chooseLogoConcept(routeParts.mark.id)
-                  flashMicro?.('Mark from this route')
-                }}
-              >
-                {routeParts?.mark?.image ? (
-                  <img className="dir-offer-mark" src={routeParts.mark.image} alt="" />
-                ) : null}
-              </DirectionPartOffer>
-              {directionWorking && directionWorking.mark.source === 'none' ? (
-                <DirectionPartGap
+              {directionWorking?.mark?.source === 'ref' ? (
+                <DirectionPartOffer
                   project={activeProject}
-                  message="No mark on this route yet — add a concept below to develop one."
+                  slot="mark"
+                  label={routeParts?.mark?.label || (routeParts?.mark ? 'a mark' : '')}
+                  inUse={routeParts?.mark?.chosen === true}
+                  onUse={() => {
+                    chooseLogoConcept(routeParts.mark.id)
+                    flashMicro?.('Mark from this route')
+                  }}
+                >
+                  {routeParts?.mark?.image ? (
+                    <img className="dir-offer-mark" src={routeParts.mark.image} alt="" />
+                  ) : null}
+                </DirectionPartOffer>
+              ) : null}
+              {directionWorking && directionWorking.mark.source === 'none' ? (
+                <DirectionPartLead
+                  project={activeProject}
+                  title="Mark on this route"
+                  status="No mark on this route yet"
+                  note="Add a concept below to develop one."
+                  testId="dir-route-mark"
                 />
               ) : null}
 
@@ -984,6 +1103,23 @@ export default function DesignView({
                   it" (PRD §2), applied to the one action this screen exists
                   for. The describing moved to Handover, where it belongs:
                   after there is something to describe. */}
+              <DirectionRouteTool
+                label={
+                  directionWorking?.mark?.source === 'none'
+                    ? 'Develop mark'
+                    : undefined
+                }
+                note={
+                  directionWorking?.mark?.source === 'none'
+                    ? 'Brand mark system — not this route’s mark until you add and choose a concept.'
+                    : undefined
+                }
+                testId={
+                  directionWorking?.mark?.source === 'none'
+                    ? 'dir-route-mark-tool'
+                    : undefined
+                }
+              >
               <div className="mark-concepts" role="group" aria-label="Concepts">
                 <div className="mark-concepts-head">
                   <p className="field-label" style={{ margin: 0 }}>
@@ -1133,6 +1269,7 @@ export default function DesignView({
                   </li>
                 </ul>
               </div>
+              </DirectionRouteTool>
 
               {/* The old mark, when there IS an old mark. On a rebrand this is
                   the single most relevant image on the screen and the app was
@@ -1258,35 +1395,58 @@ export default function DesignView({
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
 
-              {/* Route colour material — context only. No automatic Use:
-                  applying a snapshot would write roles positionally. Develop
-                  the brand system in the editor below. */}
+              {/* L1 — Direction colour material. L2 draft is the editor below;
+                  L3 project.palette only changes on Set as brand palette. */}
               {directionWorking?.colour?.hexes?.length ? (
                 <div
-                  className="dir-route-material"
+                  className="dir-route-material dir-route-part-lead"
                   data-testid="dir-route-colour"
                 >
                   <p className="field-label" style={{ margin: 0 }}>
                     {directionWorking.colour.source === 'ref'
-                      ? 'Colours on this route'
-                      : 'Cited colours on this route'}
+                      ? 'Palette on this route'
+                      : 'Colour on this route'}
+                  </p>
+                  <p className="dir-route-part-status" role="status">
+                    {directionWorking.colour.source === 'ref'
+                      ? 'Route palette material'
+                      : 'Evidence / reactions — not a finished palette'}
                   </p>
                   <span className="dir-route-swatches" aria-hidden="true">
                     {directionWorking.colour.hexes.map((h, i) => (
                       <i key={`${h}-${i}`} style={{ background: h }} title={h} />
                     ))}
                   </span>
-                  <p className="dir-route-material-note">
-                    {directionWorking.colour.source === 'ref'
-                      ? 'Captured on the route. Edit the project palette below to develop the brand system — nothing is committed until you change it here.'
-                      : 'Evidence from what you kept — not a finished palette. Build the brand system below from these reactions if they still hold.'}
-                  </p>
                 </div>
               ) : directionWorking ? (
-                <DirectionPartGap
+                <DirectionPartLead
                   project={activeProject}
-                  message="No colour on this route yet — develop the project palette below, or cite colours in Directions."
+                  title="Colour on this route"
+                  status="No colour on this route"
+                  testId="dir-route-colour"
                 />
+              ) : null}
+
+              {isColourDraftMode ? (
+                <div className="dir-layer-l3" data-testid="dir-colour-canonical">
+                  <p className="field-label" style={{ margin: 0 }}>
+                    Brand system now
+                  </p>
+                  <span className="dir-route-swatches" aria-hidden="true">
+                    {(projectPalette || []).slice(0, 6).map((h, i) => (
+                      <i
+                        key={`l3-${h}-${i}`}
+                        style={{ background: h }}
+                        title={h}
+                      />
+                    ))}
+                  </span>
+                  {paletteIsUntouched(projectPalette) ? (
+                    <p className="dir-route-tool-note">
+                      Factory placeholder — not this route.
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
 
               {/* Same loop as Type: the words from Strategy come back here,
@@ -1313,9 +1473,13 @@ export default function DesignView({
               </details>
               {(() => {
                 const health = paletteHealthScore({
-                  palette: projectPalette,
-                  colorRoles: activeProject?.colorRoles || {},
-                  colorRoleWhy: activeProject?.colorRoleWhy || {},
+                  palette: workingPalette,
+                  colorRoles: isColourDraftMode
+                    ? {}
+                    : activeProject?.colorRoles || {},
+                  colorRoleWhy: isColourDraftMode
+                    ? {}
+                    : activeProject?.colorRoleWhy || {},
                   strict: contrastTarget.strict,
                 })
                 /* Nothing picked yet is not a failing grade. The score used
@@ -1366,15 +1530,34 @@ export default function DesignView({
                   </div>
                 )
               })()}
-              <div className="brand-palette-block" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
+              <div
+                className="brand-palette-block dir-route-tool"
+                style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}
+                data-testid={isColourDraftMode ? 'dir-colour-develop' : undefined}
+              >
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Palette
+                    {isColourDraftMode
+                      ? colourSeed.source === 'none'
+                        ? 'Develop palette'
+                        : 'Develop from route'
+                      : 'Palette'}
                   </p>
                 </div>
+                {isColourDraftMode && colourSeed.source === 'none' ? (
+                  <p className="dir-route-tool-note">
+                    Empty development surface — not the factory brand palette.
+                  </p>
+                ) : null}
+                {isColourDraftMode && colourSeed.source !== 'none' ? (
+                  <p className="dir-route-tool-note">
+                    Working material from this route. Not brand until Set as
+                    brand palette.
+                  </p>
+                ) : null}
 
                 <div className="brand-palette-bleed">
-                  {projectPalette.map((c, i) => (
+                  {(workingPalette || []).map((c, i) => (
                     <div
                       key={`${c}-${i}`}
                       style={{ flex: 1, background: c }}
@@ -1383,11 +1566,11 @@ export default function DesignView({
                   ))}
                 </div>
                 <div className="direction-hex">
-                  {projectPalette.join(' · ')}
+                  {(workingPalette || []).join(' · ') || '—'}
                 </div>
 
                 <ul className="palette-editor">
-                  {projectPalette.map((hex, index) => {
+                  {(workingPalette || []).map((hex, index) => {
                     const display =
                       hexDrafts[index] != null ? hexDrafts[index] : hex
                     const tints = tintsAndShades(hex, { steps: 2 })
@@ -1405,7 +1588,7 @@ export default function DesignView({
                               onChange={(e) => {
                                 const n = normalizeHex(e.target.value)
                                 if (n) {
-                                  updatePaletteColor(index, n)
+                                  setWorkingColorAt(index, n)
                                   setHexDrafts((d) => {
                                     const next = { ...d }
                                     delete next[index]
@@ -1422,17 +1605,19 @@ export default function DesignView({
                               }}
                             />
                           </label>
-                          {/* The colour's job, in words. Roles below say what
-                              it DOES; this is what it is called in the book
-                              and in the handoff CSS. */}
-                          <input
-                            type="text"
-                            className="palette-name-input"
-                            value={paletteRows[index]?.name || ''}
-                            onChange={(e) => renameColor(index, e.target.value)}
-                            spellCheck={false}
-                            aria-label={`Color ${index + 1} name`}
-                          />
+                          {/* Names write paletteTokens on the project — L3.
+                              In draft mode omit name field so we do not invent
+                              brand names on uncommitted material. */}
+                          {!isColourDraftMode ? (
+                            <input
+                              type="text"
+                              className="palette-name-input"
+                              value={paletteRows[index]?.name || ''}
+                              onChange={(e) => renameColor(index, e.target.value)}
+                              spellCheck={false}
+                              aria-label={`Color ${index + 1} name`}
+                            />
+                          ) : null}
                           <input
                             type="text"
                             className="palette-hex-input"
@@ -1459,8 +1644,12 @@ export default function DesignView({
                           <button
                             type="button"
                             className="btn btn-ghost palette-remove"
-                            disabled={projectPalette.length <= 2}
-                            onClick={() => removePaletteColor(index)}
+                            disabled={
+                              isColourDraftMode
+                                ? (workingPalette || []).length <= 0
+                                : projectPalette.length <= 2
+                            }
+                            onClick={() => removeWorkingColor(index)}
                             aria-label={`Remove color ${index + 1}`}
                           >
                             Remove
@@ -1491,7 +1680,7 @@ export default function DesignView({
                                   }
                                   onClick={() => {
                                     if (isBase) return
-                                    updatePaletteColor(index, t)
+                                    setWorkingColorAt(index, t)
                                     setHexDrafts((d) => {
                                       const next = { ...d }
                                       delete next[index]
@@ -1504,7 +1693,7 @@ export default function DesignView({
                                 </button>
                               )
                             })}
-                            {projectPalette.length < 8 &&
+                            {(workingPalette || []).length < 8 &&
                               tints
                                 .filter(
                                   (t) =>
@@ -1518,7 +1707,7 @@ export default function DesignView({
                                     className="btn btn-ghost btn-sm palette-tint-add"
                                     title={`Add ${t} to palette`}
                                     onClick={() => {
-                                      addPaletteColor(t)
+                                      addWorkingColor(t)
                                       flashMicro?.(`Added ${t}`)
                                     }}
                                   >
@@ -1533,11 +1722,28 @@ export default function DesignView({
                 </ul>
 
                 <div className="palette-actions">
+                  {isColourDraftMode ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      data-testid="dir-set-brand-palette"
+                      disabled={
+                        !colourDraftHexes?.length ||
+                        !draftDiffersFromProject(
+                          colourDraftHexes,
+                          projectPalette
+                        )
+                      }
+                      onClick={setBrandPaletteFromDraft}
+                    >
+                      Set as brand palette
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    disabled={projectPalette.length >= 8}
-                    onClick={() => addPaletteColor('#888888')}
+                    disabled={(workingPalette || []).length >= 8}
+                    onClick={() => addWorkingColor('#888888')}
                   >
                     Add color
                   </button>
@@ -1552,7 +1758,14 @@ export default function DesignView({
                           ? `Sample all Research pins (${pinCount})`
                           : 'Add pins on Research first'
                     }
-                    onClick={() => applyFromPins()}
+                    onClick={() => {
+                      if (isColourDraftMode) {
+                        /* Sample into draft only — not canonical until Set. */
+                        applyFromPinsToDraft()
+                        return
+                      }
+                      applyFromPins()
+                    }}
                   >
                     {extractingPins
                       ? 'Sampling…'
@@ -1564,11 +1777,20 @@ export default function DesignView({
                     type="button"
                     className="btn btn-ghost"
                     onClick={() => {
+                      if (isColourDraftMode) {
+                        setColourDraftHexes(
+                          colourSeed.source === 'none'
+                            ? []
+                            : [...(colourSeed.hexes || [])]
+                        )
+                        setHexDrafts({})
+                        return
+                      }
                       setProjectPalette([...DEFAULT_PALETTE])
                       setHexDrafts({})
                     }}
                   >
-                    Reset to default
+                    {isColourDraftMode ? 'Reset draft' : 'Reset to default'}
                   </button>
                 </div>
 
@@ -1577,9 +1799,16 @@ export default function DesignView({
               <div className="palette-roles-editor" style={{ marginTop: '1rem' }}>
                 <div className="palette-section-head">
                   <p className="field-label" style={{ margin: 0 }}>
-                    Color jobs
+                    {isColourDraftMode
+                      ? 'Color jobs (brand system)'
+                      : 'Color jobs'}
                   </p>
                 </div>
+                {isColourDraftMode ? (
+                  <p className="dir-route-tool-note">
+                    Jobs apply to the brand palette after Set as brand palette.
+                  </p>
+                ) : null}
                 {/* A mode switch, and it must say so. Every subsequent click on
                     the palette row writes into whichever job is armed, so a
                     screen-reader user could overwrite Primary while intending
@@ -1780,41 +2009,149 @@ export default function DesignView({
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
 
-              <DirectionPartOffer
-                project={activeProject}
-                slot="type"
-                label={
-                  routeParts?.typePairing
-                    ? [routeParts.typePairing.heading, routeParts.typePairing.body]
-                        .filter(Boolean)
-                        .join(' + ')
-                    : ''
-                }
-                inUse={
-                  !!routeParts?.typePairing &&
+              {/* TYPE L1 / L2 / L3 — Direction material → develop → canonical.
+                  TYPE_PAIRS is L2 catalog only. Develop never writes type fields. */}
+              {directionWorking?.type?.source === 'ref' ? (
+                <div
+                  className="dir-route-material dir-route-part-lead"
+                  data-testid="dir-route-type"
+                >
+                  <p className="field-label" style={{ margin: 0 }}>
+                    Type on this route
+                  </p>
+                  <p className="dir-route-part-status" role="status">
+                    {[
+                      directionWorking.type.heading,
+                      directionWorking.type.body,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || 'Route pairing'}
+                  </p>
+                  <span className="dir-developing-type-faces" aria-hidden="true">
+                    {[
+                      directionWorking.type.heading,
+                      directionWorking.type.body,
+                    ]
+                      .filter(Boolean)
+                      .join(' + ')}
+                  </span>
+                  <DirectionPartOffer
+                    project={activeProject}
+                    slot="type"
+                    label={
+                      routeParts?.typePairing
+                        ? [
+                            routeParts.typePairing.heading,
+                            routeParts.typePairing.body,
+                          ]
+                            .filter(Boolean)
+                            .join(' + ')
+                        : ''
+                    }
+                    inUse={
+                      !!routeParts?.typePairing &&
+                      String(routeParts.typePairing.heading || '') ===
+                        String(activeProject?.typeHeading || '') &&
+                      String(routeParts.typePairing.body || '') ===
+                        String(activeProject?.typeBody || '')
+                    }
+                    onUse={() => {
+                      updateBrandField(
+                        'typeHeading',
+                        routeParts.typePairing.heading || ''
+                      )
+                      updateBrandField(
+                        'typeBody',
+                        routeParts.typePairing.body || ''
+                      )
+                      flashMicro?.('Type from this route')
+                    }}
+                  />
+                </div>
+              ) : null}
+              {directionWorking && directionWorking.type.source === 'evidence' ? (
+                <DirectionPartLead
+                  project={activeProject}
+                  title="Type on this route"
+                  status="Sample reactions / signals — not a pairing"
+                  testId="dir-route-type"
+                >
+                  <DirectionTypeEvidence samples={directionWorking.type.samples} />
+                </DirectionPartLead>
+              ) : null}
+              {directionWorking && directionWorking.type.source === 'none' ? (
+                <DirectionPartLead
+                  project={activeProject}
+                  title="Type on this route"
+                  status="No type on this route"
+                  testId="dir-route-type"
+                />
+              ) : null}
+
+              {directionWorking && directionWorking.type.source === 'ref' ? (
+                <div className="dir-layer-l3" data-testid="dir-type-canonical">
+                  {!!routeParts?.typePairing &&
                   String(routeParts.typePairing.heading || '') ===
                     String(activeProject?.typeHeading || '') &&
                   String(routeParts.typePairing.body || '') ===
-                    String(activeProject?.typeBody || '')
+                    String(activeProject?.typeBody || '') ? (
+                    <p className="dir-route-part-status" role="status">
+                      Brand system: In use
+                    </p>
+                  ) : (
+                    <>
+                      <p className="field-label" style={{ margin: 0 }}>
+                        Brand system now
+                      </p>
+                      <p className="dir-route-tool-note">
+                        {[
+                          activeProject?.typeHeading,
+                          activeProject?.typeBody,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') || '—'}
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : null}
+
+              {directionWorking &&
+              (directionWorking.type.source === 'evidence' ||
+                directionWorking.type.source === 'none') ? (
+                <div className="dir-layer-l3" data-testid="dir-type-canonical">
+                  <p className="field-label" style={{ margin: 0 }}>
+                    Brand system now
+                  </p>
+                  <p className="dir-route-tool-note">
+                    {[activeProject?.typeHeading, activeProject?.typeBody]
+                      .filter(Boolean)
+                      .join(' · ') || '—'}
+                  </p>
+                </div>
+              ) : null}
+
+              <DirectionRouteTool
+                label={
+                  directionWorking
+                    ? directionWorking.type.source === 'ref'
+                      ? 'Try other pairs'
+                      : 'Develop type'
+                    : undefined
                 }
-                onUse={() => {
-                  updateBrandField('typeHeading', routeParts.typePairing.heading || '')
-                  updateBrandField('typeBody', routeParts.typePairing.body || '')
-                  flashMicro?.('Type from this route')
-                }}
-              />
-              {directionWorking && directionWorking.type.source === 'evidence' ? (
-                <DirectionPartGap
-                  project={activeProject}
-                  message={directionWorking.parts.type.summary}
-                />
-              ) : null}
-              {directionWorking && directionWorking.type.source === 'none' ? (
-                <DirectionPartGap
-                  project={activeProject}
-                  message="No type on this route yet — choose a pairing below to develop one."
-                />
-              ) : null}
+                note={
+                  directionWorking
+                    ? directionWorking.type.source === 'ref'
+                      ? 'Catalog instrument — not another direction.'
+                      : directionWorking.type.source === 'evidence'
+                        ? 'Build a pairing from signals. Selecting a pair sets the brand system.'
+                        : 'Catalog + faces for this brand. Not this route’s type until you set it.'
+                    : undefined
+                }
+                testId={
+                  directionWorking ? 'dir-route-type-tool' : undefined
+                }
+              >
 
               {/* The font check comes FIRST and is the useful part here. A
                   specimen set in a substitute misleads the client rather
@@ -1834,7 +2171,17 @@ export default function DesignView({
                   Strategy reappear HERE, at the moment type is chosen,
                   rather than sitting in a document nobody reopens. It
                   states and never advises — the designer decides. */}
-              <details className="design-align" open={typeTagged}>
+              <details
+                className="design-align"
+                open={
+                  typeTagged &&
+                  !(
+                    directionWorking &&
+                    (directionWorking.type.source === 'none' ||
+                      directionWorking.type.source === 'evidence')
+                  )
+                }
+              >
                 <summary>How this compares to your strategy</summary>
                 <AlignmentBars
                   target={strategyProfile(activeProject?.strategyAttributes || [])}
@@ -1978,6 +2325,7 @@ export default function DesignView({
                   placeholder="Optional — the reason for this pairing (prints in the brand book)"
                 />
               </div>
+              </DirectionRouteTool>
             </section>
             )}
 

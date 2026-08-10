@@ -101,6 +101,11 @@ export default function DirectionInDevelopment({
             <span className="dir-developing-type-faces" aria-hidden="true">
               {[type.heading, type.body].filter(Boolean).join(' · ')}
             </span>
+          ) : type.source === 'evidence' && type.samples?.length ? (
+            <span className="dir-developing-type-faces is-evidence" aria-hidden="true">
+              {type.samples.slice(0, 2).join(' · ')}
+              {type.samples.length > 2 ? '…' : ''}
+            </span>
           ) : null}
         </PartRow>
         <PartRow part={parts.mark}>
@@ -171,5 +176,97 @@ export function DirectionPartGap({ project, message }) {
     <p className="dir-offer dir-offer-gap" role="status">
       {message}
     </p>
+  )
+}
+
+/**
+ * Family name from a sample label like "Fraunces Bold" for specimen preview.
+ * Display only — never written into project type fields.
+ */
+export function familyFromSampleLabel(label) {
+  const s = String(label ?? '').trim()
+  if (!s) return ''
+  return s
+    .replace(/\s+(Bold|Regular|SemiBold|Medium|Light|Black|Thin|Italic)$/i, '')
+    .trim()
+}
+
+/**
+ * Panel lead: incomplete / evidence-only route part owns first attention.
+ * Tools stay below (caller). No new data — status + optional material only.
+ */
+export function DirectionPartLead({
+  project,
+  title,
+  status,
+  note,
+  testId,
+  children,
+}) {
+  const activeId = project?.activeDirectionId || null
+  if (!activeId || !status) return null
+  return (
+    <div
+      className="dir-route-material dir-route-part-lead"
+      data-testid={testId || undefined}
+    >
+      {title ? (
+        <p className="field-label" style={{ margin: 0 }}>
+          {title}
+        </p>
+      ) : null}
+      <p className="dir-route-part-status" role="status">
+        {status}
+      </p>
+      {children}
+      {note ? <p className="dir-route-material-note">{note}</p> : null}
+    </div>
+  )
+}
+
+/**
+ * Type sample reactions as visual signals — not an approved pairing.
+ */
+export function DirectionTypeEvidence({ samples }) {
+  const list = (samples || []).filter(Boolean)
+  if (!list.length) return null
+  return (
+    <ul className="dir-route-type-samples" aria-label="Type signals on this route">
+      {list.map((label, i) => {
+        const family = familyFromSampleLabel(label)
+        return (
+          <li key={`${label}-${i}`} className="dir-route-type-sample">
+            <span
+              className="dir-route-type-sample-aa"
+              style={family ? { fontFamily: `"${family}", sans-serif` } : undefined}
+              aria-hidden="true"
+            >
+              Aa
+            </span>
+            <span className="dir-route-type-sample-name">{label}</span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/**
+ * Frames the existing brand tool when the route part is incomplete, so
+ * project defaults are not read as the chosen direction's finished system.
+ * Without label/note, children render unwrapped (no extra chrome).
+ */
+export function DirectionRouteTool({ label, note, testId, children }) {
+  if (!label && !note) return children
+  return (
+    <div className="dir-route-tool" data-testid={testId || undefined}>
+      {label ? (
+        <p className="field-label dir-route-tool-label" style={{ margin: 0 }}>
+          {label}
+        </p>
+      ) : null}
+      {note ? <p className="dir-route-tool-note">{note}</p> : null}
+      {children}
+    </div>
   )
 }
