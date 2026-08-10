@@ -326,6 +326,14 @@
   font-weight: 600;
 }
 
+.pack-ready-list .is-pending {
+  color: var(--text-muted);
+}
+
+.pack-ready-pending {
+  opacity: 0.9;
+}
+
 .pack-ready-list .is-ok {
   color: var(--text-primary);
 }
@@ -1216,4 +1224,77 @@
 .deliver-reaction footer {
   color: var(--text-secondary);
   font-size: var(--fs-2);
+}
+
+/* ── Creative workbench refinement ──────────────────────────────────────
+   Delivery leads with the verified package fact and its one action. The
+   inventory remains explicit evidence, but no longer competes as a dashboard. */
+.deliver-studio .assets-ship-ticket {
+  padding: clamp(var(--space-4), 2vw, var(--space-6));
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.deliver-studio .assets-ship-ready,
+.deliver-studio .assets-ship-gap {
+  font-size: var(--fs-4);
+  letter-spacing: -0.025em;
+}
+
+.deliver-studio .deliver-package-inventory,
+.deliver-studio .deliver-gaps {
+  margin-top: var(--space-4);
+}
+
+.deliver-studio .assets-gaps-label {
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.deliver-studio .deliver-gap-list {
+  gap: var(--space-1);
+}
+
+.deliver-studio .deliver-gap-btn {
+  border-inline: 0;
+  border-top: 0;
+  border-radius: 0;
+  background: transparent;
+  padding-inline: 0;
+}
+
+.deliver-studio .deliver-primary-ship {
+  margin-top: var(--space-5) !important;
+}
+
+.deliver-studio .deliver-primary-ship .btn-primary {
+  min-height: 3.25rem;
+  font-size: var(--fs-3);
+}
+
+.deliver-studio .assets-preview-panel {
+  margin-top: var(--space-6);
+  padding-inline: 0;
+  border-inline: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.deliver-studio .deliver-advanced {
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .deliver-studio .assets-ship-ticket {
+    padding: var(--space-4);
+  }
+
+  .deliver-studio .deliver-primary-ship .btn-primary {
+    min-height: var(--tap-min);
+    font-size: var(--fs-2);
+  }
 }
