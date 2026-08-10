@@ -29,6 +29,7 @@ import LayoutPatterns from '../components/LayoutPatterns'
 import TouchpointMockThumb from '../components/TouchpointMockThumb'
 import ApplicationCheck from '../features/brand/ApplicationCheck'
 import BusinessCardProduce from '../features/brand/BusinessCardProduce'
+import EmailSignatureProduce from '../features/brand/EmailSignatureProduce'
 import {
   BRAND_ROLE_KEYS,
   BRAND_ROLE_LABELS,
@@ -41,6 +42,7 @@ import {
   touchpointCheckHint,
 } from '../lib/journey/touchpoints'
 import { projectHasProducedBusinessCard } from '../lib/brand/businessCardArtifact'
+import { projectHasProducedEmailSignature } from '../lib/brand/emailSignatureArtifact'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
@@ -171,6 +173,7 @@ export default function SketchView(props) {
   const addPackageAsset = useAppStore((s) => s.addPackageAsset)
   const updatePackageAsset = useAppStore((s) => s.updatePackageAsset)
   const businessCardProduced = projectHasProducedBusinessCard(activeProject)
+  const emailSignatureProduced = projectHasProducedEmailSignature(activeProject)
 
   /* Touchpoints — derived from the brief, so the surfaces offered are the
      ones this project actually has, not a fixed four for every brand. */
@@ -376,20 +379,23 @@ export default function SketchView(props) {
               const done = !!row.done
               const hasCheck = !!(row.check && typeof row.check === 'object')
               const isBusinessCard = id === 'businessCard'
+              const isEmail = id === 'email'
               const cardProduced = isBusinessCard && businessCardProduced
+              const emailProduced = isEmail && emailSignatureProduced
+              const appProduced = cardProduced || emailProduced
               /* Discrete facts only — never OR into "application complete".
                  Mock accepted ≠ produced artifact. */
               const proofBits = []
               if (done) proofBits.push('Mock accepted')
               if (hasCheck) proofBits.push('Colour sample')
               if (String(note).trim()) proofBits.push('Note')
-              if (cardProduced) proofBits.push('Application produced')
+              if (appProduced) proofBits.push('Application produced')
               return (
                 <li
                   key={id}
-                  className={`touchpoints-card${cardProduced ? ' is-produced' : ''}`}
+                  className={`touchpoints-card${appProduced ? ' is-produced' : ''}`}
                   data-touchpoint={id}
-                  data-application-produced={cardProduced ? 'true' : 'false'}
+                  data-application-produced={appProduced ? 'true' : 'false'}
                 >
                   <div className="touchpoints-card-layout">
                     <TouchpointMockThumb
@@ -455,6 +461,21 @@ export default function SketchView(props) {
                           setActiveView={setActiveView}
                         />
                       ) : null}
+                      {isEmail ? (
+                        <EmailSignatureProduce
+                          project={activeProject}
+                          palette={
+                            Array.isArray(projectPalette) &&
+                            projectPalette.length
+                              ? projectPalette
+                              : activeProject?.palette || []
+                          }
+                          addPackageAsset={addPackageAsset}
+                          updatePackageAsset={updatePackageAsset}
+                          flashMicro={flashMicro}
+                          setActiveView={setActiveView}
+                        />
+                      ) : null}
                       <ApplicationCheck
                         check={row.check || null}
                         palette={checkPalette}
@@ -475,9 +496,9 @@ export default function SketchView(props) {
                         }}
                       />
                       <p className="touchpoints-asset-line">
-                        {cardProduced ? (
+                        {appProduced ? (
                           <>
-                            Application PDF is in the{' '}
+                            Application {cardProduced ? 'PDF' : 'PNG'} is in the{' '}
                             <button
                               type="button"
                               className="text-link"
@@ -501,7 +522,9 @@ export default function SketchView(props) {
                             — not linked to this surface yet
                             {isBusinessCard
                               ? '. Or produce the card above to file a real PDF.'
-                              : ''}
+                              : isEmail
+                                ? '. Or produce the signature above to file a real PNG.'
+                                : ''}
                           </>
                         )}
                       </p>
