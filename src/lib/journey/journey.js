@@ -50,8 +50,8 @@ export const JOURNEY_STEPS = [
     label: 'Research',
     process: 'Conducting research',
     plain:
-      'Gather refs and notes. Star up to 6 for the client shortlist — that is your direction.',
-    enough: 'Enough: a few pins, or starred pins that each say why.',
+      'Gather refs and notes. Star up to 6 for the export shortlist — a shortlist is not a design direction.',
+    enough: 'Enough for the path: a few pins, or starred pins that each say why.',
     nextView: 'spark',
     nextLabel: 'Go to Directions',
   },
@@ -80,7 +80,8 @@ export const JOURNEY_STEPS = [
     process: 'Designing identity',
     plain:
       'Mark, words, color, type — then preview. One screen at a time.',
-    enough: 'Enough: a mark or wordmark, plus words or color that feel real.',
+    enough:
+      'Enough for the path: a mark or wordmark, plus words or colour. Not a finished identity system by itself.',
     nextView: 'flow',
     nextLabel: 'Go to Touchpoints',
   },
@@ -91,8 +92,9 @@ export const JOURNEY_STEPS = [
     label: 'Touchpoints',
     process: 'Creating touchpoints',
     plain:
-      'Where the brand shows up — one note per surface from the brief.',
-    enough: 'Enough: one surface noted or marked looks right. Rest is optional.',
+      'Where the brand shows up — schematic mocks and optional evidence, not finished artwork.',
+    enough:
+      'Enough for the path: evidence on one surface (note, mock accepted, or colour sample). Not finished applications.',
     nextView: 'book',
     nextLabel: 'Go to Brand book',
   },
@@ -112,8 +114,9 @@ export const JOURNEY_STEPS = [
     num: '6',
     label: 'Brand book',
     process: 'Documenting the system',
-    plain: 'Lay out the book from what the project already holds.',
-    enough: 'Enough: the pages read in order and say the right things.',
+    plain: 'Lay out the book from what the project already holds — including schematic application proofs.',
+    enough:
+      'Enough for the path: open the builder. That is not the same as a finished client book.',
     nextView: 'finish',
     nextLabel: 'Go to Delivery',
   },
@@ -123,8 +126,9 @@ export const JOURNEY_STEPS = [
     num: '7',
     label: 'Delivery',
     process: 'Delivering the brand',
-    plain: 'Preview the pack, write a handoff, download. One ship job.',
-    enough: 'Enough: download the right files; handoff says what is included.',
+    plain: 'Preview the pack, write a handoff note, download. A note is not delivery.',
+    enough:
+      'Enough for the path: a handoff or learnings note. Not “handed off” or “delivered”.',
     nextView: null,
     nextLabel: null,
   },

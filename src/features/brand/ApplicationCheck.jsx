@@ -96,15 +96,15 @@ export default function ApplicationCheck({
         }}
       />
       {!check && !busy && (
-        /* The copy names the file, not the feature. "Check colours" asks the
-           designer to work out what would be checked and against what; "Check
-           the finished file" is the thing they just did in Illustrator. */
+        /* ARTIFACT HONESTY: the file is transient — only a colour sample is
+           stored. Do not call it "the finished file" or imply the application
+           is checked, kept, or delivered. */
         <button
           type="button"
           className="btn btn-ghost btn-sm app-check-open"
           onClick={() => inputRef.current?.click()}
         >
-          Check the finished file
+          Sample colours from a file
         </button>
       )}
 

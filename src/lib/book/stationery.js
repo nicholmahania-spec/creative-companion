@@ -26,12 +26,20 @@ function loadEngines() {
 }
 
 /**
- * Render an off-DOM (or hidden) element to a print-accurate PDF and
- * trigger a download.
+ * Render an off-DOM (or hidden) element to a print-accurate PDF.
+ *
+ * Same engine path StationeryKit already uses. By default the browser
+ * downloads the file. Pass `returnBlobOnly: true` when a caller needs the
+ * bytes (e.g. Touchpoints → packageAssets) without a second PDF generator.
+ *
  * @param {HTMLElement} el
- * @param {{ widthIn: number, heightIn: number, filename: string }} opts
+ * @param {{ widthIn: number, heightIn: number, filename: string, dpi?: number, returnBlobOnly?: boolean }} opts
+ * @returns {Promise<{ ok: boolean, error?: string, blob?: Blob, filename?: string, method?: string }>}
  */
-export async function elementToPdf(el, { widthIn, heightIn, filename, dpi = 300 }) {
+export async function elementToPdf(
+  el,
+  { widthIn, heightIn, filename, dpi = 300, returnBlobOnly = false } = {}
+) {
   if (!el) return { ok: false, error: 'Nothing to render' }
   const [jsPdfMod, html2canvasMod] = await loadEngines()
   const { jsPDF } = jsPdfMod
@@ -82,7 +90,11 @@ export async function elementToPdf(el, { widthIn, heightIn, filename, dpi = 300 
   } catch {
     blob = pdf.output('blob')
   }
-  return downloadBlob(blob, safeFilename(filename))
+  const name = safeFilename(filename)
+  if (returnBlobOnly) {
+    return { ok: true, blob, filename: name }
+  }
+  return downloadBlob(blob, name)
 }
 
 /** Render an off-DOM element to a downloadable PNG (email signature). */

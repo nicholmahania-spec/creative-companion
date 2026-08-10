@@ -28,6 +28,7 @@ import {
 import LayoutPatterns from '../components/LayoutPatterns'
 import TouchpointMockThumb from '../components/TouchpointMockThumb'
 import ApplicationCheck from '../features/brand/ApplicationCheck'
+import BusinessCardProduce from '../features/brand/BusinessCardProduce'
 import {
   BRAND_ROLE_KEYS,
   BRAND_ROLE_LABELS,
@@ -39,6 +40,7 @@ import {
   touchpointLabel,
   touchpointCheckHint,
 } from '../lib/journey/touchpoints'
+import { projectHasProducedBusinessCard } from '../lib/brand/businessCardArtifact'
 import '../styles/lazy-sketch.css'
 
 const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
@@ -63,25 +65,15 @@ function joinWords(list) {
 }
 
 /**
- * Touchpoints progress as words, never "1 of 3".
+ * Touchpoints status as words about what is RECORDED — never path completion,
+ * never "checked" for a note, never "1 of 3".
  *
- * `touchpointsStatus.test.js` specified this before it existed — the test
- * imported it, the function did not, and that is why main's unit job was red.
- * Implemented to the spec the test already fixes, including its explicit
- * assertion that the line must NOT match /\d+ of \d+/: a fraction on a
- * progress line reads as a score to fall short of, and this stop needs only
- * ONE surface noted, so a count would misreport the ask and leave a visible
- * remainder to finish.
+ * A surface has evidence when it holds any of: mock accepted (`done`), a note,
+ * or a colour-sample object (`check`). Those are discrete facts, not a claim
+ * that the application is finished, approved, or delivered.
  *
- * A surface counts as checked when its proof is explicitly done, or carries a
- * note — a note is the evidence that someone actually looked at it.
- *
- * NOW WIRED. It previously said it was deliberately not rendered, because
- * where the line belonged was a layout decision for the owner. That decision
- * has been made (owner, 2026-08-05: restore the Touchpoints screen), so it
- * heads the restored block. The function survived b90e24e; the UI that called
- * it did not — which is why a status line sat here for weeks with nothing to
- * describe, and why `surfaceLabel` and `joinWords` were still imported.
+ * ARTIFACT HONESTY: this line must not say "checked", "complete", or "enough
+ * for the path". The system only knows optional designer evidence on mocks.
  */
 export function touchpointsStatusLine({
   hasBriefSurfaces = false,
@@ -91,15 +83,19 @@ export function touchpointsStatusLine({
   const list = Array.isArray(apps) ? apps.filter(Boolean) : []
   if (!list.length) return hasBriefSurfaces ? 'No mocks yet' : 'No surfaces yet'
 
-  const checked = list.filter((id) => {
+  const withEvidence = list.filter((id) => {
     const proof = proofs?.[id]
     if (!proof) return false
-    return proof.done === true || String(proof.note || '').trim().length > 0
+    return (
+      proof.done === true ||
+      String(proof.note || '').trim().length > 0 ||
+      !!(proof.check && typeof proof.check === 'object')
+    )
   })
 
-  if (!checked.length) return 'No mocks checked yet'
-  if (checked.length === list.length) return 'All mocks checked'
-  return `${joinWords(checked.map(surfaceLabel))} checked — enough for the path`
+  if (!withEvidence.length) return 'Nothing recorded yet'
+  if (withEvidence.length === list.length) return 'Evidence on every surface'
+  return `Evidence on ${joinWords(withEvidence.map(surfaceLabel))}`
 }
 
 export default function SketchView(props) {
@@ -172,6 +168,9 @@ export default function SketchView(props) {
 
   const addTask = useAppStore((s) => s.addTask)
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  const addPackageAsset = useAppStore((s) => s.addPackageAsset)
+  const updatePackageAsset = useAppStore((s) => s.updatePackageAsset)
+  const businessCardProduced = projectHasProducedBusinessCard(activeProject)
 
   /* Touchpoints — derived from the brief, so the surfaces offered are the
      ones this project actually has, not a fixed four for every brand. */
@@ -313,7 +312,7 @@ export default function SketchView(props) {
 
   return (
     <div
-      className="flow-view surface-desk view-enter sketch-studio"
+      className="flow-view surface-desk view-enter sketch-studio touchpoints-studio"
       data-nav-dir={navDir}
     >
       <div className="flow-top flow-top-compact sketch-studio-top">
@@ -324,55 +323,19 @@ export default function SketchView(props) {
           <p className="work-context-line">
             <strong>{activeProject?.name || 'Project'}</strong>
             {projectDeadline ? ` · ${formatShortDate(projectDeadline)}` : ''}
-            {deskTasks.length > 0 && (
-              <span className="work-context-progress">
-                {' '}
-                · {completedCount}/{deskTasks.length}
-              </span>
-            )}
+          </p>
+          <p className="touchpoints-blurb">
+            Apply the brand system to real surfaces. What you see here is a
+            schematic mock — not finished artwork. Upload finished files in
+            Assets when you have them (not linked to these surfaces yet).
           </p>
         </div>
       </div>
 
-      {/* Fold: current step owns attention (redesign brief Work AOF) */}
-      {/* THE APPLICATIONS COME FIRST, because they are the stop.
-
-          This section used to start at line 798 of a 938-line file: you
-          arrived at Touchpoints and met "Current step · No step yet · Add
-          step", with the surfaces the brand actually has to survive on
-          sitting below three screens of task scaffolding. Blur your eyes on
-          the old page and it read as a to-do list.
-
-          Nothing was removed to fix it — the step panel, the capture strip,
-          the queue and the done list are all still here, in the same order,
-          directly below. They are secondary to the work, not absent from it,
-          and the queue is still the place a touchpoint gets turned into a
-          step. */}
-      {/* ── Touchpoints ──────────────────────────────────────────────────
-          The reason this stop exists, restored.
-
-          `journey.js` declares this stop as "Touchpoints — where the brand
-          shows up, one note per surface from the brief", and says what enough
-          looks like: "one surface noted or marked looks right." None of that
-          was on the screen. b90e24e overwrote this file — its parent version
-          WAS the Touchpoints screen — with a general step view, and the
-          heading kept reading "Touchpoints" because it comes from
-          `labelForStepId`, so the page named a job it no longer did.
-
-          The consequence was not cosmetic. `touchpointApps` had no writer
-          anywhere in src/, and `journeyProgress.js` gates this stop on it, so
-          the stop could NEVER complete — and the brand book's applications
-          page reads the same field, so it had nothing to draw from. Every
-          check stayed green throughout: no test renders this view, and an
-          empty object is a valid empty object.
-
-          Restored as an addition rather than a revert. The old file predates
-          the layout-pattern reference and the current-step panel, both of
-          which are pinned by e2e (`phase-surfaces`, `offline`), so putting it
-          back wholesale would have traded one loss for another. */}
-      <section className="touchpoints-block" aria-label="Applications">
+      {/* Application mocks are the stage. Desk tasks stay available below, collapsed. */}
+      <section className="touchpoints-block" aria-label="Application mocks">
         <div className="touchpoints-head">
-          <h2 className="touchpoints-heading">Where the brand shows up</h2>
+          <h2 className="touchpoints-heading">Application mocks</h2>
           <p className="touchpoints-status" role="status">
             {statusLine}
           </p>
@@ -383,8 +346,10 @@ export default function SketchView(props) {
             <p className="touchpoints-empty-title">
               Name where the brand appears
             </p>
-            {/* One tap each, so a thin brief is not stuck bouncing back to
-                Strategy to become completable. */}
+            <p className="touchpoints-empty-sub">
+              From the brief when it is filled — or add a surface here so you
+              can apply the system.
+            </p>
             <div
               className="touchpoints-quick"
               role="group"
@@ -403,16 +368,28 @@ export default function SketchView(props) {
             </div>
           </div>
         ) : (
+          <>
           <ul className="touchpoints-list">
             {touchpointApps.map((id) => {
               const row = touchpointProofs[id] || {}
               const note = row.note || ''
               const done = !!row.done
-              const ready = done || String(note).trim().length > 0
+              const hasCheck = !!(row.check && typeof row.check === 'object')
+              const isBusinessCard = id === 'businessCard'
+              const cardProduced = isBusinessCard && businessCardProduced
+              /* Discrete facts only — never OR into "application complete".
+                 Mock accepted ≠ produced artifact. */
+              const proofBits = []
+              if (done) proofBits.push('Mock accepted')
+              if (hasCheck) proofBits.push('Colour sample')
+              if (String(note).trim()) proofBits.push('Note')
+              if (cardProduced) proofBits.push('Application produced')
               return (
                 <li
                   key={id}
-                  className={`touchpoints-card${ready ? ' is-ready' : ''}`}
+                  className={`touchpoints-card${cardProduced ? ' is-produced' : ''}`}
+                  data-touchpoint={id}
+                  data-application-produced={cardProduced ? 'true' : 'false'}
                 >
                   <div className="touchpoints-card-layout">
                     <TouchpointMockThumb
@@ -437,14 +414,19 @@ export default function SketchView(props) {
                             setTouchpointApp(id, { done: !done })
                             flashMicro?.(
                               !done
-                                ? `${touchpointLabel(id)} · mock is good`
-                                : `${touchpointLabel(id)} · open again`
+                                ? `${touchpointLabel(id)} · mock accepted`
+                                : `${touchpointLabel(id)} · mock open again`
                             )
                           }}
                         >
                           {done ? 'Mock is good' : 'This mock is good'}
                         </button>
                       </div>
+                      <p className="touchpoints-proof-line" role="status">
+                        {proofBits.length
+                          ? proofBits.join(' · ')
+                          : 'Nothing recorded yet'}
+                      </p>
                       <label className="field-label" htmlFor={`tp-note-${id}`}>
                         How it shows up
                       </label>
@@ -458,16 +440,21 @@ export default function SketchView(props) {
                         }
                         placeholder={touchpointCheckHint(id)}
                       />
-                      {/* ── The finished piece, checked ────────────────────
-                          Phase 6 recorded this half as structurally blocked:
-                          "the banner lives on one asset, not an asset
-                          library". The blocked reasoning assumed the check
-                          needs somewhere to FILE assets. It does not — it
-                          needs somewhere the deliverables are already named,
-                          and this list is exactly that, derived from the
-                          brief. A business card exported from Illustrator
-                          lands on the Business card row because that is the
-                          row the designer is standing on. */}
+                      {isBusinessCard ? (
+                        <BusinessCardProduce
+                          project={activeProject}
+                          palette={
+                            Array.isArray(projectPalette) &&
+                            projectPalette.length
+                              ? projectPalette
+                              : activeProject?.palette || []
+                          }
+                          addPackageAsset={addPackageAsset}
+                          updatePackageAsset={updatePackageAsset}
+                          flashMicro={flashMicro}
+                          setActiveView={setActiveView}
+                        />
+                      ) : null}
                       <ApplicationCheck
                         check={row.check || null}
                         palette={checkPalette}
@@ -475,28 +462,80 @@ export default function SketchView(props) {
                         label={touchpointLabel(id).toLowerCase()}
                         onChecked={(check) => {
                           setTouchpointApp(id, { check })
-                          flashMicro?.(`${touchpointLabel(id)} · colours read`)
+                          flashMicro?.(
+                            `${touchpointLabel(id)} · colour sample`
+                          )
                         }}
                         onClear={() => {
                           const before = row.check
                           setTouchpointApp(id, { check: null })
-                          /* Undo, not a confirmation dialog. A dialog is a
-                             decision; undo is not — and the reading cost a
-                             file-picker trip to produce. */
-                          offerUndo?.('Check cleared', () =>
+                          offerUndo?.('Colour sample cleared', () =>
                             setTouchpointApp(id, { check: before })
                           )
                         }}
                       />
+                      <p className="touchpoints-asset-line">
+                        {cardProduced ? (
+                          <>
+                            Application PDF is in the{' '}
+                            <button
+                              type="button"
+                              className="text-link"
+                              onClick={() => setActiveView?.('finish')}
+                            >
+                              Delivery · client package
+                            </button>
+                            {' '}
+                            (Application proofs folder when exported)
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="text-link"
+                              onClick={() => setActiveView?.('assets')}
+                            >
+                              Upload finished files in Assets
+                            </button>
+                            {' '}
+                            — not linked to this surface yet
+                            {isBusinessCard
+                              ? '. Or produce the card above to file a real PDF.'
+                              : ''}
+                          </>
+                        )}
+                      </p>
                     </div>
                   </div>
                 </li>
               )
             })}
           </ul>
+          <p className="touchpoints-handoff-note" role="note">
+            Finished application files belong in{' '}
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => setActiveView?.('assets')}
+            >
+              Assets
+            </button>
+            {' '}
+            when you have them. They are not linked to these surfaces. A colour
+            sample here stores a reading only — not the file.
+          </p>
+          </>
         )}
       </section>
 
+      {/* Generic desk machinery — preserved, not the stage story. */}
+      <details className="touchpoints-desk-optional">
+        <summary className="touchpoints-desk-summary">
+          Desk steps (optional)
+          {deskTasks.length > 0
+            ? ` · ${completedCount}/${deskTasks.length}`
+            : ''}
+        </summary>
       <section
         className="panel step-focus-panel sketch-now"
         key={stepFocusKey}
@@ -933,7 +972,7 @@ export default function SketchView(props) {
           </section>
         )}
       </div>
-
+      </details>
 
       <div className="path-continue-row">
         <button
