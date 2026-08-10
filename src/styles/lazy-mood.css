@@ -1107,3 +1107,79 @@
 .research-pin-fav.is-on {
   color: var(--dopamine, var(--text-primary));
 }
+
+/* ── Creative workbench refinement ──────────────────────────────────────
+   The board is the working surface. Its surrounding capture controls stay
+   present, but no longer read as a sequence of nested application panels. */
+.research-studio .board-add-compact,
+.research-studio .research-wall {
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+}
+
+.research-studio .board-add-compact {
+  margin-bottom: var(--space-3);
+}
+
+.research-studio .research-wall {
+  padding-block: 0;
+}
+
+.research-artboard {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.research-artboard-toolbar {
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+}
+
+.research-artboard-plane {
+  padding: clamp(var(--space-3), 2vw, var(--space-5));
+  background: color-mix(in srgb, var(--bg-muted) 72%, var(--bg-elevated));
+}
+
+.research-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: clamp(var(--space-3), 1.7vw, var(--space-5));
+}
+
+.research-artboard .research-pin-card,
+.research-pin-card {
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.research-pin-card.is-starred {
+  border-color: var(--text-primary);
+}
+
+.research-pin-face {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.research-pin-body {
+  padding: var(--space-2) 0 0;
+}
+
+.research-pin-tools-row,
+.research-pin-note-row {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 640px) {
+  .research-studio .board-add-compact {
+    margin-bottom: var(--space-2);
+  }
+
+  .research-artboard-plane {
+    padding: var(--space-3);
+  }
+}

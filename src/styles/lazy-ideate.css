@@ -606,3 +606,70 @@
   border-left-width: 3px;
   border-left-color: var(--text-primary);
 }
+
+/* ── Creative workbench refinement ──────────────────────────────────────
+   A route is a specimen first, a form only while it is being edited. */
+.ideate-routes {
+  gap: clamp(var(--space-3), 1.5vw, var(--space-5));
+}
+
+.ideate-dir-card {
+  gap: var(--space-3);
+  padding: clamp(var(--space-3), 1.7vw, var(--space-5));
+  border-radius: 0;
+  border-color: var(--border-subtle);
+  border-inline-width: 0;
+  border-top-width: 2px;
+  background: transparent;
+}
+
+.ideate-dir-card.is-open {
+  border-top-color: var(--text-primary);
+  border-left-width: 0;
+  background: var(--bg-elevated);
+}
+
+.ideate-dir-card.is-chosen {
+  border-color: var(--accent-growth, var(--text-primary));
+  border-inline-width: 0;
+  box-shadow: none;
+}
+
+.ideate-dir-head {
+  padding-bottom: var(--space-1);
+}
+
+.ideate-dir-letter {
+  font-size: var(--fs-4);
+  letter-spacing: -0.04em;
+}
+
+.ideate-dir-title-text {
+  font-size: var(--fs-3);
+  letter-spacing: -0.02em;
+}
+
+.ideate-dir-card .dir-preview {
+  order: -1;
+}
+
+.ideate-dir-card .dir-comp.is-quiet,
+.ideate-dir-edit {
+  border-color: var(--border-subtle);
+}
+
+.ideate-dir-quiet {
+  padding-top: var(--space-1);
+}
+
+.ideate-dir-add {
+  border-radius: 0;
+  min-height: 12rem;
+}
+
+@media (max-width: 720px) {
+  .ideate-dir-card,
+  .ideate-dir-card.is-editing {
+    padding: var(--space-3);
+  }
+}

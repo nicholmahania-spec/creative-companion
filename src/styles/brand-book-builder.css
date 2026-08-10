@@ -1204,3 +1204,44 @@
 .bbb-gaps__label {
   font-weight: 600;
 }
+
+/* ── Creative workbench refinement ──────────────────────────────────────
+   The book itself is the primary artifact. The rail remains fully capable,
+   but reads as a quiet set of editorial controls around the page preview. */
+.bbb-topbar {
+  padding-block: var(--space-xs, 7px);
+}
+
+.bbb-topbar .bbb-btn:not(.bbb-btn--primary) {
+  border-color: transparent;
+  background: transparent;
+  color: #c9c6bd;
+}
+
+.bbb-panel {
+  width: min(18rem, 30vw);
+  padding: var(--space-md, 16px) var(--space-lg, 24px);
+}
+
+.bbb-panel__title {
+  margin-bottom: var(--space-md, 14px);
+}
+
+.bbb-section__summary {
+  padding-block: var(--space-sm, 10px);
+}
+
+.bbb-canvas {
+  background: #efece4;
+}
+
+.bbb-page {
+  box-shadow: 0 1rem 2.5rem rgba(23, 22, 20, 0.14);
+}
+
+@media (max-width: 860px) {
+  .bbb-panel {
+    width: 100%;
+    padding: var(--space-md, 16px);
+  }
+}

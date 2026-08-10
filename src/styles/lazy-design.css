@@ -2096,6 +2096,69 @@
   font-size: var(--fs-1);
 }
 
+/* ── Creative workbench refinement ──────────────────────────────────────
+   The brand sheet is the object of judgment; editor panels are supporting
+   tools, separated by rhythm and rules rather than a stack of containers. */
+.design-workspace {
+  gap: clamp(var(--space-4), 2.25vw, var(--space-6));
+}
+
+.design-artboard-column {
+  padding: clamp(var(--space-3), 1.6vw, var(--space-5));
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.design-edit-column > .panel.brand-section {
+  margin: 0;
+  padding: clamp(var(--space-3), 1.6vw, var(--space-5)) 0;
+  border-inline: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.design-edit-column > .panel.brand-section + .panel.brand-section {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.design-section-head {
+  margin-bottom: var(--space-4);
+}
+
+.design-section-title {
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.design-edit-column .field-input,
+.design-edit-column .field-textarea {
+  background: transparent;
+  border-inline: 0;
+  border-top: 0;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+.design-edit-column .field-input:focus,
+.design-edit-column .field-textarea:focus {
+  border-color: var(--dopamine);
+}
+
+.identity-subnav {
+  border-bottom-color: var(--border-subtle);
+}
+
+.identity-subnav-btn {
+  border-radius: 0;
+}
+
+@media (max-width: 60rem) {
+  .design-artboard-column {
+    margin-bottom: var(--space-2);
+  }
+}
+
 .artboard-brief-input,
 .artboard-tagline-input {
   border: 1px solid var(--border-subtle);
