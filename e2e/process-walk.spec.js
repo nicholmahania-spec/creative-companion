@@ -100,6 +100,13 @@ test.describe('Process walk (artifacts)', () => {
       .first()
       .getByRole('button', { name: /^Choose this$/i })
       .click()
+    /* Why lives under Edit/Why disclosure — closed cards no longer show
+       #dir-note-* on the face (Directions form reduction). */
+    await page
+      .locator('.ideate-dir-card')
+      .first()
+      .getByRole('button', { name: /^Why$/i })
+      .click()
     const whyA = page.locator('#dir-note-a')
     await expect(whyA).toBeVisible({ timeout: 5000 })
     await whyA.fill('Hierarchy carries calm')
