@@ -1,28 +1,53 @@
 import useAppStore from '../../store/useAppStore'
-import { directionEvidence } from '../../lib/brand/directionEvidence'
 import { EvidenceFace } from './DirectionEvidence'
+import {
+  activeDirectionWorkingMaterial,
+} from '../../lib/brand/directionWorkingMaterial'
 import '../../styles/lazy-directions.css'
 
 /**
- * The route Identity is being made for.
+ * The route Identity is being made for — provisional working material.
  *
- * THE HANDOFF DIRECTIONS NEVER HAD. Before this, a route's only reader
- * anywhere downstream was one line on a brand-book page. A designer left
- * Directions having named a route and arrived at Identity with no way to tell
- * which one they were making — the app had the answer and never said it.
+ * ARRIVING WRITES NOTHING. This resolves the active direction's refs and
+ * citations for display so Color / Type / Mark open as development of THAT
+ * material, not a blank brand with a sticky note. Canonical project fields
+ * stay the system of record until explicit Use or edit.
  *
- * IT IS MATERIAL, NOT A FORM. An earlier version listed the route's three
- * parts and printed "Not set" against each, which is three unfinished
- * obligations shown before any work has started. What belongs here is what the
- * designer responded to, at a size they can read it at — that is the creative
- * context. The `Use` actions live on the sub-screen that owns each part, where
- * the designer can see what one would replace.
- *
- * NO LETTER. A·B·C are positions on the Directions screen and have no referent
- * here, so the route is named.
- *
- * ARRIVING WRITES NOTHING. This renders; it does not set a field.
+ * NO LETTER. A·B·C are Directions positions only.
  */
+
+const PART_LABEL = { colour: 'Color', type: 'Type', mark: 'Mark' }
+
+function ColourStrip({ hexes }) {
+  if (!hexes?.length) return null
+  return (
+    <span className="dir-developing-swatches" aria-hidden="true">
+      {hexes.slice(0, 6).map((h, i) => (
+        <i key={`${h}-${i}`} style={{ background: h }} title={h} />
+      ))}
+    </span>
+  )
+}
+
+function PartRow({ part, children }) {
+  return (
+    <li className={`dir-developing-part is-${part.state}`}>
+      <span className="dir-developing-part-label">{PART_LABEL[part.slot]}</span>
+      <span className="dir-developing-part-body">
+        {children}
+        <span className="dir-developing-part-summary">{part.summary}</span>
+      </span>
+      <span className="dir-developing-state">
+        {part.state === 'captured'
+          ? 'On this route'
+          : part.state === 'evidence'
+            ? 'Evidence'
+            : 'Not yet'}
+      </span>
+    </li>
+  )
+}
+
 export default function DirectionInDevelopment({
   project,
   onOpenDirections,
@@ -31,29 +56,28 @@ export default function DirectionInDevelopment({
   const setActiveDirection = useAppStore((s) => s.setActiveDirection)
   const moodItems = useAppStore((s) => s.moodItems)
 
-  const activeId = project?.activeDirectionId || null
-  const direction = (project?.directions || []).find((d) => d?.id === activeId)
-  if (!direction) return null
+  const working = activeDirectionWorkingMaterial(project, moodItems)
+  if (!working) return null
 
-  const cited = directionEvidence(direction, moodItems, project?.id)
-  const name = String(direction.title || '').trim()
+  const { title, note, evidence, colour, type, mark, parts } = working
 
   return (
-    <aside className="dir-developing" aria-label="Route being developed">
+    <aside
+      className="dir-developing"
+      aria-label="Route being developed"
+      data-direction-working="true"
+    >
       <p className="dir-developing-head">
         <span className="dir-developing-kicker">Making</span>
-        <span className="dir-developing-title">{name || 'Untitled route'}</span>
+        <span className="dir-developing-title">{title || 'Untitled route'}</span>
         <button type="button" className="text-link" onClick={onOpenDirections}>
           Directions
         </button>
-        {/* The state is visible here, so the off switch belongs here. Without
-            it the only way to stop was a control on another screen, and in
-            practice this would assert a stale route for the project's life. */}
         <button
           type="button"
           className="text-link"
           onClick={() => {
-            setActiveDirection(direction.id)
+            setActiveDirection(working.directionId)
             flashMicro?.('Set aside')
           }}
         >
@@ -61,13 +85,38 @@ export default function DirectionInDevelopment({
         </button>
       </p>
 
-      {String(direction.note || '').trim() ? (
-        <p className="dir-developing-why">{direction.note.trim()}</p>
-      ) : null}
+      {note ? <p className="dir-developing-why">{note}</p> : null}
 
-      {cited.length > 0 ? (
-        <ul className="dir-developing-ev" aria-label="Material behind this route">
-          {cited.map((item) => (
+      <p className="dir-developing-lede">
+        Material from this route — develop it into the brand. Nothing below is
+        the final system until you Use it or edit it.
+      </p>
+
+      <ul className="dir-developing-parts" aria-label="What this route holds">
+        <PartRow part={parts.colour}>
+          <ColourStrip hexes={colour.hexes} />
+        </PartRow>
+        <PartRow part={parts.type}>
+          {type.source === 'ref' ? (
+            <span className="dir-developing-type-faces" aria-hidden="true">
+              {[type.heading, type.body].filter(Boolean).join(' · ')}
+            </span>
+          ) : null}
+        </PartRow>
+        <PartRow part={parts.mark}>
+          {mark.concept?.image ? (
+            <img
+              className="dir-developing-mark"
+              src={mark.concept.image}
+              alt=""
+            />
+          ) : null}
+        </PartRow>
+      </ul>
+
+      {evidence.length > 0 ? (
+        <ul className="dir-developing-ev" aria-label="Cited evidence">
+          {evidence.map((item) => (
             <li key={item.key}>
               <EvidenceFace item={item} />
             </li>
@@ -81,15 +130,9 @@ export default function DirectionInDevelopment({
 /**
  * “This route points at X · Use”, on the screen that owns X.
  *
- * ONE ROW, IN CONTEXT. It sits beside the thing it would replace, so the
- * designer can see the trade before making it, and it writes through the
- * setter the owning workspace already writes through — no second source of
- * truth, and as reversible as any other edit made there.
- *
- * Colour has no caller, deliberately: applying a palette snapshot means
- * writing `paletteTokens` positionally, which is the naming-drift question
- * this repo has parked for an owner decision. Offering it would settle that by
- * accident.
+ * ONE ROW, IN CONTEXT. Writes through the setter the owning workspace already
+ * owns. Colour has no Use caller — applying a palette snapshot writes roles
+ * positionally, which stays a parked owner decision.
  */
 export function DirectionPartOffer({ project, slot, label, inUse, onUse, children }) {
   const activeId = project?.activeDirectionId || null
@@ -114,5 +157,19 @@ export function DirectionPartOffer({ project, slot, label, inUse, onUse, childre
         </button>
       )}
     </div>
+  )
+}
+
+/**
+ * Honest empty / evidence-only state when the route has no captured pairing
+ * or mark — so Identity does not look finished by accident.
+ */
+export function DirectionPartGap({ project, message }) {
+  const activeId = project?.activeDirectionId || null
+  if (!activeId || !message) return null
+  return (
+    <p className="dir-offer dir-offer-gap" role="status">
+      {message}
+    </p>
   )
 }

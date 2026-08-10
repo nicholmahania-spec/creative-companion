@@ -158,7 +158,7 @@ test('Develop takes the route to Identity, which says which one it is', async ({
   await page.waitForTimeout(200)
 
   /* Snapshot the canonical identity fields BEFORE the handoff. A new project
-     already has a default pairing, so "arriving writes nothing" is a
+     already has a default pairing, so "arriving does not finalize" is a
      comparison, not an emptiness check. */
   const identityFields = () =>
     page.evaluate(() => {
@@ -181,11 +181,11 @@ test('Develop takes the route to Identity, which says which one it is', async ({
   const strip = page.locator('.dir-developing')
   await expect(strip).toBeVisible()
   await expect(strip).toContainText('Quiet serif')
-  /* No inventory of empty fields — the old strip printed MARK/TYPE/COLOR
-     "Not set" before any work had started. */
-  await expect(strip).not.toContainText('Not set')
+  /* Working material board — parts are honest about capture vs missing. */
+  await expect(strip).toContainText(/Color|Type|Mark/)
+  await expect(strip).toHaveAttribute('data-direction-working', 'true')
 
-  // DEVELOPING IS NOT CHOSEN, and arriving wrote nothing.
+  // DEVELOPING IS NOT CHOSEN, and Develop does not silently finalize brand fields.
   const store = await routesInStore(page)
   expect(store.chosen).toEqual([])
   expect(store.active).toBe('a')
@@ -195,6 +195,86 @@ test('Develop takes the route to Identity, which says which one it is', async ({
   // Stopping has its own control, where the state is visible.
   await strip.getByRole('button', { name: 'Stop' }).click()
   await expect(page.locator('.dir-developing')).toHaveCount(0)
+  // Stop does not rewrite the brand system either.
+  expect(await identityFields()).toEqual(before)
+})
+
+test('Develop grounds Identity in chosen route material without overwriting the brand system', async ({
+  page,
+}) => {
+  await start(page, 'Bridge Handoff')
+  /* Colour hearts specifically — type samples are not palette material. */
+  await goToStep(page, 'define')
+  await page.locator('.vd').scrollIntoViewIfNeeded()
+  await expect(page.locator('.vd')).toBeVisible({ timeout: 10000 })
+  const colorTab = page.getByRole('button', { name: /^Color$/i }).first()
+  if (await colorTab.count()) {
+    await colorTab.click()
+    await page.waitForTimeout(200)
+  }
+  for (let i = 0; i < 4; i += 1) {
+    await page.locator('.vd-fav').nth(i % 2).click()
+    await page.waitForTimeout(150)
+    if (i % 2 === 1) {
+      await page.locator('.vd-pick').first().click()
+      await page.waitForTimeout(200)
+    }
+  }
+
+  await goToStep(page, 'ideate')
+  await page.locator('#dir-add').click()
+  await page.locator('#dir-title-a').fill('Warm editorial')
+  await page.waitForTimeout(200)
+  const done = page.getByRole('button', { name: 'Done', exact: true })
+  if (await done.count()) await done.click()
+
+  const tile = page.locator('.dir-ev-item').first()
+  await expect(tile).toBeVisible({ timeout: 10000 })
+  await tile.click()
+  await page.waitForTimeout(250)
+
+  const identityFields = () =>
+    page.evaluate(() => {
+      const raw = JSON.parse(localStorage.getItem('creative-companion-storage') || '{}')
+      const st = raw.state || raw
+      const p = (st.projects || []).find((x) => x.id === st.currentProjectId)
+      return {
+        heading: p.typeHeading ?? '',
+        body: p.typeBody ?? '',
+        logo: p.logoImage ?? '',
+        palette: (p.palette || []).join(','),
+        active: p.activeDirectionId ?? null,
+        evidence: (p.directions || []).find((d) => d.id === 'a')?.evidence || [],
+      }
+    })
+  await page.waitForTimeout(500)
+  const before = await identityFields()
+  expect(before.evidence.length).toBeGreaterThan(0)
+
+  await page.getByRole('button', { name: 'Choose this' }).click()
+  await page.waitForTimeout(300)
+  await page.getByRole('button', { name: 'Develop →' }).click()
+  await expect(headingForStep(page, 'design').first()).toBeVisible({ timeout: 15000 })
+
+  const strip = page.locator('.dir-developing')
+  await expect(strip).toBeVisible()
+  await expect(strip).toContainText('Warm editorial')
+  await expect(strip.locator('.dir-developing-parts')).toBeVisible()
+  await expect(strip).toContainText(/Color/i)
+
+  /* Identity sub-nav Color — not Visual Discovery's Color tab. */
+  await page.locator('.identity-subnav-btn', { hasText: 'Color' }).click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('[data-testid="dir-route-colour"]')).toBeVisible({
+    timeout: 8000,
+  })
+
+  const after = await identityFields()
+  expect(after.heading).toBe(before.heading)
+  expect(after.body).toBe(before.body)
+  expect(after.logo).toBe(before.logo)
+  expect(after.palette).toBe(before.palette)
+  expect(after.active).toBe('a')
 })
 
 test('the strip is absent when nothing is being developed', async ({ page }) => {
