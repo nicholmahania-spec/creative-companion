@@ -82,3 +82,15 @@ export function draftDiffersFromProject(draftHexes, projectHexes) {
   if (a.length !== b.length) return true
   return a.some((h, i) => h !== b[i])
 }
+
+/**
+ * Family name from a sample label like "Fraunces Bold" for specimen preview.
+ * Display only — never written into project type fields.
+ */
+export function familyFromSampleLabel(label) {
+  const s = String(label ?? '').trim()
+  if (!s) return ''
+  return s
+    .replace(/\s+(Bold|Regular|SemiBold|Medium|Light|Black|Thin|Italic)$/i, '')
+    .trim()
+}

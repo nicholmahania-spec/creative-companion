@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { familyFromSampleLabel } from './DirectionInDevelopment'
+import { familyFromSampleLabel } from '../../lib/brand/identityColourDraft'
 
 describe('familyFromSampleLabel', () => {
   it('strips weight words for specimen font-family', () => {

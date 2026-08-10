@@ -65,7 +65,6 @@ import MarkColourCheck from '../features/brand/MarkColourCheck'
 import TypeSpecimen from '../features/brand/TypeSpecimen'
 import DirectionInDevelopment, {
   DirectionPartOffer,
-  DirectionPartGap,
   DirectionPartLead,
   DirectionTypeEvidence,
   DirectionRouteTool,
@@ -605,25 +604,30 @@ export default function DesignView({
   )
 
   /* Colour L2 draft: component state only. Seeded from route material when a
-     direction is active. project.palette stays L3 until "Set as brand palette". */
+     direction is active. project.palette stays L3 until "Set as brand palette".
+     Adjust state during render when the route seed changes (not in an effect). */
   const colourSeed = useMemo(
     () => colourDraftSeed(directionWorking),
     [directionWorking]
   )
-  const [colourDraftHexes, setColourDraftHexes] = useState(null)
-  const [colourDraftKey, setColourDraftKey] = useState(null)
-
-  useEffect(() => {
-    if (!colourSeed.active) {
-      setColourDraftHexes(null)
-      setColourDraftKey(null)
-      return
-    }
-    if (colourSeed.key !== colourDraftKey) {
-      setColourDraftHexes([...colourSeed.hexes])
-      setColourDraftKey(colourSeed.key)
-    }
-  }, [colourSeed, colourDraftKey])
+  const [colourDraft, setColourDraft] = useState({ key: null, hexes: null })
+  if (!colourSeed.active && colourDraft.key !== null) {
+    setColourDraft({ key: null, hexes: null })
+  } else if (
+    colourSeed.active &&
+    colourSeed.key !== colourDraft.key
+  ) {
+    setColourDraft({ key: colourSeed.key, hexes: [...colourSeed.hexes] })
+  }
+  const colourDraftHexes = colourDraft.hexes
+  const setColourDraftHexes = (updater) => {
+    setColourDraft((prev) => {
+      const prevHexes = prev.hexes || []
+      const nextHexes =
+        typeof updater === 'function' ? updater(prevHexes) : updater
+      return { ...prev, hexes: nextHexes }
+    })
+  }
 
   const isColourDraftMode = colourDraftHexes !== null && colourSeed.active
   /* Working surface for the Color editor: route-seeded draft, or project. */

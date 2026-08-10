@@ -3,6 +3,7 @@ import { EvidenceFace } from './DirectionEvidence'
 import {
   activeDirectionWorkingMaterial,
 } from '../../lib/brand/directionWorkingMaterial'
+import { familyFromSampleLabel } from '../../lib/brand/identityColourDraft'
 import '../../styles/lazy-directions.css'
 
 /**
@@ -177,18 +178,6 @@ export function DirectionPartGap({ project, message }) {
       {message}
     </p>
   )
-}
-
-/**
- * Family name from a sample label like "Fraunces Bold" for specimen preview.
- * Display only — never written into project type fields.
- */
-export function familyFromSampleLabel(label) {
-  const s = String(label ?? '').trim()
-  if (!s) return ''
-  return s
-    .replace(/\s+(Bold|Regular|SemiBold|Medium|Light|Black|Thin|Italic)$/i, '')
-    .trim()
 }
 
 /**
