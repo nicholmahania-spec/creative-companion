@@ -25,10 +25,10 @@ import { pathProgressSummary } from './journeyProgress'
  *   define    all required brief fields filled (getDetectiveProgress)
  *   research  every starred pin has a "why"
  *   ideate    a titled direction, a rough idea, or a spark pin
- *   design    a craft signal (wordmark) beyond the stock palette
- *   sketch    at least one touchpointApps note or “looks right”
+ *   design    mark or wordmark PLUS words or non-stock colour (not tagline alone)
+ *   sketch    at least one touchpointApps note / mock accept / colour sample
  *   book      the builder has been touched (`bookBuilder` exists)
- *   deliver   a handoff note or learnings
+ *   deliver   a handoff note or learnings (evidence only — not delivered)
  *
  * `ideate` and `book` joined the path on 2026-08-09. The fixture gained the
  * two fields their rules read; nothing else about this file changed, which is
@@ -47,6 +47,7 @@ const everythingDone = {
     },
     directions: [{ id: 'a', title: 'Harbor light' }],
     logoWordmark: 'Harbor',
+    tagline: 'Coastal and warm',
     touchpointApps: { website: { note: 'Hero uses the wordmark' } },
     bookBuilder: { print: { pageSize: 'a4' } },
     handoffNote: 'Everything is in the pack.',
@@ -54,6 +55,7 @@ const everythingDone = {
   tasks: [],
   moodItems: [{ type: 'image', inPack: true, note: 'the light' }],
   sparkIndex: 3,
+  palette: ['#1C1917', '#0F766E'],
 }
 
 describe('path completion', () => {

@@ -8,7 +8,12 @@ import {
   pathGapFocusSelector,
   buildPathProgressCtx,
   isStockProjectPalette,
+  isStockProjectType,
+  hasProducedProjectType,
+  producedTypeLabels,
   STOCK_PROJECT_PALETTE,
+  STOCK_PROJECT_TYPE_HEADING,
+  STOCK_PROJECT_TYPE_BODY,
 } from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
 
@@ -153,6 +158,37 @@ describe('pathStepHasContent', () => {
     ).toBe(true)
   })
 
+  it('stock type detector: factory pair only', () => {
+    expect(
+      isStockProjectType(STOCK_PROJECT_TYPE_HEADING, STOCK_PROJECT_TYPE_BODY)
+    ).toBe(true)
+    expect(isStockProjectType('Fraunces SemiBold', STOCK_PROJECT_TYPE_BODY)).toBe(
+      false
+    )
+    expect(
+      isStockProjectType(STOCK_PROJECT_TYPE_HEADING, 'Source Serif 4 Regular')
+    ).toBe(false)
+    expect(isStockProjectType('Fraunces SemiBold', 'Lora Regular')).toBe(false)
+    expect(isStockProjectType('', '')).toBe(false)
+    expect(isStockProjectType(undefined, undefined)).toBe(false)
+    expect(
+      hasProducedProjectType(STOCK_PROJECT_TYPE_HEADING, STOCK_PROJECT_TYPE_BODY)
+    ).toBe(false)
+    expect(hasProducedProjectType('', '')).toBe(false)
+    expect(hasProducedProjectType('Fraunces SemiBold', 'Lora Regular')).toBe(
+      true
+    )
+    expect(
+      producedTypeLabels(STOCK_PROJECT_TYPE_HEADING, STOCK_PROJECT_TYPE_BODY)
+    ).toEqual({ heading: '', body: '' })
+    expect(
+      producedTypeLabels('Fraunces SemiBold', 'Source Serif 4 Regular')
+    ).toEqual({
+      heading: 'Fraunces SemiBold',
+      body: 'Source Serif 4 Regular',
+    })
+  })
+
   it('design ignores stock default palette alone', () => {
     expect(isStockProjectPalette(STOCK_PROJECT_PALETTE)).toBe(true)
     expect(
@@ -161,15 +197,28 @@ describe('pathStepHasContent', () => {
         palette: [...STOCK_PROJECT_PALETTE],
       })
     ).toBe(false)
+    /* Tagline alone is not Identity craft — needs mark/wordmark + words/colour. */
     expect(
       pathStepHasContent('design', {
         project: { tagline: 'Hello' },
         palette: [...STOCK_PROJECT_PALETTE],
       })
-    ).toBe(true)
+    ).toBe(false)
     expect(
       pathStepHasContent('design', {
         project: {},
+        palette: ['#111111', '#222222'],
+      })
+    ).toBe(false)
+    expect(
+      pathStepHasContent('design', {
+        project: { logoWordmark: 'Acme', tagline: 'Hello' },
+        palette: [...STOCK_PROJECT_PALETTE],
+      })
+    ).toBe(true)
+    expect(
+      pathStepHasContent('design', {
+        project: { logoImage: 'data:image/png;base64,x' },
         palette: ['#111111', '#222222'],
       })
     ).toBe(true)
@@ -194,6 +243,7 @@ describe('pathStepHasContent', () => {
           deliverablesPicked: ['logoPrimary'],
         },
         tagline: 'T',
+        logoWordmark: 'Co',
         designVersion: 'v2',
         feedbackNotes: 'ok',
         handoffNote: 'hi',

@@ -24,6 +24,7 @@
  */
 import { getDetectiveProgress } from '../brief/detectiveBrief'
 import { touchpointsFor } from '../journey/touchpoints'
+import { hasProducedProjectType } from './journeyProgress'
 
 const clean = (v) => String(v ?? '').trim()
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
@@ -71,7 +72,13 @@ export function stopEstablished(stepId, ctx = {}) {
       const swatches = Array.isArray(ctx.palette) ? ctx.palette.slice(0, 5) : []
       const bits = []
       if (project.logoImage) bits.push('mark')
-      if (clean(project.typeHeading)) bits.push('type')
+      /* Factory type pair is not established craft — see hasProducedProjectType. */
+      if (
+        hasProducedProjectType(project.typeHeading, project.typeBody) &&
+        clean(project.typeHeading)
+      ) {
+        bits.push('type')
+      }
       if (clean(project.tagline)) bits.push('tagline')
       return {
         line: bits.length ? bits.join(' · ') : 'Nothing set yet',
@@ -86,16 +93,16 @@ export function stopEstablished(stepId, ctx = {}) {
       )
       if (!apps.length) return { line: 'No surfaces named yet' }
       const proofs = project.touchpointApps || {}
-      const noted = apps.filter((id) => {
+      const withEvidence = apps.filter((id) => {
         const row = proofs[id]
         return row && (row.done || clean(row.note) || row.check)
       }).length
-      /* Same rule as the brief: state what exists. Both numbers are facts
-         about the work — how many surfaces this brand has, and how many you
-         have covered — but never as a fraction of one over the other. */
+      /* ARTIFACT HONESTY: evidence = mock accept / note / colour sample —
+         not "complete" or "covered" as finished applications. Counts only,
+         never a fraction (see module header). */
       return {
-        line: noted
-          ? `${plural(noted, 'covered', 'covered')} · ${plural(apps.length, 'surface', 'surfaces')}`
+        line: withEvidence
+          ? `Evidence on ${plural(withEvidence, 'surface', 'surfaces')} · ${plural(apps.length, 'surface', 'surfaces')}`
           : plural(apps.length, 'surface', 'surfaces'),
       }
     }
@@ -121,16 +128,15 @@ export function stopEstablished(stepId, ctx = {}) {
       return { line: 'No routes yet' }
     }
     case 'book': {
-      /* `bookBuilder` is written the first time the builder is touched, so
-         its presence is the honest signal that the book has been shaped
-         rather than merely derivable from the project. */
+      /* bookBuilder exists after first touch — not a finished client book. */
       const built = project.bookBuilder && typeof project.bookBuilder === 'object'
-      return { line: built ? 'Laid out' : 'Not laid out yet' }
+      return { line: built ? 'Builder opened' : 'Builder not opened yet' }
     }
     case 'deliver': {
+      /* Note text only — never claim Handed off / Delivered without a ship event. */
       if (clean(project.handoffNote) || clean(project.learnings))
-        return { line: 'Handed off' }
-      return { line: 'Not delivered yet' }
+        return { line: 'Handoff note written' }
+      return { line: 'No handoff note yet' }
     }
     default:
       return { line: '' }

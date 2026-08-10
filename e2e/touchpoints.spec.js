@@ -57,6 +57,18 @@ test('Touchpoints can be filled in, and the note is kept', async ({ page }) => {
 
   // The mock the book will draw, previewed in the brand's own colours.
   await expect(card.locator('.tp-mock')).toBeVisible()
+  /* Application mocks lead the stage — desk tasks are optional chrome. */
+  await expect(page.locator('.touchpoints-block')).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /Application mocks/i })
+  ).toBeVisible()
+  await expect(page.locator('.touchpoints-desk-optional')).toBeVisible()
+  await expect(page.locator('.touchpoints-proof-line')).toHaveText(
+    /Nothing recorded yet/
+  )
+  await expect(
+    page.getByRole('button', { name: /Upload finished files in Assets/i })
+  ).toBeVisible()
 
   await card.locator('textarea').first().fill('Logo top-left, 24px clear space')
 

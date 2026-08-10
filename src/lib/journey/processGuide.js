@@ -65,14 +65,14 @@ const COACHING = {
   sketch: {
     title: 'Creating touchpoints',
     plain:
-      'Apply the system on real surfaces from the brief. One note per application.',
+      'Apply the system on real surfaces as schematic mocks. Notes and mock acceptance are evidence — not finished artwork.',
     prompt:
-      'Walk the applications from Strategy. Note how each looks, or mark looks right.',
+      'Walk the surfaces from the brief. Record evidence (note, mock accepted, colour sample). Finished files go in Assets separately and are not linked yet.',
     checks: [
-      'Applications match where the brand is used',
-      'Each mock checked (note or “this mock is good”)',
-      'Notes match what the book will show',
-      'Ready for Assets when the system holds on real things',
+      'Surfaces match where the brand is used',
+      'Evidence on mocks (note, mock accepted, or colour sample)',
+      'Schematic proofs — not finished client applications',
+      'Upload finished files in Assets when you have them (not linked to these surfaces yet)',
     ],
   },
   review: {
@@ -89,15 +89,15 @@ const COACHING = {
     ],
   },
   deliver: {
-    title: 'Managing assets',
+    title: 'Preparing delivery',
     plain:
-      'Preview what the client gets, write a short handoff, download once.',
+      'Preview what the client may get, write a handoff note, download. A note or download is not delivery.',
     prompt:
-      'Check the preview. One handoff line. Download the brand book (or logo files).',
+      'Check the preview. Write a handoff note if useful. Download the right files for this job.',
     checks: [
-      'Preview matches what you will send',
-      'Handoff note says what is included',
-      'Primary download is the right artifact for this job',
+      'Preview matches what you will prepare',
+      'Handoff note written (optional — not the same as handed off)',
+      'Download is the right export kind for this job',
       'Learnings optional — when you want a note for next time',
     ],
   },

@@ -101,6 +101,19 @@ describe('what each stop reports', () => {
     expect(r.line).toBe('mark · type · tagline')
   })
 
+  it('does not list factory Jakarta as established type', () => {
+    const r = stopEstablished('design', {
+      project: {
+        typeHeading: 'Plus Jakarta Sans Bold',
+        typeBody: 'Plus Jakarta Sans Regular',
+        tagline: 'T',
+      },
+      palette: ['#111111', '#222222'],
+    })
+    expect(r.line).toBe('tagline')
+    expect(r.line).not.toMatch(/type/)
+  })
+
   it('shows no swatches when the palette is still the factory four', () => {
     // The caller filters, but the shape has to survive it: presenting colours
     // nobody chose as the brand's own is the defect `paletteIsUntouched` was
@@ -110,27 +123,29 @@ describe('what each stop reports', () => {
     expect(r.line).toBe('Nothing set yet')
   })
 
-  it('names surfaces before anything is covered, and both once something is', () => {
+  it('names surfaces before any evidence, and evidence counts once something is recorded', () => {
     const project = {
       detective: { brandSurfaces: ['website', 'print'], deliverablesPicked: [] },
     }
     const before = stopEstablished('sketch', { project }).line
     expect(before).toMatch(/surfaces?$/)
-    expect(before).not.toMatch(/covered/)
+    expect(before).not.toMatch(/evidence|covered|complete/i)
 
     const after = stopEstablished('sketch', {
       project: { ...project, touchpointApps: { website: { done: true } } },
     }).line
-    expect(after).toMatch(/covered/)
+    expect(after).toMatch(/evidence/i)
     expect(after).toMatch(/surfaces?/)
+    expect(after).not.toMatch(/covered|complete/i)
+    expect(after).not.toMatch(/\d+\s*(of|\/)\s*\d+/)
   })
 
-  it('says the delivery happened, or that it has not', () => {
+  it('says whether a handoff note exists — never handed off or delivered', () => {
     expect(stopEstablished('deliver', { project: {} }).line).toBe(
-      'Not delivered yet'
+      'No handoff note yet'
     )
     expect(
       stopEstablished('deliver', { project: { handoffNote: 'Files sent' } }).line
-    ).toBe('Handed off')
+    ).toBe('Handoff note written')
   })
 })

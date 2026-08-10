@@ -21,6 +21,57 @@ export function isStockProjectPalette(palette = []) {
   return a.every((v, i) => v === b[i])
 }
 
+/**
+ * Factory type faces (matches brandIdentityDefaults in useAppStore).
+ * Exact pair only — not a fuzzy family match. Alone, must not count as
+ * produced Identity typography (same honesty rule as STOCK_PROJECT_PALETTE).
+ */
+export const STOCK_PROJECT_TYPE_HEADING = 'Plus Jakarta Sans Bold'
+export const STOCK_PROJECT_TYPE_BODY = 'Plus Jakarta Sans Regular'
+
+/**
+ * Exact factory heading+body pair. Empty is not stock — it is unproduced.
+ * Either face differing from the factory pair → false (designer-touched).
+ *
+ * @param {string} [heading]
+ * @param {string} [body]
+ */
+export function isStockProjectType(heading, body) {
+  const h = String(heading ?? '').trim()
+  const b = String(body ?? '').trim()
+  return h === STOCK_PROJECT_TYPE_HEADING && b === STOCK_PROJECT_TYPE_BODY
+}
+
+/**
+ * Designer-produced type for this project — non-empty and not the factory pair.
+ * Rendering may still fall back to a UI font; that is not the same as this.
+ *
+ * @param {string} [heading]
+ * @param {string} [body]
+ */
+export function hasProducedProjectType(heading, body) {
+  const h = String(heading ?? '').trim()
+  const b = String(body ?? '').trim()
+  if (!h && !b) return false
+  if (isStockProjectType(h, b)) return false
+  return true
+}
+
+/**
+ * Labels safe for client-facing docs / package / book. Empty when unproduced.
+ *
+ * @param {string} [heading]
+ * @param {string} [body]
+ * @returns {{ heading: string, body: string }}
+ */
+export function producedTypeLabels(heading, body) {
+  if (!hasProducedProjectType(heading, body)) return { heading: '', body: '' }
+  return {
+    heading: String(heading ?? '').trim(),
+    body: String(body ?? '').trim(),
+  }
+}
+
 function hasExplicitColorRoles(project = {}) {
   const r = project.colorRoles
   if (!r || typeof r !== 'object') return false
@@ -141,17 +192,10 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
       return !!(hasDirection || hasSparkPin || hasRough)
     }
     case 'sketch': {
-      /* Touchpoints = application notes on this stop (touchpointApps), not
-         Strategy checklists and not mere open desk tasks. At least one
-         application from the brief list has a note or “looks right”.
-
-         A CHECKED FILE COUNTS TOO, and that is the point of counting it.
-         Dropping the finished business card on the row runs the colour check
-         and is strictly stronger evidence that the designer looked at the
-         surface than a typed sentence is. Asking them to then also write a
-         note about the thing they just proved is the redundant admin this
-         product exists to remove — "can the system remember this for the
-         designer" (PRODUCT.md §33). */
+      /* ARTIFACT HONESTY: this gate proves EVIDENCE on a surface (note, mock
+         acceptance, or colour sample) — not finished applications, not
+         package files, not delivery. Path UI must say “evidence”, never
+         “applications complete”. */
       const apps = project.touchpointApps || {}
       const any = Object.keys(apps).some((id) => {
         const row = apps[id]
@@ -161,17 +205,17 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
       return any
     }
     case 'design': {
-      // Craft signals only — stock default palette alone does not count
+      /* ARTIFACT HONESTY: strongest existing state is SAVED craft fields.
+         Journey “enough” = mark or wordmark PLUS words or colour. Tagline
+         alone must not tick Identity. Stock palette alone still never counts. */
       const paletteCraft =
         palette.length >= 2 && !isStockProjectPalette(palette)
-      return !!(
-        project.tagline?.trim() ||
-        project.voice?.trim() ||
-        project.logoImage ||
-        String(project.logoWordmark || '').trim() ||
-        hasJustifiedColorRoles(project) ||
-        paletteCraft
-      )
+      const hasMark =
+        !!project.logoImage || String(project.logoWordmark || '').trim()
+      const hasWords =
+        !!project.tagline?.trim() || !!project.voice?.trim()
+      const hasColour = paletteCraft || hasJustifiedColorRoles(project)
+      return !!(hasMark && (hasWords || hasColour))
     }
     case 'review':
       return !!(
@@ -179,16 +223,13 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
         (project.tagline?.trim() && mood.some((m) => m.inPack))
       )
     case 'book': {
-      /* The builder writes `bookBuilder` the first time it is touched. Every
-         other signal the book could read — palette, type, mark — belongs to
-         Identity and would tick this stop for work done three stops earlier,
-         which is the auto-tick bug Touchpoints already shipped once. */
+      /* Builder settings object exists — proves “builder opened”, not a
+         finished brand book or client PDF. */
       return !!(project.bookBuilder && typeof project.bookBuilder === 'object')
     }
     case 'deliver': {
-      /* Handoff or learnings = a real close. Brand-word checkboxes live under
-         collapsed “Brand words” on Assets and must not silently gate the
-         path tick (2026-08-03 audit). Optional ship polish only. */
+      /* Handoff note or learnings text only — proves EVIDENCE of a close note,
+         not that anything was packaged, sent, or delivered. */
       return !!(
         project.handoffNote?.trim() || project.learnings?.trim()
       )

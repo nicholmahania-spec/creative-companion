@@ -16,9 +16,13 @@ const emptyCtx = (pathDone, pathReached) => ({
   tasks: [],
 })
 
-/** A ctx whose 'design' condition is genuinely true (a real tagline). */
+/** A ctx whose 'design' condition is genuinely true (mark/wordmark + words). */
 const filledCtx = (pathDone) => ({
-  project: { tagline: 'Made to last', ...(pathDone ? { pathDone } : {}) },
+  project: {
+    tagline: 'Made to last',
+    logoWordmark: 'Acme',
+    ...(pathDone ? { pathDone } : {}),
+  },
   moodItems: [],
   tasks: [],
 })
