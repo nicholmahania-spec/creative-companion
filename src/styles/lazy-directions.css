@@ -243,15 +243,21 @@
   flex-direction: column;
   gap: var(--space-1);
 }
+.dir-developing-lede {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  max-width: 52ch;
+  line-height: 1.4;
+}
 .dir-developing-part {
   display: grid;
-  grid-template-columns: 4rem minmax(0, 16rem) auto;
-  /* Without this the trailing `auto` track stretches and Develop lands at the
-     far right of a very wide column, adrift from the row it acts on. */
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
   justify-content: start;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--fs-1);
+  min-width: 0;
 }
 .dir-developing-part-label {
   font-weight: 700;
@@ -261,12 +267,87 @@
 }
 .dir-developing-part-body {
   color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+.dir-developing-part-summary {
+  min-width: 0;
 }
 .dir-developing-state {
   color: var(--text-muted);
+  white-space: nowrap;
+}
+.dir-developing-part.is-missing .dir-developing-part-summary {
+  color: var(--text-muted);
+}
+.dir-developing-swatches {
+  display: inline-flex;
+  gap: 2px;
+  flex: none;
+}
+.dir-developing-swatches i {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  display: block;
+}
+.dir-developing-mark {
+  max-height: 1.5rem;
+  max-width: 3rem;
+  object-fit: contain;
+  display: block;
+}
+.dir-developing-type-faces {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.dir-offer-gap {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
+/* Color screen: route material tray (context only, not the brand system). */
+.dir-route-material {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.dir-route-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.dir-route-swatches i {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  display: block;
+}
+.dir-route-material-note {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  line-height: 1.4;
+  max-width: 48ch;
+}
+.dir-working-sheet-note {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  line-height: 1.4;
+  max-width: 48ch;
 }
 
 /* ── Direction preview (paper + two rungs + mark) ──────────────────────

@@ -65,8 +65,13 @@ import MarkColourCheck from '../features/brand/MarkColourCheck'
 import TypeSpecimen from '../features/brand/TypeSpecimen'
 import DirectionInDevelopment, {
   DirectionPartOffer,
+  DirectionPartGap,
 } from '../features/discovery/DirectionInDevelopment'
 import { directionComposition } from '../lib/brand/directionComposition'
+import {
+  activeDirectionWorkingMaterial,
+  projectViewForDirectionMaterial,
+} from '../lib/brand/directionWorkingMaterial'
 import '../styles/lazy-design.css'
 
 /** User-facing labels for palette role chips (store keys stay cover/text/…). */
@@ -154,6 +159,7 @@ export default function DesignView({
   const removeLogoConcept = useAppStore((s) => s.removeLogoConcept)
   const setLogoConcepts = useAppStore((s) => s.setLogoConcepts)
   const setLogoImage = useAppStore((s) => s.setLogoImage)
+  const moodItems = useAppStore((s) => s.moodItems)
 
   /* Resume from project; sub-nav / Next / deep link all write identitySubstep. */
   const identitySubstep = resolveIdentitySubstep(activeProject?.identitySubstep)
@@ -581,6 +587,31 @@ export default function DesignView({
     return dir ? directionComposition(activeProject, dir) : null
   }, [activeProject])
 
+  /* Provisional working material for the open route. Display/context only —
+     never written into project brand fields on arrival. */
+  const directionWorking = useMemo(
+    () => activeDirectionWorkingMaterial(activeProject, moodItems),
+    [activeProject, moodItems]
+  )
+
+  /* Sheet shows the route's type/mark when captured so starter defaults do
+     not masquerade as the chosen direction. Editable brief/designer words
+     still bind to the real project. */
+  const artboardProject = useMemo(
+    () => projectViewForDirectionMaterial(activeProject || {}, directionWorking),
+    [activeProject, directionWorking]
+  )
+
+  /* Paper on the sheet: prefer route colour material when developing, so the
+     default stone palette is not presented as "Warm editorial". Canonical
+     Color editor still edits projectPalette. */
+  const artboardPalette = useMemo(() => {
+    if (directionWorking?.colour?.hexes?.length) {
+      return directionWorking.colour.hexes
+    }
+    return projectPalette
+  }, [directionWorking, projectPalette])
+
   const paletteRoles = useMemo(
     () => mapPaletteRoles(projectPalette),
     [projectPalette]
@@ -884,8 +915,8 @@ export default function DesignView({
               <Suspense fallback={<div className="panel-hint">Loading…</div>}>
                 <BrandArtboard
                   id="system-artboard"
-                  project={activeProject || {}}
-                  palette={projectPalette}
+                  project={artboardProject || {}}
+                  palette={artboardPalette}
                   pins={deskMood.filter((m) => m.inPack)}
                   editable
                   studio={studioName}
@@ -899,6 +930,13 @@ export default function DesignView({
                   onEditInBrief={() => setActiveView?.('project')}
                 />
               </Suspense>
+              {directionWorking?.hasAnyMaterial ? (
+                <p className="dir-working-sheet-note" role="status">
+                  Sheet shows material from this route where captured. Project
+                  Color / Type / Mark below are the brand system — Use a part
+                  from the route when you are ready to commit it.
+                </p>
+              ) : null}
             </div>
 
             <div className="design-edit-column">
@@ -932,6 +970,12 @@ export default function DesignView({
                   <img className="dir-offer-mark" src={routeParts.mark.image} alt="" />
                 ) : null}
               </DirectionPartOffer>
+              {directionWorking && directionWorking.mark.source === 'none' ? (
+                <DirectionPartGap
+                  project={activeProject}
+                  message="No mark on this route yet — add a concept below to develop one."
+                />
+              ) : null}
 
               {/* ADD A CONCEPT IS THE FIRST CONTROL ON THE SCREEN.
                   It used to be a file input at the very bottom, under six
@@ -1213,6 +1257,37 @@ export default function DesignView({
                 <h2 className="design-section-title">Color</h2>
                 <span className="design-section-rule" aria-hidden="true" />
               </header>
+
+              {/* Route colour material — context only. No automatic Use:
+                  applying a snapshot would write roles positionally. Develop
+                  the brand system in the editor below. */}
+              {directionWorking?.colour?.hexes?.length ? (
+                <div
+                  className="dir-route-material"
+                  data-testid="dir-route-colour"
+                >
+                  <p className="field-label" style={{ margin: 0 }}>
+                    {directionWorking.colour.source === 'ref'
+                      ? 'Colours on this route'
+                      : 'Cited colours on this route'}
+                  </p>
+                  <span className="dir-route-swatches" aria-hidden="true">
+                    {directionWorking.colour.hexes.map((h, i) => (
+                      <i key={`${h}-${i}`} style={{ background: h }} title={h} />
+                    ))}
+                  </span>
+                  <p className="dir-route-material-note">
+                    {directionWorking.colour.source === 'ref'
+                      ? 'Captured on the route. Edit the project palette below to develop the brand system — nothing is committed until you change it here.'
+                      : 'Evidence from what you kept — not a finished palette. Build the brand system below from these reactions if they still hold.'}
+                  </p>
+                </div>
+              ) : directionWorking ? (
+                <DirectionPartGap
+                  project={activeProject}
+                  message="No colour on this route yet — develop the project palette below, or cite colours in Directions."
+                />
+              ) : null}
 
               {/* Same loop as Type: the words from Strategy come back here,
                   at the moment colour is chosen. One component, because a
@@ -1728,6 +1803,18 @@ export default function DesignView({
                   flashMicro?.('Type from this route')
                 }}
               />
+              {directionWorking && directionWorking.type.source === 'evidence' ? (
+                <DirectionPartGap
+                  project={activeProject}
+                  message={directionWorking.parts.type.summary}
+                />
+              ) : null}
+              {directionWorking && directionWorking.type.source === 'none' ? (
+                <DirectionPartGap
+                  project={activeProject}
+                  message="No type on this route yet — choose a pairing below to develop one."
+                />
+              ) : null}
 
               {/* The font check comes FIRST and is the useful part here. A
                   specimen set in a substitute misleads the client rather
