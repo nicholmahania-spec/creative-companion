@@ -2460,6 +2460,45 @@ const useAppStore = create(
           ),
         })),
 
+
+      /** Server rows are canonical after reload. Keep local-only legacy rows
+          that the server has not seen, but replace a matching id wholesale so
+          a durable storage_path cannot be overwritten by stale metadata. */
+      upsertAssets: (rows) =>
+        set((state) => {
+          const incoming = (Array.isArray(rows) ? rows : [rows]).filter(Boolean)
+          if (!incoming.length) return {}
+          const byId = new Map((state.assets || []).map((asset) => [asset.id, asset]))
+          incoming.forEach((asset) => {
+            if (asset?.id) byId.set(asset.id, asset)
+          })
+          return { assets: [...byId.values()] }
+        }),
+
+      /** Point a legacy-compatible Brief attachment at its canonical source.
+          The public URL remains a rendering fallback; it is not another asset
+          record and is never a package input. */
+      linkBriefAttachmentToAsset: (projectId, fieldId, url, assetRef) =>
+        set((state) => ({
+          projects: state.projects.map((project) => {
+            if (project.id !== projectId) return project
+            const key = `${String(fieldId || '').trim()}Files`
+            const files = Array.isArray(project.detective?.[key])
+              ? project.detective[key]
+              : []
+            return {
+              ...project,
+              detective: {
+                ...(project.detective || {}),
+                [key]: files.map((file) =>
+                  file?.url === url
+                    ? { ...file, assetRef: assetRef?.kind === 'asset' && assetRef?.id ? assetRef : file.assetRef }
+                    : file
+                ),
+              },
+            }
+          }),
+        })),
       toggleBodyDoubling: () =>
         set((state) => ({ bodyDoubling: !state.bodyDoubling })),
 

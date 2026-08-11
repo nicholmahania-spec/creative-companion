@@ -61,6 +61,7 @@ export function categoryLabel(id) {
  */
 export const SOURCE_APPS = [
   { id: 'upload', label: 'Uploaded', vector: false },
+  { id: 'brief', label: 'From the brief', vector: false },
   { id: 'illustrator', label: 'Illustrator', vector: true },
   { id: 'photoshop', label: 'Photoshop', vector: false },
   { id: 'indesign', label: 'InDesign', vector: true },
@@ -68,6 +69,18 @@ export const SOURCE_APPS = [
 ]
 
 export const DEFAULT_SOURCE_APP = 'upload'
+
+/** What the file means to this project. Source files are never delivery inputs. */
+export const ASSET_ROLES = ['source', 'produced']
+export const DEFAULT_ASSET_ROLE = 'source'
+
+/** Who supplied the file, distinct from the tool it came through. */
+export const ASSET_ORIGINS = ['client', 'designer', 'imported']
+export const DEFAULT_ASSET_ORIGIN = 'client'
+
+export function assetRoleLabel(role) {
+  return role === 'produced' ? 'Produced work' : 'Source material'
+}
 
 export function sourceAppLabel(id) {
   return SOURCE_APPS.find((a) => a.id === id)?.label || 'Uploaded'
@@ -187,6 +200,8 @@ export function normaliseIngest(payload = {}) {
      a category this build has not heard of is a forward-compatible push, not
      a broken one — it files as unfiled and keeps the file. Dropping the
      designer's work over a vocabulary mismatch would be absurd. */
+  const role = oneOf(payload.role, ASSET_ROLES, DEFAULT_ASSET_ROLE)
+  const origin = oneOf(payload.origin, ASSET_ORIGINS, DEFAULT_ASSET_ORIGIN)
   const sourceApp = slugOr(payload.sourceApp ?? payload.source_app, DEFAULT_SOURCE_APP)
 
   let sourceRef = payload.sourceRef ?? payload.source_ref
@@ -205,6 +220,8 @@ export function normaliseIngest(payload = {}) {
       project_id: projectId,
       category: CATEGORY_IDS.has(category) ? category : DEFAULT_CATEGORY,
       source_app: sourceApp,
+      role,
+      origin,
       source_ref: sourceRef,
       mime_type: mimeType || null,
       byte_size: byteSize,
@@ -215,6 +232,11 @@ export function normaliseIngest(payload = {}) {
       replaces_id: null,
     },
   }
+}
+
+function oneOf(value, allowed, fallback) {
+  const candidate = String(value ?? '').trim().toLowerCase()
+  return allowed.includes(candidate) ? candidate : fallback
 }
 
 function slugOr(value, fallback) {

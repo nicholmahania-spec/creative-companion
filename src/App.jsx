@@ -140,6 +140,8 @@ import {
   changeAccessPassword,
 } from './lib/auth'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { createAssetStorage } from './lib/assets/assetStorage'
+import { adoptBriefAttachments } from './lib/assets/adoptBriefAttachments'
 import { syncAllProjects } from './services/syncEngine'
 import { stepsForProject } from './lib/journey/projectTypes'
 
@@ -630,7 +632,41 @@ function App() {
     []
   )
   const mergeDetectiveAnswers = useCallback(
-    (...a) => useAppStore.getState().mergeDetectiveAnswers(...a),
+    async (incoming, projectId) => {
+      const store = useAppStore.getState()
+      const ownerProjectId = projectId ?? store.currentProjectId
+      store.mergeDetectiveAnswers(incoming, ownerProjectId)
+
+      /* Client uploads land in a public intake bucket because the client has
+         no studio account. Once the designer accepts the reviewed Brief, copy
+         the exact image into the existing private Asset Library and replace
+         the Brief's conceptual source with an assetRef. The public URL stays
+         only as the legacy-compatible image preview fallback. */
+      const attachments = Array.isArray(incoming?.existingAssetsFiles)
+        ? incoming.existingAssetsFiles
+        : []
+      if (!attachments.length || !supabase || !isSupabaseConfigured()) return
+
+      const project = useAppStore.getState().projects.find((p) => p.id === ownerProjectId)
+      if (!project) return
+      const adopted = await adoptBriefAttachments({
+        projectId: ownerProjectId,
+        attachments,
+        assets: useAppStore.getState().assets,
+        durableStore: createAssetStorage(supabase),
+      })
+      const current = useAppStore.getState()
+      if (adopted.hydratedAssets.length) current.upsertAssets(adopted.hydratedAssets)
+      if (adopted.assets.length) current.addAssets(adopted.assets)
+      for (const link of adopted.links) {
+        current.linkBriefAttachmentToAsset(
+          ownerProjectId,
+          'existingAssets',
+          link.url,
+          link.assetRef
+        )
+      }
+    },
     []
   )
   const portalSeen = useAppStore((s) => s.portalSeen)
