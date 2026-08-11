@@ -97,6 +97,7 @@ export default function MainOutlet(p) {
     completeCurrentStep,
     startVoice,
     setActiveView,
+    workroomLauncherRef,
     flashToast,
     offerUndo,
     flashMicro,
@@ -331,6 +332,7 @@ export default function MainOutlet(p) {
       'spark',
       <SparkView
         setActiveView={setActiveView}
+        workroomLauncherRef={workroomLauncherRef}
         directions={activeProject?.directions}
         updateDirection={updateDirection}
         project={activeProject}

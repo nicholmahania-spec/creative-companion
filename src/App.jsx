@@ -363,6 +363,7 @@ function App() {
     // First visit and every return visit: one clear next action
     return 'home'
   })
+  const workroomLauncherRef = useRef(null)
   const setActiveView = useCallback((view) => {
     // Focus Mode product removed — never land on *-focus views.
     let next = view
@@ -377,6 +378,9 @@ function App() {
         'deliver-focus': 'finish',
       }
       next = map[next] || 'home'
+    }
+    if (next === 'spark' && document.activeElement instanceof HTMLElement) {
+      workroomLauncherRef.current = document.activeElement
     }
     setActiveViewRaw(next)
     try {
@@ -4095,6 +4099,7 @@ function App() {
           completeCurrentStep={completeCurrentStep}
           startVoice={startVoice}
           setActiveView={setActiveView}
+          workroomLauncherRef={workroomLauncherRef}
           flashToast={flashToast}
           offerUndo={offerUndo}
           flashMicro={flashMicro}

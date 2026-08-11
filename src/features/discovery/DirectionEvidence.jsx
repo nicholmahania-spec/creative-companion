@@ -28,6 +28,19 @@ export function EvidenceFace({ item }) {
     )
   }
   const sample = item.sample
+  if (sample?.representation === 'composite') {
+    const treatment = sample.treatment || {}
+    return (
+      <span
+        className="dir-ev-face is-application"
+        style={{ background: treatment.bg, color: treatment.ink }}
+        aria-hidden="true"
+      >
+        <b>{treatment.name || 'Aa'}</b>
+        <i>{treatment.role || ''}</i>
+      </span>
+    )
+  }
   if (sample?.category === 'type') {
     return (
       <span
