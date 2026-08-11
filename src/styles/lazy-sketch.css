@@ -609,3 +609,1623 @@
     min-height: 12rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Phase 5 Step 7 — Application Stage portal workroom
+   Same isolation pattern as Directions / Identity:
+   - fixed body layer owns viewport
+   - #root stays mounted but inert + hidden
+   - Step 6 proofing column content is unchanged inside
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.application-workroom {
+  position: fixed;
+  inset: 0;
+  /* Above suspended Identity (1000) so Application owns the stack */
+  z-index: 1100;
+  isolation: isolate;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--bg, #f0eeeb);
+  color: var(--text-primary, #1c1917);
+  padding: 0.75rem clamp(0.75rem, 2vw, 1.5rem) 2.5rem;
+  box-sizing: border-box;
+}
+
+.application-workroom:focus {
+  outline: 0;
+}
+
+.application-workroom-recovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 44px;
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.application-workroom-recovery p {
+  margin: 0;
+}
+
+.application-workroom-recovery .text-link {
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0.35rem 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.application-workroom-body {
+  /* The approved Step 6 field lives here — no shell chrome. */
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* Portaled room does not inherit .app theme tokens. Mirror deep deliberately. */
+body:has(.app.deep) .application-workroom {
+  background: #101613;
+  color: #edf3ec;
+}
+
+body:has(.app.deep) .application-workroom-recovery,
+body:has(.app.deep) .application-workroom-recovery .text-link {
+  color: #aab7ac;
+}
+
+body:has(.app.deep) .application-workroom .app-stage-proof {
+  background:
+    radial-gradient(
+      ellipse 80% 55% at 50% 42%,
+      color-mix(in srgb, #1a1f1c 90%, transparent),
+      transparent 72%
+    ),
+    #101613;
+}
+
+@media (max-width: 520px) {
+  .application-workroom {
+    padding: 0.5rem 0.5rem 2rem;
+  }
+
+  .application-workroom-recovery {
+    font-size: 0.78rem;
+    min-height: 44px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Phase 5 Step 1 — Application Specimen (proofing table)
+   The surface is the interface. UI retreats. Not a 3× thumb. Not a card grid.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.app-stage-quiet-top {
+  margin-bottom: 0;
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+/* Existing engine hold — available, not competing with the specimen */
+.touchpoints-engine-hold {
+  margin: 0 0 var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--bg-muted);
+}
+.touchpoints-engine-hold-summary {
+  cursor: pointer;
+  list-style: none;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.touchpoints-engine-hold-summary::-webkit-details-marker {
+  display: none;
+}
+.touchpoints-engine-hold[open] .touchpoints-engine-hold-summary {
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.touchpoints-engine-hold .touchpoints-block {
+  margin-top: 0;
+  padding: var(--space-3);
+  border-top: 0;
+}
+
+.app-stage-proof {
+  /* Full-width table field; no SaaS page frame */
+  width: 100%;
+  max-width: none;
+  margin: 0 0 var(--space-5);
+  padding: clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 2vw, 1.5rem)
+    clamp(1rem, 2.5vw, 1.75rem);
+  background:
+    radial-gradient(
+      ellipse 80% 55% at 50% 42%,
+      color-mix(in srgb, var(--bg-card, #fff) 90%, transparent),
+      transparent 72%
+    ),
+    var(--bg-muted, #f0eeeb);
+  border: none;
+  border-radius: 0;
+}
+
+.app-stage-proof-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: clamp(1rem, 2.5vw, 1.75rem);
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.app-stage-proof-kicker {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-stage-proof-title {
+  margin: 0.15rem 0 0;
+  font-size: clamp(1.15rem, 1.5vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* ── Phase 5 Step 3 — quiet filmstrip (navigation ONLY) ─────────────────
+   Answers: "What other surface can I work on?"
+   Not a card grid. No status, notes, produce, metrics, or miniature workspaces. */
+
+.app-stage-filmstrip {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto clamp(0.75rem, 1.5vw, 1.25rem);
+  /* Subordinate to the specimen — thin strip, not a second content zone */
+}
+
+.app-stage-filmstrip-list {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0.15rem 0.1rem 0.35rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  /* Prevent horizontal page overflow: scroll lives inside the strip */
+  max-width: 100%;
+}
+
+.app-stage-film-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.2rem 0.3rem 0.4rem;
+  min-width: 3.75rem;
+  max-width: 4.75rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+  flex: 0 0 auto;
+  appearance: none;
+}
+
+.app-stage-film-cell:hover {
+  color: var(--text-secondary);
+}
+
+.app-stage-film-cell:hover .app-stage-film-thumb {
+  opacity: 0.78;
+}
+
+.app-stage-film-cell:focus-visible {
+  outline: 2px solid var(--dopamine, #6c5ce7);
+  outline-offset: 2px;
+}
+
+/* Active = underline + full opacity — not a bordered tile */
+.app-stage-film-cell.is-active {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+  background: transparent;
+}
+
+.app-stage-film-cell.is-active .app-stage-film-thumb {
+  opacity: 1;
+}
+
+.app-stage-film-thumb {
+  display: block;
+  width: 3.15rem;
+  height: 2.1rem;
+  opacity: 0.42;
+  overflow: hidden;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* Crush TouchpointMockThumb into a quiet nav preview — not a miniature workspace */
+.app-stage-film-thumb .tp-mock {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100%;
+  gap: 0;
+}
+
+.app-stage-film-thumb .tp-mock-sheet {
+  min-height: 0;
+  height: 100%;
+  border-radius: 1px;
+  box-shadow: none;
+  border: 0;
+  outline: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+}
+
+.app-stage-film-thumb .tp-mock-caption {
+  display: none;
+}
+
+.app-stage-film-thumb .tp-mock-wordmark,
+.app-stage-film-thumb .tp-mock-meta {
+  font-size: 0.4rem;
+}
+
+.app-stage-film-thumb .tp-mock-logo {
+  max-height: 0.7rem;
+}
+
+.app-stage-film-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Quiet trailing quick-add — not an empty-state dashboard control */
+.app-stage-film-add {
+  flex: 0 0 auto;
+  align-self: center;
+  padding-left: 0.15rem;
+}
+
+.app-stage-quick-add {
+  position: relative;
+}
+
+.app-stage-quick-add-summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.4rem 0.55rem;
+  border: 1px dashed color-mix(in srgb, var(--text-muted) 45%, transparent);
+  border-radius: 3px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.app-stage-quick-add-summary::-webkit-details-marker {
+  display: none;
+}
+
+.app-stage-quick-add[open] .app-stage-quick-add-summary {
+  color: var(--text-secondary);
+  border-style: solid;
+}
+
+.app-stage-quick-add-panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 11rem;
+  max-width: min(18rem, 70vw);
+  padding: 0.5rem;
+  margin: 0;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm, 4px);
+  box-shadow: 0 0.4rem 1rem color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+/*
+  Step 6 micro-pass — ONE proofing column (same measure end-to-end):
+
+    specimen (dominant)
+      → honesty line
+      → real file tray
+      → forensic proof
+
+  No side float, no admin card cluster, no dashboard geometry.
+*/
+.app-stage-field {
+  --proof-measure: min(42rem, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: var(--proof-measure);
+  margin-inline: auto;
+  gap: 0;
+  /* Keep children in normal flow painting order — no sticky/filter fights */
+  isolation: isolate;
+}
+
+/* Hard stack: each major zone is a full-width block, never overlapping */
+.app-stage-field > .app-specimen,
+.app-stage-field > .app-stage-tray,
+.app-stage-field > .app-stage-forensic {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  float: none;
+  position: relative;
+  left: auto;
+  right: auto;
+  z-index: auto;
+}
+
+.app-stage-field .app-stage-proof-kicker {
+  margin-bottom: 0;
+}
+
+.app-stage-field .app-stage-proof-title {
+  margin: 0.15rem 0 0;
+}
+
+/* Step 4 — accept control: quiet, next to the work, not a status panel */
+.app-stage-field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  width: 100%;
+  margin: 0 0 clamp(0.65rem, 1.5vw, 1rem);
+}
+
+.app-stage-field-head .app-stage-proof-title {
+  margin-bottom: 0;
+}
+
+.app-stage-accept-btn {
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 22%, transparent);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.app-stage-accept-btn:hover {
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--text-primary) 40%, transparent);
+}
+
+.app-stage-accept-btn:focus-visible {
+  outline: 2px solid var(--dopamine, #6c5ce7);
+  outline-offset: 2px;
+}
+
+/* Pressed = judgment recorded — ink, not “success green” */
+.app-stage-accept-btn[aria-pressed='true'] {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+  background: transparent;
+}
+
+.app-stage-empty {
+  max-width: 36rem;
+  margin: clamp(1.5rem, 4vw, 3rem) auto;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+/* Specimen fills the column measure — dominant judging surface.
+   Figure must NOT carry aspect-ratio (that lives on the inner stage only).
+   scale="stage" uses app-specimen-scale-stage — never app-specimen-stage. */
+.app-stage-field .app-specimen {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+  margin: 0 0 0.25rem;
+  /* Do not constrain figure height — honesty + tray need clear flow room */
+  aspect-ratio: auto;
+  max-height: none;
+  height: auto;
+  filter: none;
+  overflow: visible;
+}
+
+.app-stage-field .app-specimen-table {
+  width: 100%;
+  justify-content: center;
+  padding: 0.35rem 0 0.75rem;
+  margin: 0;
+  /* Shadow lives on the object; bottom padding keeps it off the honesty line */
+  padding-bottom: 1.25rem;
+  flex: 0 0 auto;
+}
+
+/* Inner object only — never the figure (scale class is app-specimen-scale-*) */
+.app-stage-field .app-specimen-table .app-specimen-stage {
+  width: min(100%, 40rem);
+  max-width: 100%;
+  margin-inline: auto;
+  /* Soften shadow so it doesn't read as a second panel over the shelf */
+  filter: drop-shadow(0 0.65rem 1.35rem color-mix(in srgb, #1c1917 12%, transparent));
+}
+
+.app-stage-field .app-specimen-honesty {
+  max-width: none;
+  width: 100%;
+  text-align: left;
+  padding: 0.35rem 0 1rem;
+  margin: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+  position: static;
+  z-index: auto;
+  flex: 0 0 auto;
+}
+
+/* ── Phase 5 Step 5 — real file output tray ─────────────────────────────
+   Continuous shelf under the specimen. Same measure. Not a floating card. */
+
+.app-stage-tray {
+  position: static;
+  z-index: auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 1.1rem 0 1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+/* Before production: quieter, still full measure */
+.app-stage-tray.is-empty {
+  opacity: 0.78;
+  padding-top: 0.75rem;
+}
+
+.app-stage-tray.is-filled {
+  opacity: 1;
+  background: transparent;
+}
+
+.app-stage-tray.is-unavailable {
+  opacity: 0.65;
+}
+
+.app-stage-tray-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.app-stage-tray-kicker {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-stage-tray-kind {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-stage-tray-empty {
+  margin: 0 0 0.25rem;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.app-stage-tray-files {
+  list-style: none;
+  margin: 0 0 0.35rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.app-stage-tray-file {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--text-primary) 10%, transparent);
+}
+
+.app-stage-tray-file:last-child {
+  border-bottom: 0;
+}
+
+.app-stage-tray-filename {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.app-stage-tray-honesty {
+  margin: 0 0 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: none;
+}
+
+.app-stage-tray-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: none;
+}
+
+/* Produce engine inside tray — strip SaaS panel chrome */
+.app-stage-tray-produce .tp-produce {
+  margin: 0.35rem 0 0;
+  padding: 0.5rem 0 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border-radius: 0;
+  background: transparent;
+  gap: var(--space-2);
+}
+
+.app-stage-tray-produce .tp-produce-status {
+  font-size: 0.72rem;
+}
+
+/* Capture face: laid out for html2canvas, parked off-screen so it never
+   competes with the schematic specimen. Same approach StationeryKit uses. */
+.app-stage-tray-produce .tp-produce {
+  position: relative;
+}
+
+.app-stage-tray-produce .tp-produce-stage {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  pointer-events: none;
+}
+
+.app-stage-tray-produce .tp-produce-filed {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.app.deep .app-stage-tray {
+  background: transparent;
+}
+
+@media (max-width: 520px) {
+  .app-stage-field {
+    --proof-measure: 100%;
+  }
+
+  .app-stage-tray {
+    max-width: none;
+    margin: 0;
+    padding: 0.75rem 0 0.85rem;
+  }
+
+  .app-stage-tray-filename {
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ── Phase 5 Step 6 — forensic proofing surface ─────────────────────────
+   Same column measure as specimen + tray. Continuous shelf, not a card. */
+
+.app-stage-forensic {
+  position: static;
+  z-index: auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 1.1rem 0 1.25rem;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.app-stage-forensic-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-stage-forensic-lede {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: none;
+}
+
+.app-stage-forensic-against {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.app-stage-forensic-meta {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.app-stage-forensic-roles,
+.app-stage-forensic-swatches {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.app-stage-forensic-role,
+.app-stage-forensic-swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 18%, transparent);
+  box-sizing: border-box;
+}
+
+.app-stage-forensic-swatch.is-intruder {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #5c3d2e 35%, transparent);
+}
+
+.app-stage-forensic-source {
+  margin-bottom: 0.5rem;
+}
+
+.app-stage-forensic-source-line {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.app-stage-forensic-source-line.is-muted {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.app-stage-forensic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.app-stage-forensic-status {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.app-stage-forensic-result {
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
+.app-stage-forensic-finding {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  max-width: none;
+}
+
+.app-stage-forensic-scope {
+  margin: 0 0 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: none;
+}
+
+.app-stage-forensic-swatch-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.app-stage-forensic-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+}
+
+.app-stage-forensic-file {
+  margin: 0 0 0.25rem;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+.app-stage-forensic-boundary {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: none;
+}
+
+.app.deep .app-stage-forensic {
+  border-top-color: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  background: transparent;
+}
+
+@media (max-width: 520px) {
+  .app-stage-forensic {
+    max-width: none;
+    margin: 0;
+    padding: 0.8rem 0 1rem;
+  }
+
+  .app-stage-forensic-finding {
+    font-size: 0.9rem;
+  }
+
+  .app-stage-forensic-file {
+    overflow-wrap: anywhere;
+  }
+
+  .app-stage-forensic-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-stage-forensic-actions .btn {
+    min-height: var(--tap-min, 2.75rem);
+    width: 100%;
+  }
+}
+
+/* Deep theme: strip stays quiet; specimen material unchanged */
+.app.deep .app-stage-film-cell.is-active {
+  background: transparent;
+  border-bottom-color: var(--text-primary);
+}
+
+.app.deep .app-stage-quick-add-panel {
+  background: var(--bg-card);
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.35);
+}
+
+/* Mobile: compact horizontal shelf — must not own the first meaningful viewport */
+@media (max-width: 520px) {
+  .app-stage-proof {
+    padding: 0.55rem 0.5rem 1rem;
+  }
+
+  .app-stage-filmstrip {
+    margin-bottom: 0.5rem;
+  }
+
+  .app-stage-filmstrip-list {
+    gap: 0.2rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .app-stage-film-cell {
+    min-width: 3.15rem;
+    max-width: 3.85rem;
+    padding: 0.15rem 0.15rem 0.3rem;
+  }
+
+  .app-stage-film-thumb {
+    width: 2.55rem;
+    height: 1.7rem;
+  }
+
+  .app-stage-film-label {
+    font-size: 0.58rem;
+  }
+
+  .app-stage-quick-add-summary {
+    font-size: 0.62rem;
+    padding: 0.3rem 0.4rem;
+  }
+
+  /* Specimen still dominates below the thin strip */
+  .app-stage-field .app-stage-proof-title {
+    font-size: 1.1rem;
+  }
+
+  .app-stage-field-head {
+    align-items: flex-start;
+    gap: 0.45rem;
+    flex-direction: column;
+  }
+
+  .app-stage-accept-btn {
+    padding: 0.45rem 0.7rem;
+    min-height: var(--tap-min, 2.75rem);
+    width: 100%;
+  }
+
+  /* Stamp stays off primary hierarchy — corner, smaller on phone */
+  .app-specimen-stamp {
+    right: 5%;
+    bottom: 7%;
+    max-width: 42%;
+    font-size: 0.55rem;
+    padding: 0.22rem 0.35rem;
+    letter-spacing: 0.06em;
+  }
+}
+
+/* Desktop: generous judging space, still one column */
+@media (min-width: 1100px) {
+  .app-stage-field {
+    --proof-measure: min(46rem, 72vw);
+  }
+
+  .app-stage-field .app-specimen-table .app-specimen-stage {
+    /* business-card and similar stay large enough to judge hierarchy */
+    max-height: min(28rem, 52vh);
+  }
+}
+
+/* ── Specimen figure ───────────────────────────────────────────────────── */
+
+.app-specimen {
+  --specimen-aspect: 4 / 3;
+  --specimen-max-w: 32rem;
+  --specimen-max-h: 24rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  width: 100%;
+}
+
+.app-specimen-table {
+  /* Physical table: soft plane, specimen rests on it — not a bordered panel.
+     Height tracks the object so the real-file tray can sit clearly below. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding: clamp(0.5rem, 1.5vw, 1.25rem) clamp(0.5rem, 2vw, 1.25rem)
+    clamp(0.35rem, 1vw, 0.75rem);
+}
+
+/* Object frame only (inner div). Must not match figure.scale classes. */
+.app-specimen-table .app-specimen-stage {
+  /* Prefer width; height capped so proportion stays physical */
+  position: relative;
+  width: min(100%, var(--specimen-max-w));
+  max-height: var(--specimen-max-h);
+  aspect-ratio: var(--specimen-aspect);
+  container-type: inline-size;
+  /* If height cap binds, shrink width to keep aspect */
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 1.25rem 2.5rem color-mix(in srgb, #1c1917 16%, transparent))
+    drop-shadow(0 0.2rem 0.45rem color-mix(in srgb, #1c1917 10%, transparent));
+}
+
+/* Step 4 — proofing imprint on the specimen itself.
+   Material notation, not a SaaS success badge / package claim. */
+.app-specimen-stamp {
+  position: absolute;
+  right: 6%;
+  bottom: 8%;
+  z-index: 2;
+  padding: 0.28rem 0.45rem;
+  border: 1.5px solid color-mix(in srgb, #5c3d2e 72%, #1c1917);
+  border-radius: 1px;
+  color: color-mix(in srgb, #5c3d2e 78%, #1c1917);
+  background: color-mix(in srgb, #f7f0e6 55%, transparent);
+  font-family: ui-serif, 'Times New Roman', Georgia, serif;
+  font-size: clamp(0.58rem, 2.8cqi, 0.78rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  transform: rotate(-8deg);
+  pointer-events: none;
+  user-select: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #5c3d2e 18%, transparent);
+  opacity: 0.88;
+}
+
+/* Corner placement on tall/narrow frames so type stays readable */
+.app-specimen-frame-phone .app-specimen-stamp,
+.app-specimen-frame-pack .app-specimen-stamp {
+  right: 8%;
+  bottom: 6%;
+  font-size: clamp(0.5rem, 4cqi, 0.68rem);
+  transform: rotate(-10deg);
+}
+
+.app-specimen-frame-browser .app-specimen-stamp {
+  right: 4%;
+  bottom: 10%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-specimen-stamp {
+    transform: none;
+  }
+}
+
+.app-specimen-table .app-specimen-stage > .app-specimen-face,
+.app-specimen-table .app-specimen-stage > .app-specimen-phone-shell,
+.app-specimen-table .app-specimen-stage > .app-specimen-pack-shell,
+.app-specimen-table .app-specimen-stage > .app-specimen-merch-shell {
+  width: 100%;
+  height: 100%;
+}
+
+.app-specimen-face {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  /* Paper/material — intentional; deep theme does not neon-ize the object */
+  border-radius: 2px;
+}
+
+.app-specimen-honesty {
+  margin: 0.35rem 0 0;
+  max-width: 40rem;
+  padding: 0 0.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+/* Marks */
+.app-specimen-mark {
+  display: block;
+  max-width: 42%;
+  max-height: 2.75rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.app-specimen-mark.is-wordmark {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.app-specimen-textline {
+  display: block;
+  height: 0.55rem;
+  width: 100%;
+  border-radius: 1px;
+}
+.app-specimen-textline.is-short {
+  width: 62%;
+}
+.app-specimen-rule {
+  display: block;
+  height: 3px;
+  width: 2.5rem;
+  border-radius: 1px;
+}
+
+/* —— Business card —— */
+.app-specimen-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.35rem;
+  padding: clamp(1rem, 3.2%, 1.45rem) clamp(1.1rem, 4%, 1.7rem);
+  border: 1px solid color-mix(in srgb, #1c1917 10%, transparent);
+}
+.app-specimen-card-top {
+  min-height: 1.5rem;
+}
+.app-specimen-card-mark {
+  max-height: 1.65rem;
+  max-width: 38%;
+  font-size: clamp(0.7rem, 2.8cqi, 0.95rem);
+}
+.app-specimen-card-primary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 0;
+}
+.app-specimen-card-person {
+  font-size: clamp(1.05rem, 5.2cqi, 1.55rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.app-specimen-card-title {
+  font-size: clamp(0.7rem, 3cqi, 0.9rem);
+  font-weight: 500;
+  opacity: 0.78;
+  line-height: 1.25;
+}
+.app-specimen-card-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.app-specimen-card-contact {
+  font-size: clamp(0.62rem, 2.6cqi, 0.78rem);
+  font-weight: 500;
+  opacity: 0.8;
+  letter-spacing: 0.01em;
+}
+.app-specimen-card-org {
+  font-size: clamp(0.62rem, 2.6cqi, 0.78rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.app-specimen-card [data-placeholder='true'] {
+  opacity: 0.38;
+  font-style: normal;
+}
+
+/* —— Website —— */
+.app-specimen-web {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, #1c1917 12%, transparent);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.app-specimen-browser-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.65rem;
+  background: #eceae6;
+  flex-shrink: 0;
+}
+.app-specimen-browser-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, #1c1917 18%, transparent);
+}
+.app-specimen-browser-url {
+  margin-left: 0.5rem;
+  flex: 1;
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: #57534e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #fafaf9;
+  border-radius: 3px;
+  padding: 0.15rem 0.45rem;
+}
+.app-specimen-web-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem;
+  flex-shrink: 0;
+}
+.app-specimen-web-mark {
+  max-height: 1.35rem;
+  max-width: 30%;
+  font-size: 0.8rem;
+}
+.app-specimen-web-nav-links {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.app-specimen-web-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: clamp(0.85rem, 3%, 1.5rem) clamp(1rem, 4%, 1.75rem);
+  min-height: 0;
+}
+.app-specimen-web-headline {
+  margin: 0;
+  font-size: clamp(1.15rem, 4.5cqi, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  max-width: 18ch;
+}
+.app-specimen-web-lede {
+  margin: 0;
+  font-size: clamp(0.7rem, 2.4cqi, 0.88rem);
+  line-height: 1.4;
+  max-width: 36ch;
+  opacity: 0.9;
+}
+.app-specimen-web-cta {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 2px;
+}
+.app-specimen-web-body {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem 1rem 1rem;
+  flex-shrink: 0;
+}
+.app-specimen-web-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* —— Email —— */
+.app-specimen-email {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: clamp(1rem, 4%, 1.5rem);
+  border: 1px solid color-mix(in srgb, #1c1917 10%, transparent);
+}
+.app-specimen-email-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  opacity: 0.7;
+  flex: 1;
+  justify-content: flex-start;
+  padding-top: 0.25rem;
+}
+.app-specimen-email-sig {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, #1c1917 12%, transparent);
+}
+.app-specimen-email-mark {
+  max-height: 1.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+.app-specimen-email-name {
+  font-size: clamp(0.9rem, 3.5cqi, 1.15rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.app-specimen-email-org {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.app-specimen-email-meta {
+  font-size: 0.68rem;
+  opacity: 0.8;
+  margin-top: 0.15rem;
+}
+
+/* —— Social —— */
+.app-specimen-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, #1c1917 12%, transparent);
+}
+.app-specimen-social-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+}
+.app-specimen-social-mark {
+  max-height: 2.5rem;
+  max-width: 55%;
+  font-size: clamp(1rem, 6cqi, 1.6rem);
+}
+.app-specimen-social-caption {
+  margin: 0;
+  font-size: clamp(0.75rem, 3.2cqi, 0.95rem);
+  font-weight: 500;
+  line-height: 1.35;
+  max-width: 18ch;
+  opacity: 0.92;
+}
+.app-specimen-social-accent {
+  display: block;
+  width: 2.5rem;
+  height: 3px;
+  border-radius: 1px;
+  opacity: 0.95;
+}
+
+/* —— Print —— */
+.app-specimen-print {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid color-mix(in srgb, #1c1917 12%, transparent);
+}
+.app-specimen-print-band {
+  flex: 0 0 42%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  padding: clamp(0.85rem, 5%, 1.35rem);
+}
+.app-specimen-print-mark {
+  max-height: 1.5rem;
+  font-size: 0.85rem;
+}
+.app-specimen-print-headline {
+  margin: 0;
+  font-size: clamp(1rem, 5.5cqi, 1.45rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  max-width: 14ch;
+}
+.app-specimen-print-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: clamp(0.75rem, 5%, 1.15rem);
+}
+.app-specimen-print-meta {
+  margin: auto 0 0;
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--text-muted, #78716c);
+}
+
+/* —— App / phone —— */
+.app-specimen-phone-shell {
+  height: 100%;
+  padding: 0.45rem;
+  background: #1c1917;
+  border-radius: 1.35rem;
+  box-sizing: border-box;
+}
+.app-specimen-app {
+  border-radius: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-specimen-app-status {
+  height: 1.35rem;
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+.app-specimen-app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+.app-specimen-app-mark {
+  max-height: 2rem;
+  max-width: 70%;
+  font-size: 1rem;
+}
+.app-specimen-app-lede {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  max-width: 16ch;
+  opacity: 0.85;
+}
+.app-specimen-app-cta {
+  margin-top: 0.35rem;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+/* —— Packaging —— */
+.app-specimen-pack-shell {
+  height: 100%;
+  padding: 0 0.55rem 0.55rem;
+  box-sizing: border-box;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #1c1917 18%, transparent) 0,
+    color-mix(in srgb, #1c1917 6%, transparent) 8px,
+    transparent 8px
+  );
+}
+.app-specimen-pack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  border: 1px solid color-mix(in srgb, #fff 12%, transparent);
+}
+.app-specimen-pack-mark {
+  max-height: 2.25rem;
+  max-width: 70%;
+  font-size: clamp(1rem, 6cqi, 1.4rem);
+}
+.app-specimen-pack-line {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.88;
+}
+.app-specimen-pack-rule {
+  display: block;
+  width: 2rem;
+  height: 3px;
+  border-radius: 1px;
+}
+
+/* —— Merch —— */
+.app-specimen-merch-shell {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-specimen-merch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* soft tee silhouette via clip — schematic, not photoreal */
+  clip-path: polygon(
+    28% 8%,
+    40% 0,
+    60% 0,
+    72% 8%,
+    92% 18%,
+    84% 28%,
+    78% 24%,
+    78% 96%,
+    22% 96%,
+    22% 24%,
+    16% 28%,
+    8% 18%
+  );
+  background: #d6d3d1;
+}
+.app-specimen-merch-print {
+  width: 42%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed;
+  border-radius: 2px;
+  padding: 0.5rem;
+  margin-top: 8%;
+}
+.app-specimen-merch-mark {
+  max-height: 1.75rem;
+  max-width: 90%;
+  font-size: 0.7rem;
+}
+
+/* —— Signage —— */
+.app-specimen-sign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid color-mix(in srgb, #1c1917 14%, transparent);
+}
+.app-specimen-sign-mark {
+  max-height: 3.5rem;
+  max-width: 70%;
+  font-size: clamp(1.4rem, 8cqi, 2.6rem);
+}
+.app-specimen-sign-tag {
+  margin: 0;
+  font-size: clamp(0.75rem, 2.8cqi, 1rem);
+  font-weight: 500;
+  opacity: 0.88;
+  max-width: 28ch;
+}
+
+/* —— Generic —— */
+.app-specimen-generic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid color-mix(in srgb, #1c1917 12%, transparent);
+}
+.app-specimen-generic-label {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Deep theme: room follows tokens; specimen material stays paper-like */
+.app.deep .app-stage-proof {
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      color-mix(in srgb, var(--bg-card) 40%, transparent),
+      transparent 70%
+    ),
+    var(--bg);
+}
+.app.deep .app-specimen-table .app-specimen-stage {
+  filter: drop-shadow(0 1rem 2rem rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0.15rem 0.35rem rgba(0, 0, 0, 0.3));
+}
+.app.deep .app-specimen-honesty {
+  color: var(--text-muted);
+}
+.app.deep .app-specimen-browser-chrome {
+  background: #2a2826;
+}
+.app.deep .app-specimen-browser-url {
+  background: #1c1b19;
+  color: #a8a29e;
+}
+
+/* Mobile: specimen owns the first meaningful field */
+@media (max-width: 520px) {
+  .app-stage-proof {
+    padding: 0.85rem 0.65rem 1.25rem;
+    margin-bottom: var(--space-4);
+  }
+
+  .app-specimen-table {
+    min-height: min(52vh, 22rem);
+    padding: 0.75rem 0.25rem 0.5rem;
+  }
+
+  .app-specimen {
+    --specimen-max-w: min(100%, 22rem);
+  }
+
+  .app-specimen-frame-browser {
+    --specimen-max-w: 100%;
+    --specimen-max-h: 18rem;
+  }
+
+  .app-specimen-frame-phone {
+    --specimen-max-w: 11.5rem;
+    --specimen-max-h: 24rem;
+  }
+
+  .app-specimen-frame-card {
+    --specimen-max-w: 100%;
+    --specimen-max-h: 14rem;
+  }
+
+  .app-specimen-honesty {
+    font-size: 0.7rem;
+    padding-inline: 0.5rem;
+  }
+
+  .app-stage-proof-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+}
+
+/* Large desktop: table can breathe; specimen stays the focus */
+@media (min-width: 1100px) {
+  .app-specimen-table {
+    min-height: min(62vh, 34rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-specimen-table .app-specimen-stage {
+    filter: drop-shadow(0 0.4rem 0.8rem color-mix(in srgb, #1c1917 10%, transparent));
+  }
+}

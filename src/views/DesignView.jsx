@@ -149,6 +149,12 @@ export default function DesignView({
   /** One-shot deep link from Review/Deliver readiness — cleared after apply */
   brandEditSectionProp = null,
   setBrandEditSectionProp = null,
+  /**
+   * When Application Stage is open, Identity stays mounted but suspended so
+   * the exact Touchpoints launcher inside this room survives Escape restore
+   * (same co-mount pattern Directions uses under Identity).
+   */
+  suspended = false,
   // Focus timer props
 }) {
   const updateBrandField = useAppStore((s) => s.updateBrandField)
@@ -372,6 +378,7 @@ export default function DesignView({
   }, [setActiveView])
 
   useEffect(() => {
+    if (suspended) return undefined
     const root = document.getElementById('root')
     const hadInert = root?.hasAttribute('inert')
     const priorAriaHidden = root?.getAttribute('aria-hidden')
@@ -434,7 +441,7 @@ export default function DesignView({
       if (root) root.style.visibility = priorVisibility || ''
       document.body.style.overflow = priorOverflow
     }
-  }, [closeIdentityStudio])
+  }, [closeIdentityStudio, suspended])
 
 
   const restoreSelectedVersion = async () => {
@@ -1045,11 +1052,12 @@ export default function DesignView({
   return createPortal(
     <section
       ref={studioRoomRef}
-      className="identity-workroom"
+      className={`identity-workroom${suspended ? ' is-suspended' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="identity-studio-title"
       tabIndex={-1}
+      aria-hidden={suspended ? true : undefined}
     >
       <h1 id="identity-studio-title" className="sr-only">
         {labelForStepId('design')}
