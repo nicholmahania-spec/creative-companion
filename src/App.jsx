@@ -363,6 +363,8 @@ function App() {
     // First visit and every return visit: one clear next action
     return 'home'
   })
+  const workroomLauncherRef = useRef(null)
+  const identityWorkroomLauncherRef = useRef(null)
   const setActiveView = useCallback((view) => {
     // Focus Mode product removed — never land on *-focus views.
     let next = view
@@ -377,6 +379,12 @@ function App() {
         'deliver-focus': 'finish',
       }
       next = map[next] || 'home'
+    }
+    if (next === 'spark' && document.activeElement instanceof HTMLElement) {
+      workroomLauncherRef.current = document.activeElement
+    }
+    if (next === 'brand' && document.activeElement instanceof HTMLElement) {
+      identityWorkroomLauncherRef.current = document.activeElement
     }
     setActiveViewRaw(next)
     try {
@@ -4041,7 +4049,7 @@ function App() {
             that just failed — offering "back to the project" while the project
             view is the thing crashing is a button that re-runs the crash. */}
         <ErrorBoundary
-          key={activeView}
+          key={activeView === 'spark' || activeView === 'brand' ? 'directions-identity-workrooms' : activeView}
           leaveLabel={
             activeView === 'project' ? 'Back to your projects' : 'Back to the project'
           }
@@ -4095,6 +4103,8 @@ function App() {
           completeCurrentStep={completeCurrentStep}
           startVoice={startVoice}
           setActiveView={setActiveView}
+          identityWorkroomLauncherRef={identityWorkroomLauncherRef}
+          workroomLauncherRef={workroomLauncherRef}
           flashToast={flashToast}
           offerUndo={offerUndo}
           flashMicro={flashMicro}

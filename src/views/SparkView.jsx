@@ -27,7 +27,8 @@
  * an editor. The step id stays `ideate` because saved projects key `pathDone`
  * off it.
  */
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore, { DIRECTION_SLOTS, orderedDirections } from '../store/useAppStore'
 import useIsMobile from '../lib/useIsMobile'
@@ -52,12 +53,14 @@ const focusLater = (id, ms = 60) => {
 
 export default function SparkView({
   setActiveView,
+  workroomLauncherRef,
   directions = [],
   updateDirection,
   project = null,
   flashMicro,
   projectId,
   goSystemSection,
+  suspended = false,
 }) {
   const addDirection = useAppStore((s) => s.addDirection)
   const deleteDirection = useAppStore((s) => s.deleteDirection)
@@ -71,6 +74,8 @@ export default function SparkView({
      band can fill B while A is chosen, and Edit is only when the designer
      asks to change the composition, name or why. */
   const [editingId, setEditingId] = useState(null)
+  const roomRef = useRef(null)
+  const launcherRef = useRef(null)
 
   /* Matches the routes grid breakpoint: one column on phone, multi on desk.
      Closed cards use DirectionPreview compact; Edit opens the full specimen. */
@@ -94,6 +99,9 @@ export default function SparkView({
     routes[0]?.id ||
     null
   const openRoute = routes.find((r) => r.id === openId) || null
+  const tableRoutes = openRoute
+    ? [openRoute, ...routes.filter((route) => route.id !== openRoute.id)]
+    : routes
 
   const evidence = useMemo(
     () => projectEvidence(project, moodItems),
@@ -119,6 +127,89 @@ export default function SparkView({
   )
 
   const title = labelForStepId('ideate')
+
+  /* Capture before App's post-navigation effect parks focus in main. The
+     journey button remains mounted under the inert shell, so it is the exact
+     launcher we can return to once the room closes. */
+  useLayoutEffect(() => {
+    const active = document.activeElement
+    launcherRef.current =
+      workroomLauncherRef?.current ||
+      (active instanceof HTMLElement ? active : null)
+  }, [workroomLauncherRef])
+
+  const closeWorkroom = useCallback(() => {
+    const launcher = launcherRef.current
+    setActiveView?.('studio')
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (launcher?.isConnected) launcher.focus({ preventScroll: true })
+      })
+    })
+  }, [setActiveView])
+
+  useEffect(() => {
+    if (suspended) return undefined
+    const root = document.getElementById('root')
+    const hadInert = root?.hasAttribute('inert')
+    const priorAriaHidden = root?.getAttribute('aria-hidden')
+    const priorOverflow = document.body.style.overflow
+    const priorVisibility = root?.style.visibility
+    root?.setAttribute('inert', '')
+    root?.setAttribute('aria-hidden', 'true')
+    if (root) root.style.visibility = 'hidden'
+    document.body.style.overflow = 'hidden'
+    const focusables = () =>
+      [...(roomRef.current?.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ) || [])].filter((element) => element instanceof HTMLElement)
+
+    const focusRoom = (last = false) => {
+      const items = focusables()
+      ;(last ? items.at(-1) : items[0])?.focus({ preventScroll: true })
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeWorkroom()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const items = focusables()
+      if (!items.length) {
+        event.preventDefault()
+        roomRef.current?.focus({ preventScroll: true })
+        return
+      }
+      const current = document.activeElement
+      const index = items.indexOf(current)
+      if (event.shiftKey && (current === roomRef.current || index <= 0)) {
+        event.preventDefault()
+        items.at(-1)?.focus({ preventScroll: true })
+      } else if (!event.shiftKey && index === items.length - 1) {
+        event.preventDefault()
+        items[0]?.focus({ preventScroll: true })
+      }
+    }
+
+    const onFocusIn = (event) => {
+      if (roomRef.current && !roomRef.current.contains(event.target)) focusRoom()
+    }
+
+    requestAnimationFrame(() => roomRef.current?.focus({ preventScroll: true }))
+    document.addEventListener('keydown', onKeyDown, true)
+    document.addEventListener('focusin', onFocusIn, true)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('focusin', onFocusIn, true)
+      if (!hadInert) root?.removeAttribute('inert')
+      if (priorAriaHidden == null) root?.removeAttribute('aria-hidden')
+      else root?.setAttribute('aria-hidden', priorAriaHidden)
+      if (root) root.style.visibility = priorVisibility || ''
+      document.body.style.overflow = priorOverflow
+    }
+  }, [closeWorkroom, suspended])
 
   /* Opening is not choosing and never writes a decision. Clicking the route
      that is already open does nothing rather than closing it — there is no
@@ -193,11 +284,22 @@ export default function SparkView({
     )
   }
 
-  return (
-    <div className="spark-view ideate-studio">
-      <div className="flow-top ideate-top">
-        <h1 className="page-title">{title}</h1>
-      </div>
+  const room = (
+    <section
+      ref={roomRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      className={`direction-room spark-view ideate-studio${suspended ? ' is-suspended' : ''}`}
+      aria-labelledby="directions-room-heading"
+    >
+      <header className="direction-room-recovery">
+        <button type="button" className="text-link" onClick={closeWorkroom}>
+          Back to {labelForStepId('research')}
+        </button>
+        <span>{openRoute ? `Working on route ${openRoute.letter}` : 'Private route table'}</span>
+      </header>
+      <h1 id="directions-room-heading" className="sr-only">{title}</h1>
 
       {/* THE BRIDGE. Material the project already holds, read by reference.
           Tapping a tile puts it in the open route — one tap, one target, the
@@ -234,12 +336,6 @@ export default function SparkView({
 
       {/* START STATES. Facts about what is kept — not process prose, not
           invented routes. Split is an offer; accepting creates citations only. */}
-      {start.state === 'nothing' && routes.length === 0 ? (
-        <p className="ideate-start-note" role="status">
-          {start.reason}
-        </p>
-      ) : null}
-
       {start.state === 'thin' ? (
         <p className="ideate-start-note" role="status">
           {start.reason}
@@ -260,7 +356,7 @@ export default function SparkView({
       ) : null}
 
       <section className="ideate-routes" aria-label={`${title} routes`}>
-        {routes.map((d) => {
+        {tableRoutes.map((d) => {
           const isOpen = d.id === openId
           const isEditing = editingId === d.id
           const name = String(d.title || '').trim()
@@ -477,6 +573,7 @@ export default function SparkView({
           </button>
         ) : null}
       </section>
-    </div>
+    </section>
   )
+  return createPortal(room, document.body)
 }
