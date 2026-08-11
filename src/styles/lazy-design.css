@@ -1275,6 +1275,214 @@
   box-shadow: inset 0 -2px 0 var(--text-primary);
 }
 
+/* Phase 4A — artboard studio: one large identity field with a quiet tool
+   shelf. Existing controls remain in the DOM and keep their writers. */
+.identity-workroom {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.design-studio.system-view {
+  max-width: none !important;
+  padding: 1rem clamp(1rem, 4vw, 4rem) 3rem;
+  background: var(--bg);
+}
+
+.identity-studio-recovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.identity-studio-recovery p { margin: 0; }
+
+.identity-tool-dock {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  max-width: max-content;
+  margin: 1rem auto 1.5rem;
+  border: 0;
+}
+
+.identity-tool-btn {
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.identity-tool-btn.is-active {
+  color: var(--text-primary);
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 currentColor;
+}
+
+.design-studio .design-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: none;
+}
+
+.design-studio .design-artboard-column {
+  order: 0;
+  min-width: 0;
+}
+
+.design-studio .system-artboard {
+  height: min(56vh, 34rem);
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: auto;
+}
+
+.design-studio .design-edit-column {
+  order: 1;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.design-studio .design-edit-column > .brand-section {
+  padding: 1.25rem 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.design-studio .design-section-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.design-studio .design-section-rule { flex: 1; }
+
+.app.deep .design-studio.system-view { background: var(--bg); }
+.app.deep .identity-workroom { background: var(--bg); }
+
+/* The studio is portaled above `.app`, so it cannot inherit deep-theme
+   variables from that ancestor. Keep the same intentional dark surface. */
+body:has(.app.deep) .identity-workroom {
+  background: #101613;
+  color: #edf3ec;
+}
+
+body:has(.app.deep) .identity-workroom .design-studio.system-view {
+  background: #101613;
+}
+
+body:has(.app.deep) .identity-workroom .identity-studio-recovery,
+body:has(.app.deep) .identity-workroom .identity-tool-btn,
+body:has(.app.deep) .identity-workroom .dir-developing,
+body:has(.app.deep) .identity-workroom .dir-developing-title,
+body:has(.app.deep) .identity-workroom .text-link {
+  color: #edf3ec;
+}
+
+body:has(.app.deep) .identity-workroom .identity-tool-btn.is-active {
+  color: #ffffff;
+}
+
+/* A direction is a provisional source, not a second inspector. Keep its
+   route, citation and explicit commit path in a single quiet shelf above the
+   field; the fuller breakdown remains in Directions. */
+.identity-workroom .dir-developing {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+}
+
+.identity-workroom .dir-developing-head { grid-column: 1; }
+.identity-workroom .dir-developing-lede {
+  grid-column: 1;
+  margin: 0;
+}
+.identity-workroom .dir-developing-why,
+.identity-workroom .dir-developing-parts { display: none; }
+.identity-workroom .dir-developing-ev {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin: 0;
+}
+.identity-workroom .dir-developing-commit {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  margin: 0;
+}
+.identity-workroom .dir-developing-commit-hint { display: none; }
+
+@media (max-width: 720px) {
+  .identity-studio-recovery { font-size: 0.78rem; }
+
+  .identity-tool-dock {
+    width: 100%;
+    justify-content: space-between;
+    margin: 0.5rem 0 1rem;
+    overflow-x: auto;
+  }
+
+  .identity-tool-btn {
+    flex: 1;
+    padding: 0.6rem 0.7rem;
+    white-space: nowrap;
+  }
+
+  .design-studio .system-artboard {
+    height: 55dvh;
+    min-height: 24rem;
+  }
+  .design-studio .design-edit-column { padding: 0; }
+  .design-studio .design-edit-column > .brand-section { padding: 1rem 0; }
+
+  .identity-workroom .dir-developing {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .identity-workroom .dir-developing-ev {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    display: block;
+  }
+
+  .identity-workroom .dir-developing-ev li { display: block; }
+
+  .identity-workroom .dir-developing-ev .dir-ev-face {
+    width: min(100%, 13rem);
+    height: auto;
+    aspect-ratio: 1.35;
+    font-size: inherit;
+  }
+
+  .identity-workroom .dir-developing-commit {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+}
+
 .app.deep .identity-subnav-btn.is-active {
   background: var(--bg-muted);
 }

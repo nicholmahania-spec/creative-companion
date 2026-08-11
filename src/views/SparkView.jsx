@@ -60,6 +60,7 @@ export default function SparkView({
   flashMicro,
   projectId,
   goSystemSection,
+  suspended = false,
 }) {
   const addDirection = useAppStore((s) => s.addDirection)
   const deleteDirection = useAppStore((s) => s.deleteDirection)
@@ -148,6 +149,7 @@ export default function SparkView({
   }, [setActiveView])
 
   useEffect(() => {
+    if (suspended) return undefined
     const root = document.getElementById('root')
     const hadInert = root?.hasAttribute('inert')
     const priorAriaHidden = root?.getAttribute('aria-hidden')
@@ -207,7 +209,7 @@ export default function SparkView({
       if (root) root.style.visibility = priorVisibility || ''
       document.body.style.overflow = priorOverflow
     }
-  }, [closeWorkroom])
+  }, [closeWorkroom, suspended])
 
   /* Opening is not choosing and never writes a decision. Clicking the route
      that is already open does nothing rather than closing it — there is no
@@ -288,7 +290,7 @@ export default function SparkView({
       tabIndex={-1}
       role="dialog"
       aria-modal="true"
-      className="direction-room spark-view ideate-studio"
+      className={`direction-room spark-view ideate-studio${suspended ? ' is-suspended' : ''}`}
       aria-labelledby="directions-room-heading"
     >
       <header className="direction-room-recovery">

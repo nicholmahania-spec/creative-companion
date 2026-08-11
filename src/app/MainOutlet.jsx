@@ -97,6 +97,7 @@ export default function MainOutlet(p) {
     completeCurrentStep,
     startVoice,
     setActiveView,
+    identityWorkroomLauncherRef,
     workroomLauncherRef,
     flashToast,
     offerUndo,
@@ -330,7 +331,9 @@ export default function MainOutlet(p) {
   if (activeView === 'spark') {
     return wrap(
       'spark',
+      <>
       <SparkView
+        key="directions-workroom"
         setActiveView={setActiveView}
         workroomLauncherRef={workroomLauncherRef}
         directions={activeProject?.directions}
@@ -340,6 +343,7 @@ export default function MainOutlet(p) {
         projectId={activeProjectId}
         goSystemSection={goSystemSection}
       />
+      </>
     )
   }
 
@@ -491,6 +495,19 @@ export default function MainOutlet(p) {
   if (activeView === 'brand') {
     return wrap(
       'brand',
+      <>
+      <SparkView
+        key="directions-workroom"
+        suspended
+        setActiveView={setActiveView}
+        workroomLauncherRef={workroomLauncherRef}
+        directions={activeProject?.directions}
+        updateDirection={updateDirection}
+        project={activeProject}
+        flashMicro={flashMicro}
+        projectId={activeProjectId}
+        goSystemSection={goSystemSection}
+      />
       <DesignView
         navDir={navDir}
         journeyNext={journeyNext}
@@ -499,12 +516,14 @@ export default function MainOutlet(p) {
         projectPalette={projectPalette}
         studioName={studioName}
         setActiveView={setActiveView}
+        identityWorkroomLauncherRef={identityWorkroomLauncherRef}
         flashToast={flashToast}
         offerUndo={offerUndo}
         flashMicro={flashMicro}
         brandEditSectionProp={brandEditSection}
         setBrandEditSectionProp={setBrandEditSection}
       />
+      </>
     )
   }
 
