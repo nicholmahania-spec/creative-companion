@@ -365,6 +365,7 @@ function App() {
   })
   const workroomLauncherRef = useRef(null)
   const identityWorkroomLauncherRef = useRef(null)
+  const applicationWorkroomLauncherRef = useRef(null)
   const setActiveView = useCallback((view) => {
     // Focus Mode product removed — never land on *-focus views.
     let next = view
@@ -380,11 +381,16 @@ function App() {
       }
       next = map[next] || 'home'
     }
+    /* Capture the exact launcher node before the view transition parks
+       focus in main. Workrooms restore this same element on Escape. */
     if (next === 'spark' && document.activeElement instanceof HTMLElement) {
       workroomLauncherRef.current = document.activeElement
     }
     if (next === 'brand' && document.activeElement instanceof HTMLElement) {
       identityWorkroomLauncherRef.current = document.activeElement
+    }
+    if (next === 'flow' && document.activeElement instanceof HTMLElement) {
+      applicationWorkroomLauncherRef.current = document.activeElement
     }
     setActiveViewRaw(next)
     try {
@@ -4049,7 +4055,13 @@ function App() {
             that just failed — offering "back to the project" while the project
             view is the thing crashing is a button that re-runs the crash. */}
         <ErrorBoundary
-          key={activeView === 'spark' || activeView === 'brand' ? 'directions-identity-workrooms' : activeView}
+          key={
+            activeView === 'spark' ||
+            activeView === 'brand' ||
+            activeView === 'flow'
+              ? 'directions-identity-application-workrooms'
+              : activeView
+          }
           leaveLabel={
             activeView === 'project' ? 'Back to your projects' : 'Back to the project'
           }
@@ -4105,6 +4117,7 @@ function App() {
           setActiveView={setActiveView}
           identityWorkroomLauncherRef={identityWorkroomLauncherRef}
           workroomLauncherRef={workroomLauncherRef}
+          applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
           flashToast={flashToast}
           offerUndo={offerUndo}
           flashMicro={flashMicro}

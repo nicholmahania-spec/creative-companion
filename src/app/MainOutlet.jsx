@@ -99,6 +99,7 @@ export default function MainOutlet(p) {
     setActiveView,
     identityWorkroomLauncherRef,
     workroomLauncherRef,
+    applicationWorkroomLauncherRef,
     flashToast,
     offerUndo,
     flashMicro,
@@ -233,71 +234,6 @@ export default function MainOutlet(p) {
         setClientInboxOpen={setClientInboxOpen}
         listRowNext={listRowNext}
         upcomingDeadlines={upcomingDeadlines}
-      />
-    )
-  }
-
-  if (activeView === 'flow') {
-    return wrap(
-      'flow',
-      <SketchView
-        navDir={navDir}
-        activeProject={activeProject}
-        projectPalette={projectPalette}
-        projectDeadline={projectDeadline}
-        completedCount={completedCount}
-        deskTasks={deskTasks}
-        doneTasks={doneTasks}
-        queueTasks={queueTasks}
-        nextTask={nextTask}
-        stepFocusKey={stepFocusKey}
-        setStepFocusKey={setStepFocusKey}
-        showHowItWorks={showHowItWorks}
-        hideHowItWorks={hideHowItWorks}
-        openBreakdown={openBreakdown}
-        journeyNext={journeyNext}
-        setActiveView={setActiveView}
-        flashToast={flashToast}
-        flashMicro={flashMicro}
-        offerUndo={offerUndo}
-        notifyAction={notifyAction}
-        quickInput={quickInput}
-        setQuickInput={setQuickInput}
-        captureEnergy={captureEnergy}
-        setCaptureEnergy={setCaptureEnergy}
-        captureDue={captureDue}
-        setCaptureDue={setCaptureDue}
-        captureOptionsOpen={captureOptionsOpen}
-        setCaptureOptionsOpen={setCaptureOptionsOpen}
-        addQuickTask={addQuickTask}
-        queueCollapsed={queueCollapsed}
-        queueOpen={queueOpen}
-        setQueueOpen={setQueueOpen}
-        doneOpen={doneOpen}
-        setDoneOpen={setDoneOpen}
-        toggleTask={toggleTask}
-        updateTaskTitle={updateTaskTitle}
-        updateTaskWhy={updateTaskWhy}
-        removeTask={removeTask}
-        breakIntoSteps={breakIntoSteps}
-        setTaskDueDate={setTaskDueDate}
-        stepDueOpen={stepDueOpen}
-        setStepDueOpen={setStepDueOpen}
-        completeCurrentStep={completeCurrentStep}
-        startVoice={startVoice}
-        setDeskConfirm={setDeskConfirm}
-        forcedBreak={forcedBreak}
-        setSessionComplete={setSessionComplete}
-        startOrPauseFocus={startOrPauseFocus}
-        resetFocus={resetFocus}
-        isFocusRunning={isFocusRunning}
-        focusLeft={focusLeft}
-        setFocusLeft={setFocusLeft}
-        setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
-        setIsFocusRunning={setIsFocusRunning}
-        setTimerFocusSource={setTimerFocusSource}
-        sessionLabel={sessionLabel}
-        sessionComplete={sessionComplete}
       />
     )
   }
@@ -492,37 +428,108 @@ export default function MainOutlet(p) {
     return wrap('assets', <AssetLibraryView navDir={navDir} cloud={CLOUD} flashToast={flashToast} />)
   }
 
-  if (activeView === 'brand') {
+  /*
+    Identity + Application share one mount tree so:
+    - Directions stays under Identity (existing)
+    - Identity stays under Application (Step 7 Escape restores exact launcher)
+    DesignView is never remounted when stepping brand ↔ flow.
+  */
+  if (activeView === 'brand' || activeView === 'flow') {
     return wrap(
-      'brand',
+      activeView === 'flow' ? 'flow' : 'brand',
       <>
-      <SparkView
-        key="directions-workroom"
-        suspended
-        setActiveView={setActiveView}
-        workroomLauncherRef={workroomLauncherRef}
-        directions={activeProject?.directions}
-        updateDirection={updateDirection}
-        project={activeProject}
-        flashMicro={flashMicro}
-        projectId={activeProjectId}
-        goSystemSection={goSystemSection}
-      />
-      <DesignView
-        navDir={navDir}
-        journeyNext={journeyNext}
-        activeProject={activeProject}
-        deskMood={deskMood}
-        projectPalette={projectPalette}
-        studioName={studioName}
-        setActiveView={setActiveView}
-        identityWorkroomLauncherRef={identityWorkroomLauncherRef}
-        flashToast={flashToast}
-        offerUndo={offerUndo}
-        flashMicro={flashMicro}
-        brandEditSectionProp={brandEditSection}
-        setBrandEditSectionProp={setBrandEditSection}
-      />
+        <SparkView
+          key="directions-workroom"
+          suspended
+          setActiveView={setActiveView}
+          workroomLauncherRef={workroomLauncherRef}
+          directions={activeProject?.directions}
+          updateDirection={updateDirection}
+          project={activeProject}
+          flashMicro={flashMicro}
+          projectId={activeProjectId}
+          goSystemSection={goSystemSection}
+        />
+        <DesignView
+          key="identity-workroom"
+          suspended={activeView === 'flow'}
+          navDir={navDir}
+          journeyNext={journeyNext}
+          activeProject={activeProject}
+          deskMood={deskMood}
+          projectPalette={projectPalette}
+          studioName={studioName}
+          setActiveView={setActiveView}
+          identityWorkroomLauncherRef={identityWorkroomLauncherRef}
+          flashToast={flashToast}
+          offerUndo={offerUndo}
+          flashMicro={flashMicro}
+          brandEditSectionProp={brandEditSection}
+          setBrandEditSectionProp={setBrandEditSection}
+        />
+        {activeView === 'flow' ? (
+          <SketchView
+            key="application-workroom"
+            navDir={navDir}
+            activeProject={activeProject}
+            projectPalette={projectPalette}
+            projectDeadline={projectDeadline}
+            completedCount={completedCount}
+            deskTasks={deskTasks}
+            doneTasks={doneTasks}
+            queueTasks={queueTasks}
+            nextTask={nextTask}
+            stepFocusKey={stepFocusKey}
+            setStepFocusKey={setStepFocusKey}
+            showHowItWorks={showHowItWorks}
+            hideHowItWorks={hideHowItWorks}
+            openBreakdown={openBreakdown}
+            journeyNext={journeyNext}
+            setActiveView={setActiveView}
+            applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
+            flashToast={flashToast}
+            flashMicro={flashMicro}
+            offerUndo={offerUndo}
+            notifyAction={notifyAction}
+            quickInput={quickInput}
+            setQuickInput={setQuickInput}
+            captureEnergy={captureEnergy}
+            setCaptureEnergy={setCaptureEnergy}
+            captureDue={captureDue}
+            setCaptureDue={setCaptureDue}
+            captureOptionsOpen={captureOptionsOpen}
+            setCaptureOptionsOpen={setCaptureOptionsOpen}
+            addQuickTask={addQuickTask}
+            queueCollapsed={queueCollapsed}
+            queueOpen={queueOpen}
+            setQueueOpen={setQueueOpen}
+            doneOpen={doneOpen}
+            setDoneOpen={setDoneOpen}
+            toggleTask={toggleTask}
+            updateTaskTitle={updateTaskTitle}
+            updateTaskWhy={updateTaskWhy}
+            removeTask={removeTask}
+            breakIntoSteps={breakIntoSteps}
+            setTaskDueDate={setTaskDueDate}
+            stepDueOpen={stepDueOpen}
+            setStepDueOpen={setStepDueOpen}
+            completeCurrentStep={completeCurrentStep}
+            startVoice={startVoice}
+            setDeskConfirm={setDeskConfirm}
+            forcedBreak={forcedBreak}
+            setSessionComplete={setSessionComplete}
+            startOrPauseFocus={startOrPauseFocus}
+            resetFocus={resetFocus}
+            isFocusRunning={isFocusRunning}
+            focusLeft={focusLeft}
+            setFocusLeft={setFocusLeft}
+            setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
+            setIsFocusRunning={setIsFocusRunning}
+            setTimerFocusSource={setTimerFocusSource}
+            sessionLabel={sessionLabel}
+            sessionComplete={sessionComplete}
+          />
+        ) : null}
       </>
     )
   }

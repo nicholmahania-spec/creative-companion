@@ -1285,6 +1285,12 @@
   background: var(--bg);
 }
 
+/* Co-mounted under Application Stage: keep DOM for launcher restore, no paint. */
+.identity-workroom.is-suspended {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .design-studio.system-view {
   max-width: none !important;
   padding: 1rem clamp(1rem, 4vw, 4rem) 3rem;
