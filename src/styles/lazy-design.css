@@ -1278,11 +1278,22 @@
 /* Phase 4A — artboard studio: one large identity field with a quiet tool
    shelf. Existing controls remain in the DOM and keep their writers. */
 .identity-workroom {
+  /* Portaled onto body — cannot inherit .app tokens. Own an opaque room
+     surface the same way Directions owns --table-paper. */
+  --bg: #f0eeeb;
+  --bg-elevated: #ffffff;
+  --bg-muted: #e8e6e1;
+  --text-primary: #1c1917;
+  --text-secondary: #44403c;
+  --text-muted: #78716c;
+  --border-subtle: color-mix(in srgb, #1c1917 12%, transparent);
+  --border-strong: color-mix(in srgb, #1c1917 22%, transparent);
   position: fixed;
   z-index: 1000;
   inset: 0;
   overflow: auto;
   background: var(--bg);
+  color: var(--text-primary);
 }
 
 /* Co-mounted under Application Stage: keep DOM for launcher restore, no paint. */
@@ -1294,7 +1305,7 @@
 .design-studio.system-view {
   max-width: none !important;
   padding: 1rem clamp(1rem, 4vw, 4rem) 3rem;
-  background: var(--bg);
+  background: transparent;
 }
 
 .identity-studio-recovery {
@@ -1333,21 +1344,36 @@
   box-shadow: inset 0 -2px 0 currentColor;
 }
 
+/*
+  Intended Identity geometry (see .design-workspace grid at file end):
+  artboard left (dominant) | active tool right.
+  Phase 4A had forced flex-column here, which collapsed the grid into a
+  full-width sticky sheet with tools stacking underneath — restore grid.
+*/
 .design-studio .design-workspace {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(1rem, 2.25vw, 1.75rem);
+  align-items: start;
   max-width: none;
+  width: 100%;
 }
 
 .design-studio .design-artboard-column {
   order: 0;
   min-width: 0;
+  /* Sticky is safe only while the column is a side rail, not full measure */
+  position: sticky;
+  top: var(--space-4, 1rem);
+  max-height: calc(100vh - var(--space-7, 3.5rem));
+  overflow: auto;
 }
 
 .design-studio .system-artboard {
   height: min(56vh, 34rem);
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   border: 0;
   border-radius: 0;
@@ -1357,9 +1383,10 @@
 
 .design-studio .design-edit-column {
   order: 1;
-  width: 100%;
-  max-width: 72rem;
-  margin: 0 auto;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
 }
 
 .design-studio .design-edit-column > .brand-section {
@@ -1379,18 +1406,26 @@
 
 .design-studio .design-section-rule { flex: 1; }
 
-.app.deep .design-studio.system-view { background: var(--bg); }
+.app.deep .design-studio.system-view { background: transparent; }
 .app.deep .identity-workroom { background: var(--bg); }
 
 /* The studio is portaled above `.app`, so it cannot inherit deep-theme
    variables from that ancestor. Keep the same intentional dark surface. */
 body:has(.app.deep) .identity-workroom {
+  --bg: #101613;
+  --bg-elevated: #1a1f1c;
+  --bg-muted: #161b18;
+  --text-primary: #edf3ec;
+  --text-secondary: #c5cec6;
+  --text-muted: #aab7ac;
+  --border-subtle: color-mix(in srgb, #edf3ec 14%, transparent);
+  --border-strong: color-mix(in srgb, #edf3ec 24%, transparent);
   background: #101613;
   color: #edf3ec;
 }
 
 body:has(.app.deep) .identity-workroom .design-studio.system-view {
-  background: #101613;
+  background: transparent;
 }
 
 body:has(.app.deep) .identity-workroom .identity-studio-recovery,
@@ -1439,6 +1474,26 @@ body:has(.app.deep) .identity-workroom .identity-tool-btn.is-active {
   margin: 0;
 }
 .identity-workroom .dir-developing-commit-hint { display: none; }
+
+/* Single column below the PRD §12 wide-desktop breakpoint (matches
+   .design-workspace media at 60rem further down the file). */
+@media (max-width: 60rem) {
+  .design-studio .design-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .design-studio .design-artboard-column {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    order: -1;
+  }
+
+  .design-studio .design-edit-column {
+    order: 0;
+    width: 100%;
+  }
+}
 
 @media (max-width: 720px) {
   .identity-studio-recovery { font-size: 0.78rem; }
@@ -1524,9 +1579,7 @@ body:has(.app.deep) .identity-workroom .identity-tool-btn.is-active {
 }
 
 .design-studio .design-edit-column {
-  width: 100%;
   min-width: 0;
-  flex: 1 1 auto;
 }
 
 .design-studio .path-continue-row.design-path-footer {
