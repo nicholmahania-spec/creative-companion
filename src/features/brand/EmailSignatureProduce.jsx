@@ -20,6 +20,10 @@ import {
   findProducedEmailSignature,
   projectHasProducedEmailSignature,
 } from '../../lib/brand/emailSignatureArtifact'
+import {
+  PRODUCERS,
+  productionStamp,
+} from '../../lib/brand/productionProvenance'
 /* Same face styles StationeryKit uses — one visual system, one generator. */
 import '../../styles/lazy-design.css'
 
@@ -86,6 +90,9 @@ export default function EmailSignatureProduce({
         orgName,
         contactName: activeContact?.name,
       })
+      /* Only a row THIS path produced is overwritten — a signature the
+         designer uploaded and attributed themselves fails the find, and
+         production adds its own row rather than replacing their file. */
       const existing = findProducedEmailSignature(project.packageAssets)
       const patch = {
         name,
@@ -96,6 +103,10 @@ export default function EmailSignatureProduce({
         rights: 'clientOwned',
         heldBack: '',
         sizeBytes: result.blob.size || 0,
+        /* Applied at the only moment it is honest to apply it: holding bytes
+           this path just generated. Re-stamped on re-production, because
+           `producedAt` describes the run behind the bytes the row holds now. */
+        ...productionStamp(PRODUCERS.emailSignature),
       }
       if (existing?.id && updatePackageAsset) {
         updatePackageAsset(existing.id, patch)

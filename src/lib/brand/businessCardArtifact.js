@@ -2,14 +2,26 @@
  * Business-card application artifact — truth helpers only.
  *
  * Touchpoints mocks and ApplicationCheck readings are NOT artifacts.
- * A real business card is a packageAssets row with:
- *   group: 'application'
- *   deliverable: 'businessCard'
- *   dataUrl: real PDF (or image) bytes
  *
- * Linking is by deliverable on the existing packageAssets shape — no new
- * Touchpoints schema field.
+ * TWO DIFFERENT QUESTIONS, KEPT APART
+ *
+ *   isBusinessCardPackageAsset — is this file the business card the client
+ *   bought? Answered by the designer's attribution. An upload out of
+ *   Illustrator answers yes, and should.
+ *
+ *   isProducedBusinessCardArtifact — did THIS APP make these bytes? Answered
+ *   only by the produce path's own stamp (see productionProvenance).
+ *
+ * They used to be one question with the second one's name. Attribution,
+ * folder and mime were all an upload could carry, so a designer's own PDF
+ * filed through Delivery made Touchpoints announce a production run that
+ * never happened.
+ *
+ * Linking is still by deliverable on the existing packageAssets shape — no
+ * new Touchpoints schema field.
  */
+
+import { PRODUCERS, isProducedByApp } from './productionProvenance.js'
 
 const PDF_DATA_URL = /^data:application\/pdf[;,]/i
 const DATA_URL = /^data:/i
@@ -30,15 +42,25 @@ export function isBusinessCardPackageAsset(asset) {
 }
 
 /**
- * A produced application file (not a mock, not a colour sample).
- * Prefer PDF; any real data URL with the businessCard deliverable still counts
- * as filed work, but production always writes PDF.
+ * A file this app produced (not a mock, not a colour sample, not an upload).
+ *
+ * All three conditions have to hold at once, and the stamp is the one that
+ * cannot be arrived at by accident:
+ *   - filed as the business card (attribution),
+ *   - carrying PDF bytes (production always writes PDF),
+ *   - stamped by the business-card produce path (authorship).
+ *
+ * FAILS CLOSED. A row missing the stamp reads as package material and not as
+ * produced output, which is the honest answer for both an upload and a row
+ * written before the stamp existed. The alternative — assuming production
+ * because nothing contradicts it — is the failure this function had.
  *
  * @param {object|null|undefined} asset
  * @returns {boolean}
  */
 export function isProducedBusinessCardArtifact(asset) {
   if (!isBusinessCardPackageAsset(asset)) return false
+  if (!isProducedByApp(asset, PRODUCERS.businessCard)) return false
   return PDF_DATA_URL.test(String(asset.dataUrl || ''))
 }
 

@@ -2,14 +2,17 @@
  * Email-signature application artifact — truth helpers only.
  *
  * Touchpoints mocks and ApplicationCheck readings are NOT artifacts.
- * A real email signature is a packageAssets row with:
- *   group: 'application'
- *   deliverable: 'emailSignature'
- *   dataUrl: real PNG bytes
  *
- * Linking is by deliverable on the existing packageAssets shape — no new
- * Touchpoints schema field.
+ * Same two-questions split the business card carries, for the same reason:
+ * attribution says which bought item a file IS, and only the produce path's
+ * stamp says the app MADE it. See businessCardArtifact and
+ * productionProvenance for the failure that separating them fixed.
+ *
+ * Linking is still by deliverable on the existing packageAssets shape — no
+ * new Touchpoints schema field.
  */
+
+import { PRODUCERS, isProducedByApp } from './productionProvenance.js'
 
 const PNG_DATA_URL = /^data:image\/png[;,]/i
 const DATA_URL = /^data:/i
@@ -30,13 +33,18 @@ export function isEmailSignaturePackageAsset(asset) {
 }
 
 /**
- * Produced application file: PNG data URL with emailSignature deliverable.
+ * A file this app produced: PNG bytes, filed as the email signature, and
+ * stamped by the email-signature produce path.
+ *
+ * Fails closed for the same reason the business card does — an unstamped row
+ * is package material whose authorship the app cannot establish.
  *
  * @param {object|null|undefined} asset
  * @returns {boolean}
  */
 export function isProducedEmailSignatureArtifact(asset) {
   if (!isEmailSignaturePackageAsset(asset)) return false
+  if (!isProducedByApp(asset, PRODUCERS.emailSignature)) return false
   return PNG_DATA_URL.test(String(asset.dataUrl || ''))
 }
 

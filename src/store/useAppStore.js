@@ -1739,6 +1739,19 @@ const useAppStore = create(
              from one the designer forgot. */
           heldBack: asset.heldBack || '',
           sizeBytes: Number(asset.sizeBytes) || 0,
+          /* WHO MADE THE BYTES — empty for everything that arrives through
+             the file picker, which is the ordinary path. Only an in-app
+             produce path sets it, so its absence is what lets the app tell
+             its own output apart from the designer's. See
+             lib/brand/productionProvenance for why attribution could not
+             answer this and was being read as though it could.
+
+             `producedAt` is the RUN; `addedAt` below is the FILING. They are
+             the same instant the first time and diverge on re-production,
+             where the row keeps its id and its filing date but holds new
+             bytes. */
+          producedBy: asset.producedBy || '',
+          producedAt: asset.producedAt || '',
           addedAt: new Date().toISOString(),
         }
         set((state) => ({
