@@ -345,7 +345,25 @@ export async function downloadBrandPackVectorPdf(
     const monogram = monogramFor(wordmark)
     const tagline = clean(pack?.tagline)
     const d = pack?.detective || {}
-    const day = new Date().toLocaleDateString()
+    /* THE COVER'S DATE IS THE SNAPSHOT'S, NOT THE CLOCK'S.
+       This read `new Date()`, so the date was whenever the generator happened
+       to run. Two consequences, both only visible in the produced file:
+
+       1. Re-generating from identical canonical truth produced a different
+          document every day — the book had no stable artifact identity, so
+          "is this the same book I approved?" was unanswerable from the file.
+       2. The reveal page regenerates the PDF in the CLIENT's browser from the
+          delivered pack. So the client's copy was stamped the day they
+          clicked, not the day it was delivered — a book opened six months
+          later dated itself today, and the designer's copy and the client's
+          copy of one delivery disagreed.
+
+       `buildBrandPackSnapshot` already stamps `exportedAt`, and the markdown,
+       the direction sheet and the overview PDF all read it. The book was the
+       one export ignoring the stamp its own pack carries. Same honest
+       fallback as `downloadProjectOverviewPdf`: a hand-built pack with no
+       stamp still dates as now rather than printing nothing. */
+    const day = new Date(pack?.exportedAt || Date.now()).toLocaleDateString()
     const pins = Array.isArray(pack?.pins) ? pack.pins : []
     const decision = clean(decisionLineFromPack(pack))
     const chapters = filledDetectiveChapters(d)

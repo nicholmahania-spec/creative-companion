@@ -12,6 +12,15 @@
  * pattern the store already uses for `writingCase`.
  */
 
+/* The page-setup vocabulary is declared once, in the module the PDF
+   generator resolves through. Restating sizes or edge distances here is the
+   two-tables defect this pass exists to close. */
+import {
+  BOOK_EDGE_SPACE,
+  BOOK_PAGE_SIZES,
+  DEFAULT_BOOK_SETUP,
+} from './brandBookSetup'
+
 /** Colour-row names from the owner's DEFAULT_COLORS, in order. */
 export const DEFAULT_TOKEN_NAMES = ['Primary', 'Accent', 'Ink', 'Paper']
 
@@ -19,6 +28,12 @@ export const DEFAULT_TOKEN_NAMES = ['Primary', 'Accent', 'Ink', 'Paper']
 export function mintTokenId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
+
+/** Valid ids, resolved through the same tables the generator uses. */
+const pickPageSize = (id) =>
+  BOOK_PAGE_SIZES.some((s) => s.id === id) ? id : DEFAULT_BOOK_SETUP.pageSize
+const pickEdgeSpace = (id) =>
+  BOOK_EDGE_SPACE.some((e) => e.id === id) ? id : DEFAULT_BOOK_SETUP.edgeSpace
 
 export function blankBookBuilder() {
   return {
@@ -41,13 +56,15 @@ export function blankBookBuilder() {
       pageType: 'white',
       pageBack: 'white',
     },
-    /* Roomy edge % of A4 width (~20mm) — matches EDGE_STOPS.roomy on a4. */
+    /* GUIDES ONLY. `margin` places the grid overlay and nothing else — the
+       page's real content margin comes from `edgeSpace` below, resolved
+       through the same table the generator uses. `edge` used to live here
+       too, which is how a working aid ended up owning half the trim. */
     grid: {
       columns: 12,
       rows: 1,
       gutter: 3,
       margin: 9.4,
-      edge: 'roomy',
       /* Guides are a working aid, not artwork: off unless the designer turns
          them on. A client book with the grid printed on it is a mistake. */
       show: false,
@@ -62,14 +79,28 @@ export function blankBookBuilder() {
       showPageNumbers: true,
       alternate: false,
     },
-    /* A4 + roomy: design-doc default for the builder top bar / print. */
-    print: { pageSize: 'a4', bleed: false },
+    /* ── THE PAGE SETUP. ONE HOME, PER PROJECT. ──────────────────────
+       Owner decision: studio prefs SEED a new project and nothing more.
+       After that these three are the only live source, read by the Builder,
+       the preview, the PDF, the package and the delivery alike.
+
+       They replace `print: { pageSize, bleed }` and `grid.edge`, which were
+       this surface's half of a two-home split: the Builder stored A4 + roomy
+       per project while `prefs.book*` stored Letter + standard for every
+       client-facing consumer, so the book a designer proofed came out at a
+       different trim from the one the client received. `bookBuilderFor`
+       still READS the old keys once, to migrate a project that predates
+       this; nothing writes them.
+
+       Defaults are `DEFAULT_BOOK_SETUP` rather than the old A4 + roomy, so a
+       project that never opens the Builder and one that does now agree. */
+    ...DEFAULT_BOOK_SETUP,
   }
 }
 
 
 /** Sections whose keys are merged individually rather than replaced wholesale. */
-const SECTIONS = ['type', 'typeColor', 'pageBg', 'grid', 'running', 'print']
+const SECTIONS = ['type', 'typeColor', 'pageBg', 'grid', 'running']
 
 /**
  * The Builder's settings for a project, with every key present.
@@ -88,24 +119,57 @@ export function bookBuilderFor(project) {
     out[key] = { ...blank[key], ...(saved[key] || {}) }
   })
 
-  /* grid.edge resolves here, read-time only, same pattern as everything else
-     in this file — never a migration. A project that explicitly chose a
-     named stop gets grid.margin recomputed from it (so the physical edge
-     survives a Letter/A4 switch); a project that never chose one — including
-     every project saved before this existed — keeps exactly the grid.margin
-     it already had. `saved.grid.edge` (not the merged `out.grid.edge`) is
-     the check, so a stop can never be inferred onto an old project by the
-     blank defaults it was merged against. */
-  const chosenEdge = saved.grid && saved.grid.edge
-  if (chosenEdge && EDGE_STOPS[chosenEdge]) {
-    out.grid.edge = chosenEdge
-    const pct = marginPercentForEdge(chosenEdge, out.print.pageSize)
-    if (pct != null) out.grid.margin = pct
-  } else {
-    delete out.grid.edge
-  }
+  /* THE PAGE SETUP, RESOLVED FROM THE PROJECT AND ONLY THE PROJECT.
+     Canonical key first, then the pre-split key it replaced, then the app
+     default. Studio prefs are deliberately absent from this chain: they seed
+     a project at creation (see `seededBookSetup`) and are never consulted
+     again, so changing a studio default cannot retro-alter a book that has
+     already been laid out, proofed or delivered.
+
+     Reading the legacy key here is what makes the store migration safe to
+     be merely additive — a workspace restored from an old backup, which
+     never passes through `migrate`, still resolves to what it was set to. */
+  out.pageSize = pickPageSize(saved.pageSize ?? saved.print?.pageSize)
+  out.edgeSpace = pickEdgeSpace(saved.edgeSpace ?? saved.grid?.edge)
+  out.printShop = !!(saved.printShop ?? saved.print?.bleed ?? false)
+
+  /* `grid.margin` is NOT the page setup and never was: the PDF uses it only
+     to place the guide overlay (`bookGrid.margin`, drawn when `grid.show`).
+     It used to be recomputed from the chosen edge, which quietly tied a
+     working aid to the trim. Decoupled — the edge drives the content margin
+     through `resolveBookSetup`, the guide keeps its own number. */
+  delete out.grid.edge
 
   return out
+}
+
+/** The canonical page setup for a project — the shape `resolveBookSetup` takes. */
+export function projectBookSetup(project) {
+  const bb = bookBuilderFor(project)
+  return {
+    pageSize: bb.pageSize,
+    edgeSpace: bb.edgeSpace,
+    printShop: bb.printShop,
+  }
+}
+
+/**
+ * The setup a NEW project starts from — the studio's sticky defaults.
+ *
+ * This is the one and only place `prefs.book*` is read. It is an
+ * initialization input, copied once into the project, not a fallback: after
+ * this the project answers for itself. That preserves the owner's original
+ * reason for making the prefs sticky ("a studio's paper size and print
+ * habits don't change per client, and re-deciding them on every project is a
+ * recurring toll") without letting a later pref change rewrite a finished
+ * book.
+ */
+export function seededBookSetup(prefs = {}) {
+  return {
+    pageSize: pickPageSize(prefs.bookPageSize),
+    edgeSpace: pickEdgeSpace(prefs.bookEdgeSpace),
+    printShop: !!prefs.bookPrintShop,
+  }
 }
 
 /**
@@ -144,51 +208,55 @@ export const MIN_COLORS = 2
 /**
  * Named edge-space stops — "named stops, not number fields."
  *
- * `grid.margin` stays the percent-of-page-width value every consumer
- * (the screen, the print CSS, `brandBookPdf.js`) already reads. These stops
- * are a read-time convenience layered on top: pick "Standard" and the
- * percent is derived from a physical distance instead of typed by hand, and
- * switching Letter/A4 keeps the same physical edge rather than the same
- * percent (which would be a different physical margin on each sheet).
+ * ONE TABLE, NOT TWO. These carried their own physical distances — roomy
+ * 20mm, standard 14mm, tight 10mm — while `BOOK_EDGE_SPACE` in
+ * `brandBookSetup.js` defined the same three ids as 60/48/36pt (21.2 / 16.9 /
+ * 12.7mm). The Builder padded the page on screen from these, the PDF set its
+ * content margin from those, so "Standard" meant two different edges and the
+ * proof on screen was never the sheet the client got.
+ *
+ * `BOOK_EDGE_SPACE` wins because it is the one with a stated derivation: 48pt
+ * is the 64px at 96dpi the book is actually designed at. The labels stay
+ * here — the ids and their order are this surface's — and every distance is
+ * now DERIVED from the canonical points below, so the two cannot drift again.
  */
 export const EDGE_STOPS = {
-  roomy: { label: 'Roomy', mm: 20, in: 0.78 },
-  standard: { label: 'Standard', mm: 14, in: 0.55 },
-  tight: { label: 'Tight', mm: 10, in: 0.39 },
+  roomy: { label: 'Roomy' },
+  standard: { label: 'Standard' },
+  tight: { label: 'Tight' },
 }
 
 /** Display order for the chip row. */
 export const EDGE_ORDER = ['roomy', 'standard', 'tight']
 
-/** Physical sheet widths, inches. Local on purpose — a constant, not state. */
-const EDGE_PAGE_WIDTH_IN = { letter: 8.5, a4: 8.27 }
-
-/** An edge stop's distance, converted to the percent `grid.margin` expects. */
-export function marginPercentForEdge(edgeId, pageSize) {
-  const stop = EDGE_STOPS[edgeId]
-  if (!stop) return null
-  const width = EDGE_PAGE_WIDTH_IN[pageSize] || EDGE_PAGE_WIDTH_IN.letter
-  return Math.round(((stop.in / width) * 100) * 10) / 10
-}
-
 /**
- * Display-only: which stop a legacy numeric margin reads closest to, so the
- * chip row can show a sensible highlight for a project that has a margin but
- * never explicitly chose a stop. Never written back — see `bookBuilderFor`.
+ * An edge stop as a percent of the sheet's width — what the Builder pads its
+ * pages by on screen and in its print stylesheet.
+ *
+ * THE CONVERSION, STATED. Both terms are already PostScript points (72 to the
+ * inch): `BOOK_EDGE_SPACE[].margin` is the content margin the generator uses,
+ * and `BOOK_PAGE_SIZES[].w` is the trim width it uses. So the percentage is a
+ * straight ratio with no unit change — and because the screen and the PDF now
+ * read the same two numbers, a page proofed in the Builder has the same
+ * proportional edge as the page that prints.
+ *
+ * Bleed is deliberately not in it: `resolveBookSetup` keeps content measured
+ * from the TRIM line, so an edge percent is of the trimmed sheet either way.
  */
-export function nearestEdgeStop(marginPercent, pageSize) {
-  let best = EDGE_ORDER[0]
-  let bestDiff = Infinity
-  EDGE_ORDER.forEach((id) => {
-    const pct = marginPercentForEdge(id, pageSize)
-    const diff = Math.abs(pct - marginPercent)
-    if (diff < bestDiff) {
-      bestDiff = diff
-      best = id
-    }
-  })
-  return best
+export function marginPercentForEdge(edgeId, pageSize) {
+  const edge = BOOK_EDGE_SPACE.find((e) => e.id === edgeId)
+  if (!edge) return null
+  const size =
+    BOOK_PAGE_SIZES.find((x) => x.id === pageSize) || BOOK_PAGE_SIZES[0]
+  return Math.round(((edge.margin / size.w) * 100) * 10) / 10
 }
+
+/* `nearestEdgeStop` lived here: it guessed the Edge chip from `grid.margin`
+   for a project that had a margin but never chose a stop. Removed with the
+   coupling it served — the edge is now a stored value the project answers
+   for directly, and `grid.margin` is the guide overlay's alone. A helper left
+   wired to a relationship that no longer exists is how the next reader
+   concludes the relationship is still there. */
 
 /**
  * The page backgrounds the book actually paints, resolved to hex.
