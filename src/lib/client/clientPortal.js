@@ -74,6 +74,47 @@ export async function revokeClientPortal(portalId) {
   return { ok: true }
 }
 
+/**
+ * Studio side: bind an existing portal to a project, server-side.
+ *
+ * `project_local_id` is stamped at creation and was never updated afterwards,
+ * which was fine while the only way to get a portal onto a project was to
+ * create one. The inbox's reconnect — for a portal orphaned by a workspace
+ * import or a second machine — attaches an EXISTING portal to whichever project
+ * is open, and only rewrote the local `clientPortalId`. The server row went on
+ * naming a project that no longer existed on this device.
+ *
+ * That left `publishDelivery` with nothing to check against: the portal claimed
+ * one project, the app was sending another's brand book, and no layer could
+ * tell a legitimate reconnect from a mis-click on the wrong project. Re-stamping
+ * makes the reconnect an explicit, recorded rebind, which is what lets the
+ * publish path enforce that the two agree.
+ *
+ * Owner RLS scopes the write; no new migration and no widened permission —
+ * `Owners can update own client portals` already covers this column.
+ */
+export async function rebindPortalToProject(portalId, projectLocalId) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: CLOUD_REQUIRED }
+  }
+  if (!portalId || projectLocalId == null || projectLocalId === '') {
+    return { ok: false, error: 'Couldn’t link that — no project is open' }
+  }
+  const { error } = await supabase
+    .from('client_portals')
+    .update({
+      project_local_id: String(projectLocalId),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', portalId)
+  if (error) {
+    // Log the driver's message, show the human one.
+    console.warn('Couldn’t link the portal', error)
+    return { ok: false, error: 'Couldn’t link it — try again in a moment' }
+  }
+  return { ok: true }
+}
+
 /** Studio side: update which steps are pushed (visible) to the client. */
 export async function setPortalStepVisibility(portalId, stepVisibility) {
   if (!isSupabaseConfigured() || !supabase) {
@@ -82,6 +123,49 @@ export async function setPortalStepVisibility(portalId, stepVisibility) {
   const { error } = await supabase
     .from('client_portals')
     .update({ step_visibility: stepVisibility, updated_at: new Date().toISOString() })
+    .eq('id', portalId)
+  if (error) {
+    // Log the driver's message, show the human one — this string is
+    // rendered to clients on the public routes.
+    console.warn('Couldn’t update the portal', error)
+    return { ok: false, error: 'Couldn’t update the portal' }
+  }
+  return { ok: true }
+}
+
+/**
+ * Studio side: SHOW an artifact to the client, or stop showing it.
+ *
+ * One gesture, deliberately. `setPortalStepVisibility` used to turn a stop on
+ * and that was the whole push — the client got a label. G10.5 says an approval
+ * attaches to something shown, so showing and stamping what is shown are the
+ * same act; splitting them into two buttons would let a designer turn a stop on
+ * and leave nothing behind it, which is the state this is fixing.
+ *
+ * The artifact is stamped HERE, from the project as it stands at this moment.
+ * It is never rebuilt when the client reads the page: an artifact that
+ * re-derived on read would change under an approval already in progress, and
+ * the version the client approved would be unknowable afterwards.
+ *
+ * @param {string} portalId
+ * @param {object} stepVisibility  the full visibility map, as before
+ * @param {object|null} artifacts  { [stepId]: artifact } to store, or null to
+ *   leave the stored set alone
+ */
+export async function publishReviewArtifacts(portalId, stepVisibility, artifacts) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: CLOUD_REQUIRED }
+  }
+  const patch = {
+    step_visibility: stepVisibility,
+    updated_at: new Date().toISOString(),
+  }
+  if (artifacts && typeof artifacts === 'object') {
+    patch.review_artifacts = artifacts
+  }
+  const { error } = await supabase
+    .from('client_portals')
+    .update(patch)
     .eq('id', portalId)
   if (error) {
     // Log the driver's message, show the human one — this string is
@@ -279,6 +363,10 @@ export async function fetchClientPortal(portalId) {
     detectiveAnswers: row.detective_answers || {},
     stepVisibility: row.step_visibility || {},
     stepStatus: row.step_status || {},
+    /* What the studio has actually shown, per step. The portal renders this
+       and nothing else — a step with no artifact here shows no approval
+       controls, because there would be nothing to approve. */
+    reviewArtifacts: row.review_artifacts || {},
     formStatus: row.form_status,
     submittedAnswers: row.submitted_answers || null,
     surveyKind: row.survey_kind || '',

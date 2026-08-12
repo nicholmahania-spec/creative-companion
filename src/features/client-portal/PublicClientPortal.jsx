@@ -57,6 +57,56 @@ function sentAtLabel(iso) {
   }
 }
 
+/**
+ * The thing being approved, on screen, above the buttons.
+ *
+ * READ-ONLY BY CONSTRUCTION. It renders from the artifact the studio stamped
+ * and holds no controls that write anything back — the portal must never edit
+ * studio-owned design data, and the client's only inputs on this card remain
+ * the note and the two buttons underneath.
+ *
+ * Nothing here is derived from live project state, because none reaches this
+ * page: the payload is exactly what was shown at push time, so what the client
+ * approves and what the studio recorded them approving are the same object.
+ */
+function ReviewArtifact({ artifact }) {
+  const payload = artifact?.payload || null
+  if (!payload) return null
+  const { mark, palette, type } = payload
+  return (
+    <div className="client-portal-artifact">
+      {mark?.image ? (
+        <img
+          className="client-portal-artifact-mark"
+          src={mark.image}
+          alt="The logo, as your designer has it now"
+        />
+      ) : null}
+      {palette?.hexes?.length ? (
+        <ul className="client-portal-artifact-swatches">
+          {palette.hexes.map((hex) => (
+            <li key={hex}>
+              <span
+                className="client-portal-artifact-swatch"
+                style={{ background: hex }}
+                aria-hidden="true"
+              />
+              {/* The value, not only the colour — a swatch alone is invisible
+                  to a screen reader and unnameable on the phone. */}
+              <span className="client-portal-artifact-hex">{hex}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {type?.heading || type?.body ? (
+        <p className="client-portal-artifact-type">
+          {[type.heading, type.body].filter(Boolean).join(' · ')}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 export default function PublicClientPortal({ portalId }) {
   const [loadState, setLoadState] = useState('loading') // loading | ready | notfound
   const [portal, setPortal] = useState(null)
@@ -307,8 +357,13 @@ export default function PublicClientPortal({ portalId }) {
      studio row saved before this filter existed could carry visibility for a
      stop the portal must not offer, and the client is the one person who
      cannot be told "ignore that button". */
+  /* Pushable, visible, AND carrying something to look at. The third condition
+     is the R4 rule at the render layer: no artifact, no approval controls,
+     because a client cannot approve what they were not shown. The RPC refuses
+     the same case, so this is the honest screen for a state that could not have
+     been submitted anyway. */
   const visibleSteps = portalPushableSteps().filter(
-    (s) => portal.stepVisibility?.[s.id]
+    (s) => portal.stepVisibility?.[s.id] && portal.reviewArtifacts?.[s.id]
   )
 
   return (
@@ -357,6 +412,10 @@ export default function PublicClientPortal({ portalId }) {
                           : 'Waiting on you'}
                     </span>
                   </div>
+                  {/* The artifact FIRST, then the question about it. A
+                      decision asked before the thing is on screen is the
+                      defect this whole change exists to remove. */}
+                  <ReviewArtifact artifact={portal.reviewArtifacts?.[step.id]} />
                   {status !== 'approved' ? (
                     <div className="client-portal-step-actions">
                       <textarea

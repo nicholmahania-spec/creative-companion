@@ -23,6 +23,8 @@ import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
 import { downscaleDataUrl } from './lib/moodPins'
 import { resolveStudioName } from './lib/studio/studioIdentity'
+/* The reconnect's server half — see the onAttachPortal handler below. */
+import { rebindPortalToProject } from './lib/client/clientPortal'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   toISODate,
@@ -4353,10 +4355,22 @@ function App() {
         onGoToView={goToInboxTarget}
         onOpenPortal={openInboxPortal}
         currentProjectName={activeProject?.name || ''}
-        onAttachPortal={(portalId) => {
+        onAttachPortal={async (portalId) => {
           /* `setClientPortalId` writes to the CURRENT project, which is
              exactly the promise the button makes — the label names the
-             project it will attach to. */
+             project it will attach to.
+
+             The server is re-stamped FIRST. The local link alone used to leave
+             the portal row still naming the project it was created for, and
+             `publishDelivery` now refuses to send a book through a link bound
+             to a different project — so a reconnect that only wrote locally
+             would produce a link that looks attached and cannot be delivered
+             through. Rebinding is what makes the reconnect complete. */
+          const r = await rebindPortalToProject(portalId, activeProject?.id)
+          if (!r.ok) {
+            flashToast(r.error || 'Couldn’t link it — try again in a moment')
+            return
+          }
           setClientPortalId(portalId)
           flashToast(
             `Linked to ${activeProject?.name || 'this project'} — their answers are on the Project screen`,

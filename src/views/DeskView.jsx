@@ -52,10 +52,16 @@ import '../styles/lazy-desk.css'
    The state names change; the discipline does not. No second person, no
    percentage, no version number, no "incomplete" — the same shame-free
    constraints the test below pins, which is why it still checks them. */
+/* Returns the WORDS and the STATE, because returning only the words meant the
+   one caller who needed the state had to re-derive it by comparing against a
+   string literal — and that literal went stale the moment the copy was
+   rewritten. `packHandoffReady` compared against 'Pack ready for handoff' long
+   after this stopped saying it, so the affordance it gated was unreachable and
+   nothing failed. A boolean cannot drift from the line it describes. */
 export function packHandoffStatus({ thin, pathFull }) {
-  if (thin) return 'Not enough here to send yet'
-  if (pathFull) return 'Ready to send to the client'
-  return 'Has the basics, not ready to send'
+  if (thin) return { line: 'Not enough here to send yet', ready: false }
+  if (pathFull) return { line: 'Ready to send to the client', ready: true }
+  return { line: 'Has the basics, not ready to send', ready: false }
 }
 
 /* `stopTag` used to render label.slice(0,3).toUpperCase() beside each stop in
@@ -247,7 +253,7 @@ export default function DeskView({
     thin: !!packReady.thin,
     pathFull,
   })
-  const packHandoffReady = packStatus === 'Pack ready for handoff'
+  const packHandoffReady = packStatus.ready
 
   const packPins = (pins || [])
     .filter((p) => p.inPack)
@@ -312,7 +318,7 @@ export default function DeskView({
                 }`}
                 role="status"
               >
-                {packStatus}
+                {packStatus.line}
               </span>
             </div>
             <DeskLiveArtboard
