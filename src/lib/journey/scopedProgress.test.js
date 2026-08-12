@@ -109,12 +109,27 @@ describe('packReadiness is scoped', () => {
      another — the exact two-surfaces-drift this codebase keeps recording. */
   it('scopes from the same deliverablesPicked the chip uses', () => {
     const picked = ['logoPrimary']
+    /* ONE job, read by both counters. The pack side used to be handed a
+       project with no `logoImage` while the chip side got one, and the pair
+       still agreed — because `packReadiness` did not look at the mark at all,
+       so it could not disagree about it. That made the assertion below true
+       for the wrong reason: it was comparing two different jobs and proving
+       only that one of the two counters was not paying attention.
+
+       `packReadiness` now consults `deliverableChecklist`, which asks
+       `packagePlan` whether the bought logo can actually be packaged. So the
+       fixture has to be a single job to test what this test says it tests —
+       and with the mark present, both counters read done for the same reason
+       rather than for none. A real data URL, not 'x': the plan reads the mark
+       through `markSource`, which will not call an unparseable string a file. */
+    const logoImage = 'data:image/svg+xml;base64,PHN2Zy8+'
     const chipCounts = brandProgressSummary({
-      logoImage: 'x',
+      logoImage,
       detective: { deliverablesPicked: picked },
     }).allDone
     const packDone = packReadiness({
       projectName: 'p',
+      logoImage,
       detective: { deliverablesPicked: picked, goal: 'g' },
       pins: [{ inPack: true }],
       handoffNote: 'h',
@@ -123,5 +138,24 @@ describe('packReadiness is scoped', () => {
     // dragged incomplete by an out-of-scope book field.
     expect(chipCounts).toBe(true)
     expect(packDone).toBe(true)
+  })
+
+  /* The other half of the same invariant, and the one that could not be
+     written before: the two counters must also agree that an UNFINISHED job is
+     unfinished. A logo-only brief with no mark is the case that used to read
+     "Ready" on the pack while the chip said otherwise. */
+  it('agrees with the chip that a logo-only job with no mark is not done', () => {
+    const picked = ['logoPrimary']
+    expect(
+      brandProgressSummary({ detective: { deliverablesPicked: picked } }).allDone
+    ).toBe(false)
+    expect(
+      packReadiness({
+        projectName: 'p',
+        detective: { deliverablesPicked: picked, goal: 'g' },
+        pins: [{ inPack: true }],
+        handoffNote: 'h',
+      }).allDone
+    ).toBe(false)
   })
 })

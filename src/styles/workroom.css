@@ -1,0 +1,532 @@
+/* The stage — the app-wide visual foundation for every path stop.
+ *
+ * Imported by `Workroom.jsx` itself, not by a view. A shared component that
+ * needs a sheet has to carry it, or the rule and the rules it depends on end
+ * up in two different lazy chunks and the loser is whoever visits in the
+ * "wrong" order — the defect `docs/ONBOARDING.md` records against the palette
+ * strip, where swatches rendered 0px wide on a cold load and correctly for
+ * anyone who had been to Research first.
+ *
+ * ── WHY THIS FILE RE-POINTS TOKENS INSTEAD OF RESTYLING COMPONENTS ────────
+ *
+ * The first three rebuilt stops each carried their own private skin:
+ * `.direction-room .btn`, `.identity-workroom .dir-developing`,
+ * `.app-stage-*`. Three answers to one question, and none of them reached the
+ * three stops that had not been rebuilt yet — so migrating Brief, Research
+ * and Delivery would have meant writing a fourth, fifth and sixth.
+ *
+ * Every view in this app already draws with the shared surface tokens. So the
+ * stage redefines those tokens on ITSELF, and the whole of any view rendered
+ * inside it re-skins at once. That is the difference between a foundation and
+ * a patch: a stop migrates by being wrapped, not by being restyled.
+ *
+ * The `--ts-*` aliases are re-pointed alongside the `--bg-*` ones and this is
+ * not belt-and-braces. `--ts-panel: var(--bg-elevated)` is declared at
+ * `:root`, so it is substituted at `:root` and descendants inherit the
+ * already-resolved colour — redefining `--bg-elevated` further down the tree
+ * does not reach it. Anything reading a `--ts-*` alias would otherwise have
+ * kept the shell's white panels on the stage's warm ground.
+ *
+ * ── WHAT THE STAGE IS ─────────────────────────────────────────────────────
+ *
+ * Warm ground, hairlines, no cards, no plates, no shadows. The creative work
+ * is the only thing on screen allowed to carry weight. Chrome is one row at
+ * the top edge, set at the smallest step on the ramp.
+ */
+
+.cc-stage {
+  /* Ground, ink and rule — the whole palette of the chrome. */
+  --stage-ground: #ece7dd;
+  --stage-raise: #f5f1e9;
+  --stage-ink: #17140f;
+  --stage-mute: #66625a;
+  --stage-line: rgba(23, 20, 15, 0.16);
+  --stage-line-strong: rgba(23, 20, 15, 0.32);
+  --stage-edge-h: 3rem;
+  /* The plane's side gutter, named so a stop can cancel it. A field that is
+     meant to run the width of the table (Touchpoints' proofing light) has to
+     know the gutter to escape it, and hardcoding the same clamp in a second
+     file is how the two drift apart by one step and the "full bleed" ends up
+     inset by 4px. */
+  --stage-gutter: clamp(var(--space-4), 5vw, var(--space-7));
+
+  /* ── X3 · ELEVATION VOCABULARY ──────────────────────────────────────────
+     The census counted 0 / 0 / 1 / 1 / 5 / 15 shadows across the six stops —
+     Delivery alone carried more than the other five combined, because each
+     stop had reached for its own. Two steps, and they mean two things:
+
+       --stage-lift     a SHEET on the table. Something the client will
+                        receive: the artboard, the book page, the specimen.
+       --stage-lift-sm  a thumbnail of one of those, at reduced scale.
+
+     Nothing else on a stage is lifted. Panels, trays and controls sit flat
+     on the ground — elevation is how the stage says "this is the artefact",
+     so spending it on chrome is what made it stop meaning anything. */
+  --stage-lift: 0 var(--space-2) var(--space-6) rgba(0, 0, 0, 0.14);
+  --stage-lift-sm: 0 1px var(--space-2) rgba(0, 0, 0, 0.1);
+
+  /* App surface tokens, re-pointed for everything rendered inside. */
+  --bg-canvas: var(--stage-ground);
+  --bg-warm: var(--stage-raise);
+  --bg-card: var(--stage-raise);
+  --bg-elevated: var(--stage-raise);
+  --bg-surface: var(--stage-raise);
+  --bg-muted: color-mix(in srgb, var(--stage-ink) 7%, var(--stage-ground));
+  --text-primary: var(--stage-ink);
+  --text-secondary: color-mix(in srgb, var(--stage-ink) 74%, transparent);
+  --text-muted: var(--stage-mute);
+  --border-subtle: var(--stage-line);
+  --border-hairline: var(--stage-line);
+  --border-strong: var(--stage-line-strong);
+  --border-default: var(--stage-line);
+  --glass-bg: var(--stage-raise);
+  --glass-bg-strong: var(--stage-raise);
+  --glass-border: var(--stage-line);
+  --glass-shadow: none;
+  --highlight-inset: none;
+  --ts-canvas: var(--stage-ground);
+  --ts-panel: var(--stage-raise);
+  --ts-ink: var(--stage-ink);
+  --ts-mute: var(--stage-mute);
+  --ts-border: var(--stage-line);
+
+  position: fixed;
+  inset: 0;
+  /* Above every shell layer. The shell is inert and hidden underneath, but a
+     stage that lost a z-index race would be invisible with no error. */
+  z-index: 2147483647;
+  isolation: isolate;
+  /* THREE FIXED ROWS: edge · plane · ledge. The stage itself does not
+     scroll — the plane does. That is what lets the path edge and the action
+     ledge sit AT the stage edges without either of them being sticky, which
+     is the whole of X2: one ledge, owned here, that cannot end up stacked
+     against a second sticky layer a view brought with it. */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--stage-ground);
+  color: var(--stage-ink);
+  font-family: var(--font-sans);
+}
+
+.cc-stage:focus {
+  outline: 0;
+}
+
+/* Mounted but not presenting — a stop that has handed the viewport to the
+   next one along (Directions under Identity, Identity under Touchpoints).
+   It keeps its DOM, and with it its scroll offsets and field state, so
+   returning is a return and not a rebuild.
+
+   `visibility: hidden`, NOT `display: none`. Both hide it and both keep the
+   node connected for launcher restore, but display:none drops the subtree
+   from layout entirely — Identity's artboard column has its own scroller, and
+   coming back from Touchpoints would have silently returned it to the top.
+   That is the exact "it lost my place" failure the co-mount exists to avoid. */
+.cc-stage.is-suspended {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── The edge ──────────────────────────────────────────────────────────────
+   Everything that is not the work. One row, one hairline, smallest step on
+   the type ramp. It stays put while the plane scrolls, because "where am I
+   on the path" is the question that does not stop being asked. */
+.cc-stage-edge {
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: var(--stage-edge-h);
+  padding: var(--space-2) clamp(var(--space-4), 5vw, var(--space-7));
+  border-bottom: 1px solid var(--stage-line);
+  background: var(--stage-ground);
+  font-size: var(--fs-1);
+}
+
+.cc-stage-exit,
+.cc-stage-stop {
+  border: 0;
+  border-radius: var(--radius-none);
+  background: none;
+  color: var(--stage-mute);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cc-stage-exit {
+  padding: var(--space-2) 0;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  white-space: nowrap;
+}
+
+.cc-stage-exit:hover,
+.cc-stage-stop:hover {
+  color: var(--stage-ink);
+}
+
+/* The path, subordinate but present. Chrome going from dominant straight to
+   absent is what the first three rebuilt rooms did, and from Identity there
+   was then no route to Brief at all. */
+.cc-stage-path-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cc-stage-stop {
+  position: relative;
+  padding: var(--space-2) 0;
+  white-space: nowrap;
+}
+
+/* Three readable states with no symbol to decode: reached is ink, the stop
+   you are on is ink under a rule, everything ahead is muted. */
+.cc-stage-stop.is-done {
+  color: var(--stage-ink);
+}
+
+.cc-stage-stop.is-here {
+  color: var(--stage-ink);
+  font-weight: 600;
+  cursor: default;
+}
+
+.cc-stage-stop.is-here::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--stage-ink);
+}
+
+.cc-stage-status {
+  margin: 0;
+  color: var(--stage-mute);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cc-stage :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--stage-ink);
+  outline-offset: 3px;
+}
+
+/* ── The plane ─────────────────────────────────────────────────────────────
+   The stop's own composition. The stage gives it room and gets out of the
+   way; nothing here draws a container. */
+.cc-stage-plane {
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(var(--space-5), 4vw, var(--space-7)) var(--stage-gutter)
+    var(--space-7);
+}
+
+/* Runs the full width of the table, cancelling the plane's gutter. */
+.cc-stage-bleed {
+  width: auto;
+  margin-inline: calc(-1 * var(--stage-gutter));
+}
+
+/* ── X1 · THE MASTHEAD SYSTEM ──────────────────────────────────────────────
+   The census found 96px Georgia on Brief, Research and Delivery, 52px on
+   Directions and Touchpoints, and NOTHING on Identity — whose largest
+   heading was a 34px sans h2. Walking Research → Directions → Identity, the
+   type system visibly changed product.
+
+   ONE TREATMENT, TWO RANKS, and the rank is decided by what the page is
+   about rather than by whoever wrote the screen:
+
+     .cc-stage-display              the stop names ITSELF (Brief, Research,
+                                    Identity, Delivery)
+     .cc-stage-display--subject     the stop names the ONE THING on the table
+                                    (a route on Directions, a surface on
+                                    Touchpoints). One step down, because the
+                                    artefact beside it is the real headline.
+
+   Same family, same weight, same tracking, same colour. Directions is the
+   reference stop and keeps its composition exactly — declaring the second
+   rank is what makes its 52px a decision instead of a discrepancy. */
+.cc-stage-masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.cc-stage-masthead-aside {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+/* Supporting metadata — status, counts, "not sent yet". Never a sentence of
+   instruction; the stop explains itself by what it puts on the table. */
+.cc-stage-meta {
+  grid-column: 1;
+  max-width: 60ch;
+  margin: 0;
+  color: var(--stage-mute);
+  font-size: var(--fs-2);
+  line-height: 1.45;
+}
+
+
+/* Two selectors, one rule. `.cc-stage-display` alone (0,1,0) loses to any
+   view's own `.page-title.work-page-title` (0,2,0), and which sheet loads
+   first is decided by which view you happened to open — so Delivery's
+   masthead silently kept the shell's 1.65rem while Brief's took the display
+   size. A stage-scoped element selector settles it by specificity instead of
+   by import order. */
+/* Two selectors, one rule. `.cc-stage-display` alone (0,1,0) loses to any
+   view's own `.page-title.work-page-title` (0,2,0), and which sheet loads
+   first is decided by which view you happened to open — so Delivery's
+   masthead silently kept the shell's 1.65rem while Brief's took the display
+   size. A stage-scoped element selector settles it by specificity instead of
+   by import order. */
+.cc-stage-display,
+.cc-stage-display--subject,
+.cc-stage h1.cc-stage-display,
+.cc-stage h2.cc-stage-display,
+.cc-stage h2.cc-stage-display--subject {
+  grid-column: 1;
+  margin: 0 0 var(--space-2);
+  color: var(--stage-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(var(--fs-6), 7vw, 6rem);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+/* The rank is a SIZE, and only a size. Family, weight, colour and tracking
+   come from the block above, which both classes match — the modifier used to
+   set three properties on its own, so a head carrying only `--subject`
+   rendered at the right size in the wrong face. */
+.cc-stage .cc-stage-display--subject,
+.cc-stage h2.cc-stage-display--subject {
+  font-size: clamp(var(--fs-5), 4vw, 3.25rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  /* Restated at two classes deep on purpose. A subject head is usually an
+     element the view already styles — `.ideate-dir-title-text` carries
+     `font-weight: 600` — and one class against one class is a tie broken by
+     whichever sheet the visitor happened to load first. Directions rendered
+     its masthead a weight heavier than the other five for exactly that
+     reason. */
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  color: var(--stage-ink);
+}
+
+.cc-stage-lede {
+  max-width: 46ch;
+  margin: 0 0 var(--space-6);
+  color: var(--stage-mute);
+  line-height: 1.5;
+}
+
+/* ── X2 · THE ACTION LEDGE ─────────────────────────────────────────────────
+   ONE next-action affordance per stage, at the stage edge, owned here.
+
+   Before this there were four different answers: `path-continue-row` on
+   Research, Identity and Delivery; `define-brief-footer` on Brief; nothing at
+   all on Directions and Touchpoints — and Brief stacked `define-chapter-head`
+   on top of its footer, so two sticky layers competed for the same edge.
+
+   It is a SLOT, not a behaviour. Workroom decides where the next action sits
+   and what it looks like; the view still decides what the action IS and what
+   pressing it does. Nothing about any stop's navigation moved into here.
+
+   It is a grid row of the fixed stage rather than a sticky element, so it
+   cannot be scrolled past and cannot stack with anything a view brings. */
+.cc-stage-ledge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--stage-gutter)
+    calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--stage-line);
+  background: var(--stage-ground);
+}
+
+/* Anything the ledge should say rather than do — "2 still blank" — sits left
+   and stays quiet. `margin-right: auto` rather than `space-between` so it
+   holds that edge whether or not it is there at all. */
+.cc-stage-ledge-note {
+  margin: 0 auto 0 0;
+  max-width: 60ch;
+  color: var(--stage-mute);
+  font-size: var(--fs-1);
+}
+
+/* THE LEGACY LEDGES ARE NEUTRALISED, NOT LEFT TO FIGHT. Every stop's old
+   footer bar is emptied at the JSX level, but `.path-continue-row` also
+   carries a sticky/bordered/filled treatment from shell.css that would
+   re-draw a second edge anywhere a stray one survives. Stated once, here,
+   because four stops shared the class. */
+.cc-stage :is(.path-continue-row, .define-brief-footer) {
+  position: static;
+  z-index: auto;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+  background: transparent;
+}
+
+/* ── Flattening the shell's containers ─────────────────────────────────────
+   Views carry the shell's card classes because they were written for the
+   shell. Inside a stage those classes must draw nothing — a boxed panel on a
+   warm ground is the single loudest legacy tell, and it is the reason a
+   migrated stop can otherwise still read as the old app in a new colour. */
+.cc-stage :is(.card, .panel, .surface-card, .glass, .glass-panel) {
+  border-color: var(--stage-line);
+  border-radius: var(--radius-none);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* One decision, six stops: controls on the stage are square. The shell keeps
+   its rounded corners — this is the stage's language, not a global retheme,
+   and stating it here is what stops each migrated stop from re-deciding it. */
+.cc-stage :is(.btn, .field-input, input, select, textarea) {
+  border-radius: var(--radius-none);
+}
+
+/* An empty slot is an invitation. A dashed, rounded box is a form control
+   that has failed, and every stop had grown at least one.
+   Matched on `.is-add`, never on a `[class*='-add']` wildcard: that selector
+   also caught `.mark-concept-add-plus` and `.mark-concept-add-label`, so the
+   glyph and the words INSIDE the slot each got their own border. */
+.cc-stage .is-add {
+  border-style: solid;
+  border-color: var(--stage-line-strong);
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+/* THE OLD PAGE-FRAME RULE. `.flow-top` carries a 2px solid ink baseline under
+   every page title — "the one intentional heavy rule per screen" from the
+   shell's 2026 dressing, and correct there. On a stage it is the only 2px ink
+   line in the whole system apart from the active-stop marker in the edge, so
+   it competes with the one piece of chrome that is supposed to be subordinate,
+   and it re-draws the page frame the reset removed. Hairlined here rather
+   than in each stop's sheet — three views carry `.flow-top`. */
+.cc-stage .flow-top {
+  border-bottom: 1px solid var(--stage-line);
+}
+
+.cc-stage .page-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+/* ── Dark ──────────────────────────────────────────────────────────────────
+   The stage is portalled to <body>, so it is outside `.app.deep` and cannot
+   inherit the theme class. It reads it off the still-mounted shell instead.
+   `--paper` is deliberately absent: an artefact preview is a picture of what
+   the client receives, and a client's letterhead is white at 2am
+   (DESIGN_GRAMMAR G4.4). */
+body:has(.app.deep) .cc-stage {
+  --stage-ground: #141210;
+  --stage-raise: #1d1a16;
+  --stage-ink: #f3efe7;
+  --stage-mute: #a9a298;
+  --stage-line: rgba(243, 239, 231, 0.18);
+  --stage-line-strong: rgba(243, 239, 231, 0.36);
+}
+
+@media (max-width: 720px) {
+  /* TWO ROWS, NOT THREE. Stacking the edge's three cells gave a 113px band on
+     a 780px phone — 14% of the viewport spent on chrome, which is not
+     subordinate by any reading. Recovery and status share the top line (they
+     are both one short phrase); the path gets the second to itself because it
+     scrolls. */
+  .cc-stage-edge {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-1) var(--space-4) var(--space-2);
+  }
+
+  .cc-stage-exit {
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: start;
+    padding-block: var(--space-1);
+  }
+
+  /* A grid item stretches, and a stretched <button> centres its own label —
+     so the recovery link sat dead centre and read as a title. */
+  .cc-stage-status {
+    grid-row: 1;
+    grid-column: 2;
+    text-align: right;
+  }
+
+  .cc-stage-path {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .cc-stage-path-list {
+    gap: 0 var(--space-3);
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .cc-stage {
+    --stage-gutter: var(--space-4);
+  }
+
+  .cc-stage-plane {
+    padding: var(--space-4) var(--stage-gutter) var(--space-6);
+  }
+
+  .cc-stage-masthead {
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: var(--space-5);
+  }
+
+  .cc-stage-masthead-aside {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+
+  .cc-stage-ledge {
+    justify-content: stretch;
+    padding-inline: var(--stage-gutter);
+  }
+
+  .cc-stage-ledge > .btn {
+    flex: 1 1 10rem;
+    min-height: var(--tap-min, 2.75rem);
+    justify-content: center;
+  }
+
+  .cc-stage-ledge-note {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-stage,
+  .cc-stage * {
+    animation-duration: 0.01ms;
+    transition-duration: 0.01ms;
+  }
+}

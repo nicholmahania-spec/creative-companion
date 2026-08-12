@@ -26,8 +26,13 @@ import {
   fetchStudioMessages,
   postStudioMessage,
   setPortalDetectiveAnswers,
-  setPortalStepVisibility,
+  publishReviewArtifacts,
 } from '../../lib/client/clientPortal'
+import {
+  approvalStaleness,
+  buildReviewArtifact,
+  stalenessLine,
+} from '../../lib/client/reviewArtifact'
 import {
   SURVEY_KINDS,
   surveyQuestions,
@@ -332,14 +337,60 @@ function PortalMode({
     }
   }
 
+  /**
+   * Show a stop, or stop showing it.
+   *
+   * Turning it ON stamps the artifact the client will look at, built from the
+   * project as it stands right now. That is one act rather than two on purpose:
+   * a stop that could be switched on with nothing behind it is exactly the
+   * "approve the word Identity" state this replaces.
+   *
+   * Turning it OFF leaves the stamped artifact on the row. The RPC only serves
+   * artifacts for visible steps, so the client stops seeing it immediately —
+   * and any approval already recorded against it keeps naming the thing that
+   * was actually approved.
+   */
+  /* Which approvals no longer describe the current work. Derived on every
+     render from the row and the project — never stored, because a stored
+     staleness flag is a second copy of a fact both sides already hold. */
+  const stale = Object.fromEntries(
+    portalPushableSteps().map((s) => [
+      s.id,
+      approvalStaleness(portal, project, s.id).stale,
+    ])
+  )
+
   const toggleStep = async (stepId, stepLabel) => {
+    const turningOn = !portal?.step_visibility?.[stepId]
+    let artifacts = null
+    if (turningOn) {
+      const built = buildReviewArtifact(project, stepId)
+      if (!built.ok) {
+        /* Refused, and said out loud. Silently showing an empty stop would put
+           the client in front of the blank this whole change removes. */
+        flashToast?.(built.reason)
+        return
+      }
+      artifacts = {
+        ...(portal?.review_artifacts || {}),
+        [stepId]: { ...built.artifact, at: new Date().toISOString() },
+      }
+    }
     const next = {
       ...(portal?.step_visibility || {}),
-      [stepId]: !portal?.step_visibility?.[stepId],
+      [stepId]: turningOn,
     }
     setBusyStep(stepId)
-    setPortal((p) => (p ? { ...p, step_visibility: next } : p))
-    const r = await setPortalStepVisibility(portalId, next)
+    setPortal((p) =>
+      p
+        ? {
+            ...p,
+            step_visibility: next,
+            ...(artifacts ? { review_artifacts: artifacts } : null),
+          }
+        : p
+    )
+    const r = await publishReviewArtifacts(portalId, next, artifacts)
     setBusyStep(null)
     if (!r.ok) {
       flashToast?.(r.error || `Couldn’t change “${stepLabel}” — put back as it was`)
@@ -570,6 +621,14 @@ function PortalMode({
                   {status ? (
                     <span className={`client-portal-step-badge is-${status}`}>
                       {status === 'approved' ? 'Approved' : 'Changes requested'}
+                    </span>
+                  ) : null}
+                  {/* An approval of an earlier version, said plainly. Neutral
+                      by rule — the client's answer was not wrong, the work
+                      moved. No colour, no count, one obvious next action. */}
+                  {stale[step.id] ? (
+                    <span className="discovery-brief-hint">
+                      {stalenessLine({ stale: true })}
                     </span>
                   ) : null}
                 </label>

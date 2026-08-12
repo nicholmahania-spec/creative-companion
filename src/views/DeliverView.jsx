@@ -7,6 +7,7 @@ import { Suspense, lazy, useState } from 'react'
 import useAppStore from '../store/useAppStore'
 import CaseStudyExport from '../components/CaseStudyExport'
 import ClientPackagePanel from '../components/ClientPackagePanel'
+import Workroom from '../components/Workroom'
 import { labelForStepId, JOURNEY_STEPS } from '../lib/journey/journey'
 import {
   packReadiness,
@@ -16,6 +17,7 @@ import {
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
 import { clientFacingName } from '../lib/client/clientRecord'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
+import { deliverStatusLine } from '../lib/deliver/deliverStatus'
 import {
   BOOK_PAGE_SIZES,
   BOOK_EDGE_SPACE,
@@ -65,6 +67,7 @@ export default function DeliverView({
   prefs = {},
   bookSetup = { pageSize: 'letter', edgeSpace: 'standard', printShop: false },
   setActiveView,
+  pathCtx = null,
   goToProcessStep,
   goSystemSection,
   buildCurrentBrandPack,
@@ -147,31 +150,39 @@ export default function DeliverView({
 
   /* Named gap beside ship — download never blocked; hollowness must not feel ready. */
   const firstCoreGap = coreGaps[0] || null
-  const statusLine = ready.allDone
-    ? 'Ready to ship'
-    : firstCoreGap
-      ? `Still to add · ${firstCoreGap.label}`
-      : gaps.length > 0
-        ? 'Add a handoff note when you ship'
-        : 'Preview the book, then download'
+  const statusLine = deliverStatusLine(ready, firstCoreGap, gaps.length)
   const moreCoreCount = Math.max(0, coreGaps.length - 1)
 
   return (
+    <Workroom
+      stepId="deliver"
+      project={activeProject}
+      pathCtx={pathCtx}
+      setActiveView={setActiveView}
+      /* `.assets-status` in the masthead already carries this line. Two copies
+         of one status on one screen is two facts to reconcile. */
+      masthead={
+        <>
+          <h1 className="cc-stage-display">{labelForStepId('deliver')}</h1>
+          <p className="cc-stage-meta assets-status" role="status">
+            {statusLine}
+          </p>
+        </>
+      }
+      ledge={
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => setActiveView?.('desk')}
+        >
+          Back to the desk
+        </button>
+      }
+    >
     <div
       className="finish-view surface-document pack-view deliver-studio assets-studio view-enter"
       data-nav-dir={navDir}
     >
-      <div className="flow-top deliver-top">
-        <div className="deliver-top-text">
-          <h1 className="page-title work-page-title">
-            {labelForStepId('deliver')}
-          </h1>
-          <p className="assets-status" role="status">
-            {statusLine}
-          </p>
-      </div>
-      </div>
-
       {/* Ship ticket first in DOM for mobile; sticky on wide (audit P0). */}
       <section className="assets-ship assets-ship-ticket" aria-label="Ship">
         {firstCoreGap ? (
@@ -578,15 +589,7 @@ export default function DeliverView({
         </details>
       </div>
 
-      <div className="path-continue-row assets-footer">
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => setActiveView?.('desk')}
-        >
-          Back to the desk
-        </button>
-      </div>
     </div>
+    </Workroom>
   )
 }
