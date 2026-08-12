@@ -3,6 +3,7 @@
  * ADHD: short chrome, goal anchor, note focus without sibling blur.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import Workroom from '../components/Workroom'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getProcessPhase } from '../lib/journey/processGuide'
@@ -23,6 +24,8 @@ export default function ResearchView({
   competitors = '',
   projectPalette = [],
   setActiveView,
+  activeProject = null,
+  pathCtx = null,
   flashToast,
   flashMicro,
   notifyAction,
@@ -310,32 +313,42 @@ export default function ResearchView({
   }, [])
 
   return (
-    <>
+    <Workroom
+      stepId="research"
+      project={activeProject}
+      pathCtx={pathCtx}
+      setActiveView={setActiveView}
+      /* No edge status. The masthead's own meta line already says it, with
+         the nuance the edge cannot fit ("★ 3 in pack · room for 3"), and the
+         same count in two places at once reads as two different facts that
+         happen to agree. The edge's right slot is allowed to be empty. */
+      masthead={
+        <>
+          <h1 className="cc-stage-display">{labelForStepId('research')}</h1>
+          <p className="cc-stage-meta research-status" role="status">
+            {starred > 0
+              ? starred >= 6
+                ? '★ pack full'
+                : `★ ${starred} in pack · room for ${6 - starred}`
+              : deskMood.length === 0
+                ? 'Nothing pinned yet'
+                : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
+          </p>
+        </>
+      }
+      ledge={
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
+        >
+          {`Next · ${journeyNext?.label || labelForStepId('design')}`}
+        </button>
+      }
+    >
           <div className="studio-view surface-wall view-enter research-studio" data-nav-dir={navDir}>
             <div className="flow-top research-studio-top">
               <div className="research-top-text">
-                <h1 className="page-title">
-                  {labelForStepId('research')}
-                </h1>
-                {/* Floor, not ratio. "★ 3/6" is a number to decode that
-                    produces no next action, and it reads as a scoreboard
-                    three-fifths empty — the same pattern the project sidebar
-                    and the Define chapter rail both removed, with the
-                    reasoning recorded in each. Say what is still open, or
-                    say it is done. */}
-                {/* The empty case used to fall through to `0 pins` — a zero
-                    scoreboard, which is the very thing the note above argues
-                    against for the starred case. Words, per G2, and the live
-                    region stays so the count is still announced as it fills. */}
-                <p className="research-status" role="status">
-                  {starred > 0
-                    ? starred >= 6
-                      ? '★ pack full'
-                      : `★ ${starred} in pack · room for ${6 - starred}`
-                    : deskMood.length === 0
-                      ? 'Nothing pinned yet'
-                      : `${deskMood.length} pin${deskMood.length === 1 ? '' : 's'}`}
-                </p>
                 {/* One button, never two, and only when it does something.
                     Showing both leaves one inert in most states, which is a
                     choice plus a dead end. The pack state already decides
@@ -1081,15 +1094,6 @@ export default function ResearchView({
           </div>
         )}
 
-      <div className="path-continue-row">
-        <button
-          type="button"
-          className="btn btn-primary work-path-next"
-          onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
-        >
-          {`Next · ${journeyNext?.label || labelForStepId('design')}`}
-        </button>
-      </div>
-    </>
+    </Workroom>
   )
 }

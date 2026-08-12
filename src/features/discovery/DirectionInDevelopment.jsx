@@ -88,10 +88,14 @@ export default function DirectionInDevelopment({
 
       {note ? <p className="dir-developing-why">{note}</p> : null}
 
-      <p className="dir-developing-lede">
-        Material from this route — develop it into the brand. Nothing below is
-        the final system until you Use it or edit it.
-      </p>
+      {/* THE LEDE IS GONE, not reworded. It was two lines explaining a state
+          machine — "Material from this route — develop it into the brand.
+          Nothing below is the final system until you Use it or edit it." —
+          sitting above the work on every visit to Identity, read once and
+          then skipped forever. What it explained is already carried by the
+          controls it was describing: each part row offers "Use", and until
+          you press it the row says the route points at something rather than
+          claiming the brand holds it. Hierarchy and labels, not a paragraph. */}
 
       <ul className="dir-developing-parts" aria-label="What this route holds">
         <PartRow part={parts.colour}>

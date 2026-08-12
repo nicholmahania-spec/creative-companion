@@ -4121,6 +4121,11 @@ function App() {
           completeCurrentStep={completeCurrentStep}
           startVoice={startVoice}
           setActiveView={setActiveView}
+          /* The stage's path edge ticks its stops from this. Passed as ONE
+             already-derived value rather than its five ingredients, because a
+             second derivation of "has this stop got content" is exactly the
+             restated-copy defect journey.js's header records. */
+          pathCtx={pathProgressCtx}
           identityWorkroomLauncherRef={identityWorkroomLauncherRef}
           workroomLauncherRef={workroomLauncherRef}
           applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}

@@ -8,6 +8,7 @@
  * Footer: Back to desk · Next · Research · short needed count.
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo } from 'react'
+import Workroom from '../components/Workroom'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
@@ -45,6 +46,7 @@ export default function DefineView(props) {
     updateDetective: updateDetectiveProp,
     onOpenShare,
     setActiveView,
+    pathCtx = null,
     setProjectDeadline: setProjectDeadlineProp,
     projectDeadline: projectDeadlineProp = '',
   } = props
@@ -108,38 +110,63 @@ export default function DefineView(props) {
   const showSend = sendStatus.kind === 'not_sent'
 
   return (
-    <div
-      className="brand-layout surface-document define-studio define-brief view-enter"
-      data-nav-dir={navDir}
-    >
-      <header className="define-brief-head">
-        <div className="define-brief-head-row">
-          <div className="define-brief-head-text">
-            <h1 className="page-title define-brief-title">
-              {labelForStepId('define')}
-            </h1>
-            <p className="define-brief-status" data-status={sendStatus.kind}>
-              {sendStatus.label}
-              {deadlineRelative ? (
-                <span className="define-brief-status-due">
-                  {' '}
-                  · {deadlineRelative}
-                </span>
-              ) : null}
-            </p>
+    <Workroom
+      stepId="define"
+      project={activeProject}
+      pathCtx={pathCtx}
+      setActiveView={setActiveView}
+      status={`${sendStatus.label}${
+        deadlineRelative ? ` · ${deadlineRelative}` : ''
+      }`}
+      masthead={
+        <>
+          <h1 className="cc-stage-display">{labelForStepId('define')}</h1>
+          <div className="cc-stage-masthead-aside">
+            {/* Share never competes with path Continue (audit P1). */}
+            <button
+              type="button"
+              className="btn btn-secondary define-brief-send"
+              onClick={() => onOpenShare?.()}
+            >
+              {showSend ? 'Send the brief' : 'Share'}
+            </button>
           </div>
-          {/* Share never competes with path Continue (audit P1). */}
+        </>
+      }
+      ledge={
+        <>
+          {neededLine ? (
+            <p className="cc-stage-ledge-note">{neededLine}</p>
+          ) : null}
           <button
             type="button"
-            className="btn btn-secondary define-brief-send"
-            onClick={() => onOpenShare?.()}
+            className="btn btn-secondary"
+            onClick={() => setActiveView?.('desk')}
           >
-            {showSend ? 'Send the brief' : 'Share'}
+            Back to the desk
           </button>
-        </div>
-        <div className="define-title-rule" aria-hidden="true" />
-      </header>
-
+          <button
+            type="button"
+            className={`btn work-path-next${
+              showSend && (requiredEmpty?.length || 0) === 0
+                ? ' btn-secondary'
+                : ' btn-primary'
+            }`}
+            onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
+          >
+            {`Next · ${journeyNext?.label || labelForStepId('research')}`}
+          </button>
+        </>
+      }
+    >
+      {/* The view's layout classes stay on a wrapper INSIDE the plane, never
+          on the stage element. `.define-brief` declares `display: flex` and a
+          6rem bottom padding; on the stage those fought `.cc-stage`'s grid and
+          shifted the sticky footer up off the viewport edge. The stage owns
+          the frame, the view owns what sits in it — putting both on one
+          element is how the two negotiate by cascade order instead of by
+          decision. */}
+      <div className="define-studio define-brief" data-nav-dir={navDir}>
       <div className="define-split" data-define-layout="form-only">
         <div
           className="define-split-form"
@@ -179,40 +206,7 @@ export default function DefineView(props) {
         />
       </section>
 
-      <div
-        className="define-brief-footer"
-        role="region"
-        aria-label="Brief actions"
-      >
-        <div className="define-brief-footer-row">
-          <div className="define-brief-footer-actions">
-            <button
-              type="button"
-              className={`btn work-path-next${
-                showSend && (requiredEmpty?.length || 0) === 0
-                  ? ' btn-secondary'
-                  : ' btn-primary'
-              }`}
-              onClick={() => setActiveView?.(journeyNext?.view || 'studio')}
-            >
-              {`Next · ${journeyNext?.label || labelForStepId('research')}`}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                const hub = 'desk'
-                setActiveView?.(hub)
-              }}
-            >
-              Back to the desk
-            </button>
-          </div>
-          {neededLine ? (
-            <p className="define-brief-still-blank">{neededLine}</p>
-          ) : null}
-        </div>
       </div>
-    </div>
+    </Workroom>
   )
 }
