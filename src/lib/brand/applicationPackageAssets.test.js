@@ -5,13 +5,19 @@ import {
   primaryProducedAsset,
   trayHonestyLine,
 } from './applicationPackageAssets.js'
+import { PRODUCERS } from './productionProvenance.js'
 
+/* Rows as a produce RUN writes them. The stamp is not decoration here: it is
+   what separates the tray's "Real file" from a file the designer uploaded and
+   attributed themselves. */
 const cardPdf = {
   id: 'a1',
   name: 'Brand · business card',
   deliverable: 'businessCard',
   group: 'application',
   dataUrl: 'data:application/pdf;base64,AAA',
+  producedBy: PRODUCERS.businessCard,
+  producedAt: '2026-08-12T09:00:00.000Z',
 }
 
 const sigPng = {
@@ -20,6 +26,8 @@ const sigPng = {
   deliverable: 'emailSignature',
   group: 'application',
   dataUrl: 'data:image/png;base64,AAA',
+  producedBy: PRODUCERS.emailSignature,
+  producedAt: '2026-08-12T09:00:00.000Z',
 }
 
 describe('applicationPackageAssets', () => {
@@ -36,6 +44,13 @@ describe('applicationPackageAssets', () => {
     expect(producedAssetsForSurface(project, 'businessCard')).toEqual([cardPdf])
     expect(producedAssetsForSurface(project, 'email')).toEqual([sigPng])
     expect(producedAssetsForSurface(project, 'website')).toEqual([])
+  })
+
+  it('an attributed upload never fills the tray', () => {
+    const upload = { ...cardPdf, producedBy: '', producedAt: '' }
+    const project = { packageAssets: [upload] }
+    expect(producedAssetsForSurface(project, 'businessCard')).toEqual([])
+    expect(primaryProducedAsset(project, 'businessCard')).toBe(null)
   })
 
   it('primary produced uses existing artifact helpers', () => {

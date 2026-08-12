@@ -20,6 +20,10 @@ import {
   findProducedBusinessCard,
   projectHasProducedBusinessCard,
 } from '../../lib/brand/businessCardArtifact'
+import {
+  PRODUCERS,
+  productionStamp,
+} from '../../lib/brand/productionProvenance'
 /* Same face styles StationeryKit uses — one visual system, one generator. */
 import '../../styles/lazy-design.css'
 
@@ -88,28 +92,32 @@ export default function BusinessCardProduce({
         orgName,
         contactName: activeContact?.name,
       })
+      /* Only a row THIS path produced is overwritten. A card the designer
+         uploaded and attributed themselves is not ours to replace, so it
+         fails the find and production adds its own row alongside it. */
       const existing = findProducedBusinessCard(project.packageAssets)
+      /* ONE payload for both branches — same shape as EmailSignatureProduce.
+         It was two literals, which meant the stamp could be dropped from the
+         first-production branch while re-production kept it, and every test
+         that only asks "does this file stamp anything" would still pass. */
+      const patch = {
+        name,
+        dataUrl,
+        group: 'application',
+        item: 'businessCard',
+        deliverable: 'businessCard',
+        rights: 'clientOwned',
+        heldBack: '',
+        sizeBytes: result.blob.size || 0,
+        /* Applied at the only moment it is honest to apply it: holding bytes
+           this path just generated. Re-stamped on re-production, because
+           `producedAt` describes the run behind the bytes the row holds now. */
+        ...productionStamp(PRODUCERS.businessCard),
+      }
       if (existing?.id && updatePackageAsset) {
-        updatePackageAsset(existing.id, {
-          name,
-          dataUrl,
-          group: 'application',
-          item: 'businessCard',
-          deliverable: 'businessCard',
-          rights: 'clientOwned',
-          heldBack: '',
-          sizeBytes: result.blob.size || 0,
-        })
+        updatePackageAsset(existing.id, patch)
       } else {
-        addPackageAsset?.({
-          name,
-          dataUrl,
-          group: 'application',
-          item: 'businessCard',
-          deliverable: 'businessCard',
-          rights: 'clientOwned',
-          sizeBytes: result.blob.size || 0,
-        })
+        addPackageAsset?.(patch)
       }
       flashMicro?.(
         produced ? 'Business card re-produced' : 'Business card produced'

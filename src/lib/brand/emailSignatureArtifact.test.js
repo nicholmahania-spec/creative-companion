@@ -6,6 +6,7 @@ import {
   projectHasProducedEmailSignature,
   emailSignatureAssetName,
 } from './emailSignatureArtifact.js'
+import { PRODUCERS } from './productionProvenance.js'
 
 /* Minimal valid PNG data URL shape (header only for unit tests). */
 const PNG =
@@ -33,7 +34,25 @@ describe('emailSignatureArtifact — package truth, not mock truth', () => {
     ).toBe(false)
   })
 
-  it('accepts a real PNG package asset attributed as emailSignature', () => {
+  it('accepts a real PNG package asset produced by the signature path', () => {
+    const row = {
+      id: '1',
+      deliverable: 'emailSignature',
+      group: 'application',
+      dataUrl: PNG,
+      rights: 'clientOwned',
+      producedBy: PRODUCERS.emailSignature,
+      producedAt: '2026-08-12T09:00:00.000Z',
+    }
+    expect(isEmailSignaturePackageAsset(row)).toBe(true)
+    expect(isProducedEmailSignatureArtifact(row)).toBe(true)
+    expect(findProducedEmailSignature([row])?.id).toBe('1')
+    expect(projectHasProducedEmailSignature({ packageAssets: [row] })).toBe(true)
+  })
+
+  /* Same correction the business card carries: an unstamped row is the
+     designer's own file, not a run this app performed. */
+  it('an attributed upload is package material but not produced output', () => {
     const row = {
       id: '1',
       deliverable: 'emailSignature',
@@ -42,9 +61,8 @@ describe('emailSignatureArtifact — package truth, not mock truth', () => {
       rights: 'clientOwned',
     }
     expect(isEmailSignaturePackageAsset(row)).toBe(true)
-    expect(isProducedEmailSignatureArtifact(row)).toBe(true)
-    expect(findProducedEmailSignature([row])?.id).toBe('1')
-    expect(projectHasProducedEmailSignature({ packageAssets: [row] })).toBe(true)
+    expect(isProducedEmailSignatureArtifact(row)).toBe(false)
+    expect(projectHasProducedEmailSignature({ packageAssets: [row] })).toBe(false)
   })
 
   it('does not treat PDF or wrong deliverable as the email signature', () => {
