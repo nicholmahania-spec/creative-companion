@@ -6,6 +6,9 @@ import {
   SPECTRUM_FIELDS,
 } from '../lib/brief/detectiveBrief'
 import { attributesFromBrief } from '../lib/brand/strategySeed'
+/* Page setup is seeded from prefs at creation and migration ONLY — see
+   `seededBookSetup`. No other read of `prefs.book*` exists. */
+import { seededBookSetup } from '../lib/book/bookBuilder'
 import { BRAND_ROLE_KEYS } from '../lib/color'
 import { liftMeasuredRows } from './workLogSeparation'
 import { sameProjectId } from '../lib/journey/journeyProgress'
@@ -293,7 +296,9 @@ export function brandIdentityDefaults() {
   contacts: [],
   /* Brand Book Builder settings. null = never opened; read through
      bookBuilderFor() in lib/bookBuilder.js, which fills every key at read
-     time — so projects saved before this existed need no migration. */
+     time — so projects saved before this existed need no migration.
+     `createBlankProject` seeds the PAGE SETUP over this from the studio's
+     defaults; the rest is still filled at read time. */
   bookBuilder: null,
   /* Names for the palette's colours, index-parallel to `palette`. Holds only
      { id, name } — the hex lives in `palette` and nowhere else, so the two
@@ -651,7 +656,16 @@ export function isStarterProject(p) {
 }
 
 /** Fresh real desk — no sample clients or fake tasks */
-export function createBlankProject(name = STARTER_PROJECT_NAME, brief = '') {
+export function createBlankProject(
+  name = STARTER_PROJECT_NAME,
+  brief = '',
+  /* The studio's sticky page-setup defaults, copied in ONCE at creation.
+     Callers inside the store pass `seededBookSetup(get().prefs)`; the
+     default keeps this function pure for the module-level starter project
+     and for tests. After this the project owns its setup outright — see
+     `bookBuilder.js` for why prefs are never read again. */
+  bookSetup = seededBookSetup()
+) {
   /* Date.now() alone collides for anything created inside the same
      millisecond, and every store action selects with `p.id === id` — so two
      projects sharing an id means a write to one silently writes to both.
@@ -689,6 +703,11 @@ export function createBlankProject(name = STARTER_PROJECT_NAME, brief = '') {
      *  where you were instead of teleporting you to a computed "first gap". */
     lastView: null,
     ...brandIdentityDefaults(),
+    /* The page setup is the project's from the moment it exists, seeded once
+       from the studio's sticky defaults. Written AFTER the identity defaults
+       because those carry `bookBuilder: null` — the rest of the Builder is
+       still filled in at read time by `bookBuilderFor`. */
+    bookBuilder: { ...bookSetup },
     tasks: [],
     runningTodo: blankRunningTodo(),
     /** Billable hours — hand-entered only. What a client gets charged is a
@@ -780,10 +799,17 @@ export function blankWorkspaceState() {
          save of every project, not just its own. See src/lib/studio/
          studioIdentity.js for the full reasoning. */
       studioLogo: '',
-      /* Brand book page setup. Sticky across projects rather than per-project:
+      /* Brand book page setup — THE STUDIO'S DEFAULTS FOR A NEW PROJECT,
+         and nothing more. The original reasoning stands and is preserved:
          a studio's paper size and print habits don't change per client, and
-         re-deciding them on every project is a recurring toll. Shown as text
-         beside the download button so the state is read, not remembered.
+         re-deciding them on every project is a recurring toll. So a new
+         project still inherits these without being asked.
+
+         What changed (owner, 2026-08-12): they are no longer read at render,
+         export or delivery time. `seededBookSetup` copies them into
+         `project.bookBuilder` once, at creation and at the v10 migration,
+         and from then on the PROJECT is the only live source. Editing these
+         cannot retro-alter a book that has already been laid out or sent.
          Values are declared in lib/brandBookSetup.js. */
       bookPageSize: 'letter',
       bookEdgeSpace: 'standard',
@@ -3837,7 +3863,8 @@ const useAppStore = create(
       createNewProject: (name = 'My project', brief = '') => {
         const project = createBlankProject(
           name || 'My project',
-          brief || ''
+          brief || '',
+          seededBookSetup(get().prefs)
         )
         get().addProject(project)
         return project
@@ -3970,7 +3997,11 @@ const useAppStore = create(
         if (intake.projectDeadline) {
           detective.projectDeadline = intake.projectDeadline
         }
-        const project = createBlankProject(clientName || 'My project', '')
+        const project = createBlankProject(
+          clientName || 'My project',
+          '',
+          seededBookSetup(get().prefs)
+        )
         project.detective = detective
         /* BOTH fields, the way setProjectDeadline does it.
            Creation set only detective.projectDeadline, but the brief's date
@@ -4181,7 +4212,7 @@ const useAppStore = create(
           }
         },
       },
-      version: 9,
+      version: 10,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
@@ -4220,6 +4251,48 @@ const useAppStore = create(
             m && m.favorite === undefined ? { ...m, favorite: !!m.inPack } : m
           )
         }
+        /* v10: PAGE SETUP GETS ONE HOME.
+           It had two — `project.bookBuilder.print.pageSize` / `grid.edge`
+           (per project, defaulting A4 + roomy) and `prefs.book*` (workspace
+           sticky, defaulting Letter + standard, and the one every
+           client-facing consumer actually read). So the trim a designer
+           proofed in the Builder was not the trim the client received.
+
+           The project becomes the single live source, seeded from the studio
+           pref. Rules, in order:
+             · a project that already carries the canonical keys is left
+               alone — that makes this idempotent, so running it twice is
+               the same as running it once;
+             · an explicit Builder choice (`print.pageSize`, `grid.edge`,
+               `print.bleed`) is preserved exactly, never overwritten by the
+               pref;
+             · anything unanswered is seeded from the studio pref, which is
+               what that project was actually being DELIVERED at — so no
+               client-facing output changes.
+           `prefs.book*` is kept as the seed for new projects and is never
+           read again for an existing one. */
+        const seed = seededBookSetup(persisted.prefs || blank.prefs)
+        /* Folded into the existing `projects` map below rather than given a
+           key of its own — there is already one there, and a second would
+           simply be overwritten by it. */
+        const withBookSetup = (p) => {
+          const bb = p.bookBuilder || {}
+          if (
+            bb.pageSize !== undefined &&
+            bb.edgeSpace !== undefined &&
+            bb.printShop !== undefined
+          ) {
+            /* Already migrated. This is what makes a second run a no-op. */
+            return bb
+          }
+          return {
+            ...bb,
+            pageSize: bb.pageSize ?? bb.print?.pageSize ?? seed.pageSize,
+            edgeSpace: bb.edgeSpace ?? bb.grid?.edge ?? seed.edgeSpace,
+            printShop: !!(bb.printShop ?? bb.print?.bleed ?? seed.printShop),
+          }
+        }
+
         return {
           ...blank,
           ...persisted,
@@ -4287,6 +4360,8 @@ const useAppStore = create(
                      title, and a slot with no record STAYS empty — the
                      backfill runs over what is there, never over the gaps. */
                   ).map((d) => (d?.refs ? d : { ...d, refs: {} })),
+                  /* v10: one home for the page setup — see `withBookSetup`. */
+                  bookBuilder: withBookSetup(p),
                 }))
               : blank.projects,
         }
