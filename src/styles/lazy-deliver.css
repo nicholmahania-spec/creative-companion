@@ -686,7 +686,9 @@
   bottom: auto !important;
   justify-content: stretch !important;
   border-top: none !important;
-  margin-top: 0.35rem !important;
+  /* Was 0.35rem here and var(--space-5) in a second block 580 lines down,
+     both `!important`, the later one winning. One value, one place. */
+  margin-top: var(--space-5) !important;
   margin-bottom: 0.5rem !important;
   padding: 0 !important;
   background: transparent !important;
@@ -1266,9 +1268,6 @@
   padding-inline: 0;
 }
 
-.deliver-studio .deliver-primary-ship {
-  margin-top: var(--space-5) !important;
-}
 
 .deliver-studio .deliver-primary-ship .btn-primary {
   min-height: 3.25rem;
@@ -1297,4 +1296,59 @@
     min-height: var(--tap-min);
     font-size: var(--fs-2);
   }
+}
+
+
+/* ── Delivery on the stage ─────────────────────────────────────────────────
+   The ship column was a bordered, filled, rounded panel 640px wide and 1520
+   tall: a card containing the entire second half of the stop, which is the
+   shell's answer to "these things belong together" and the stage's answer is
+   a rule and some air. */
+
+.cc-stage--deliver .assets-ship-ticket {
+  padding: 0 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+.cc-stage--deliver :is(.assets-ship-gap, .deliver-gaps, .assets-package) {
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+.cc-stage--deliver .assets-ship-gap {
+  padding: 0 0 0 var(--space-3);
+  /* `border: 0` FIRST. Setting only `border-left` leaves the other three
+     sides drawing whatever the base rule gave them, which is a three-sided
+     box — and `getComputedStyle(...).border` returns an empty string when the
+     sides disagree, so it also reads as "no border" when you go looking. */
+  border: 0;
+  border-left: 2px solid var(--border-strong);
+}
+
+.cc-stage--deliver .deliver-advanced {
+  border-top: 1px solid var(--border-subtle);
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+/* The client package list was a 640×1047 bordered, rounded panel — the last
+   dashboard card on the path. It is a file tree; a rule above it says "these
+   belong together" as well as a box does, without re-drawing the frame. */
+.cc-stage--deliver .package-panel {
+  padding: var(--space-5) 0 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+/* The book preview is the artefact on this stop — it gets the sheet
+   treatment the artboard gets on Identity, not a bordered viewport. */
+.cc-stage--deliver .assets-preview-frame,
+.cc-stage--deliver .pack-view .deliver-pack-preview {
+  border: 0;
+  border-radius: var(--radius-none);
+  background: transparent;
 }

@@ -66,8 +66,60 @@ describe('a crash shows a screen, not a white page', () => {
   it('keys the inner boundary so navigating away clears it', () => {
     /* Without the key the boundary stays broken after you leave the screen
        that threw, which is a worse trap than the white page because it looks
-       deliberate. */
-    expect(read('App.jsx')).toMatch(/<ErrorBoundary[\s\S]{0,200}key=\{activeView\}/)
+       deliberate.
+
+       THE INVARIANT: the inner boundary is keyed, and its key EXPRESSION
+       depends on `activeView`. The co-mounted stages (Directions, Identity,
+       Touchpoints) deliberately resolve to one shared key value — remounting
+       that tree when stepping brand <-> flow would throw away the state the
+       co-mount exists to keep — so the expression is a conditional and the
+       literal `key={activeView}` this once matched can never appear again.
+
+       WHY THE EXPRESSION IS BRACE-MATCHED RATHER THAN PATTERN-MATCHED. The
+       first attempt at adapting this asserted
+       `/key=\{[\s\S]*?activeView[\s\S]*?\}/` over the whole opening tag.
+       That is vacuous here: `leaveLabel={ activeView === 'project' ? ... }`
+       sits two lines below `key={`, so the match ran straight past the key's
+       own closing brace and found `activeView` in the NEXT prop. A constant
+       key passed it. Isolating the expression by counting braces is what
+       makes the assertion about the key rather than about the tag.
+
+       Both mutations are run against this guard whenever it is edited, and
+       were run when it was written: removing the key prop fails the second
+       assertion; replacing the expression with a constant fails the third.
+       Do not restate that claim here without re-running them.
+
+       Known limit, stated rather than hidden: brace counting does not skip
+       braces inside string literals. A key expression containing `{` or `}`
+       in a string would mis-slice. Nothing here does, and a guard that reads
+       source will always have an edge like this one. */
+    const tag = read('App.jsx').match(/<ErrorBoundary[\s\S]{0,400}?>/)
+    expect(tag, 'App.jsx renders no ErrorBoundary opening tag').toBeTruthy()
+
+    /** The text between `key={` and its MATCHING `}`, or null when unkeyed. */
+    const keyExpression = (source) => {
+      const at = source.indexOf('key={')
+      if (at === -1) return null
+      const from = at + 'key={'.length
+      let depth = 1
+      for (let i = from; i < source.length; i++) {
+        if (source[i] === '{') depth++
+        else if (source[i] === '}' && --depth === 0) return source.slice(from, i)
+      }
+      return null
+    }
+
+    const expression = keyExpression(tag[0])
+    expect(
+      expression,
+      'the inner boundary is not keyed, so a screen that threw stays broken ' +
+        'after you navigate away from it'
+    ).not.toBeNull()
+    expect(
+      expression,
+      'the boundary key expression does not reference activeView, so it ' +
+        'cannot change on navigation and the boundary never resets'
+    ).toMatch(/activeView/)
   })
 
   it('promises only what the store can actually keep', () => {
