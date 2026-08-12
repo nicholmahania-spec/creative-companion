@@ -398,92 +398,313 @@
   }
 }
 
-/* ── Route table workroom ──────────────────────────────────────────────
-   Directions is an immersive sorting surface, not another route dashboard.
-   The app shell remains mounted for route continuity but is inert while this
-   opaque table is open. */
-.direction-room{--table-paper:#ece7dd;--table-ink:#17231e;--table-muted:#69716c;position:fixed;inset:0;z-index:2147483647;isolation:isolate;overflow:auto;overscroll-behavior:contain;background:var(--table-paper);color:var(--table-ink);padding:1rem clamp(1rem,5vw,5rem) 4rem;animation:none}.direction-room:focus{outline:0}.direction-room-recovery{display:flex;justify-content:space-between;gap:1rem;align-items:center;min-height:44px;font-size:.85rem;color:var(--table-muted)}.direction-room-recovery .text-link{color:inherit}.direction-room-intro{max-width:46rem;margin:clamp(1rem,4vw,4rem) 0 2rem}.direction-room-intro h1{margin:0;font-family:Georgia,serif;font-size:clamp(3rem,7vw,7rem);font-weight:400;line-height:.88;letter-spacing:-.07em}.direction-room-intro p{max-width:35rem;margin:.85rem 0 0;color:var(--table-muted);line-height:1.45}.direction-room .dir-ev-band{margin:0;padding:0 0 clamp(1.5rem,4vw,4rem);border:0;border-radius:0;background:transparent}.direction-room .dir-ev-head{display:block}.direction-room .dir-ev-head .brand-section-label{display:block;margin-bottom:.65rem;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--table-muted)}.direction-room .dir-ev-target{display:block;margin-bottom:1rem}.direction-room .dir-ev-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));gap:.75rem}.direction-room .dir-ev-item{display:grid;grid-template-columns:1fr;gap:.45rem;min-height:8rem;max-width:none;padding:0;border:0;border-radius:0;background:transparent;text-align:left}.direction-room .dir-ev-face{width:100%;height:6.25rem;border-radius:0;border:0}.direction-room .dir-ev-face.is-type{font-size:3rem;background:#f6f2ea}.direction-room .dir-ev-label{font-size:.78rem;color:var(--table-ink)}.direction-room .dir-ev-item.is-in{box-shadow:inset 0 -3px 0 var(--table-ink)}.direction-room .dir-ev-observed{margin-top:1rem}.direction-room .ideate-start-note,.direction-room .ideate-split-offer{max-width:none;margin:0 0 1.5rem;border-radius:0;background:transparent}.direction-room .ideate-routes{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(15rem,.65fr);gap:clamp(1rem,3vw,4rem);margin:0;align-items:start}.direction-room .ideate-dir-card{gap:1rem;padding:0;border:0;border-top:1px solid color-mix(in srgb,var(--table-ink) 22%,transparent);border-radius:0;background:transparent}.direction-room .ideate-dir-card.is-open{grid-row:span 2;padding-top:1rem;border-top:3px solid var(--table-ink);background:transparent}.direction-room .ideate-dir-card:not(.is-open){padding-top:1rem}.direction-room .ideate-dir-card.is-chosen{border-color:var(--table-ink);box-shadow:none}.direction-room .ideate-dir-head{order:0}.direction-room .ideate-dir-letter{font-family:Georgia,serif;font-size:2rem;color:var(--table-ink)}.direction-room .ideate-dir-title-text{font-size:1.1rem;color:var(--table-ink)}.direction-room .ideate-dir-card .dir-preview{order:1;border-radius:0;min-height:14rem}.direction-room .ideate-dir-card.is-open .dir-preview{min-height:23rem}.direction-room .dir-ev-strip{order:2}.direction-room .ideate-dir-go{order:3;width:auto;align-self:flex-start;border-radius:0}.direction-room .ideate-dir-quiet{order:4}.direction-room .ideate-dir-edit{order:5}.direction-room .ideate-dir-add{min-height:9rem;border-color:var(--table-muted);border-radius:0}.direction-room .btn,.direction-room .field-input{border-radius:0}.direction-room .ideate-dir-chosen{color:var(--table-ink)}.direction-room .ideate-dir-diff{color:var(--table-muted)}.direction-room button:focus-visible,.direction-room input:focus-visible,.direction-room textarea:focus-visible,.direction-room select:focus-visible{outline:3px solid #b45309;outline-offset:3px}
-@media(max-width:720px){.direction-room{padding: .65rem 1rem 2rem}.direction-room-recovery{font-size:.78rem}.direction-room-intro{margin:1.4rem 0 1.5rem}.direction-room-intro h1{font-size:clamp(3rem,16vw,4.7rem)}.direction-room .dir-ev-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem}.direction-room .dir-ev-face{height:4.75rem}.direction-room .dir-ev-label{max-width:none;font-size:.68rem;white-space:normal}.direction-room .ideate-routes{display:flex;flex-direction:column;gap:1.5rem}.direction-room .ideate-dir-card{width:100%}.direction-room .ideate-dir-card.is-open{order:-1}.direction-room .ideate-dir-card .dir-preview,.direction-room .ideate-dir-card.is-open .dir-preview{min-height:15rem}.direction-room .ideate-dir-card:not(.is-open) .dir-preview{min-height:10rem}.direction-room .ideate-dir-card,.direction-room .ideate-dir-card.is-editing{padding-top:1rem}.direction-room .ideate-dir-go{min-height:44px}}
-.direction-room .dir-ev-face.is-application{display:grid;place-items:center;font-family:Arial,sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:-.08em}
-.direction-room{display:grid;grid-template-columns:minmax(12rem,20rem) minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:clamp(1.5rem,5vw,7rem);align-items:start}.direction-room-recovery{grid-column:1/-1;margin-bottom:clamp(1rem,4vw,4rem)}.direction-room>.dir-ev-band{grid-column:1;position:sticky;top:1rem;padding:0}.direction-room .dir-ev-head{display:none}.direction-room .dir-ev-list{display:flex;flex-direction:column;gap:1.2rem;margin:0}.direction-room .dir-ev-item{min-height:0;gap:0}.direction-room .dir-ev-face{height:auto;aspect-ratio:1.35}.direction-room .dir-ev-label{margin-top:.45rem}.direction-room .dir-ev-face.is-application{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:1rem;box-sizing:border-box;font-size:inherit;letter-spacing:normal}.direction-room .dir-ev-face.is-application b{max-width:5ch;font-size:clamp(1.25rem,2.4vw,2.5rem);line-height:.82;letter-spacing:-.08em;white-space:pre-line}.direction-room .dir-ev-face.is-application i{font-size:.68rem;font-style:normal}.direction-room>.ideate-start-note,.direction-room>.ideate-split-offer{grid-column:2}.direction-room .ideate-routes{grid-column:2;grid-row:2;grid-template-columns:minmax(0,1fr) minmax(10rem,15rem);gap:clamp(1rem,4vw,5rem);width:100%;min-height:calc(100vh - 8rem)}.direction-room .ideate-dir-card.is-open{border-top:0;position:relative;padding:clamp(1rem,3vw,3rem);background:linear-gradient(135deg,#f6f2ea 0%,#eee8dc 100%)}.direction-room .ideate-dir-card.is-open::before{content:'';position:absolute;inset:0 auto 0 -2rem;width:1px;background:var(--table-ink)}.direction-room .ideate-dir-card.is-open .dir-preview{min-height:min(62vh,42rem);background:transparent!important;border-bottom:1px solid var(--table-ink)}.direction-room .ideate-dir-card:not(.is-open){padding-top:1rem}.direction-room .ideate-dir-add{align-self:start;min-height:44px;padding:.5rem 0;border:0;background:transparent;justify-content:flex-start;flex-direction:row;font-size:.85rem}.direction-room .ideate-dir-add-plus{font-size:1.2rem}.direction-room .ideate-dir-add::after{content:'New route';font-size:.85rem}.direction-room .ideate-dir-add{font-size:0}.direction-room .ideate-dir-card.is-open .ideate-dir-head{font-family:Georgia,serif}.direction-room .ideate-dir-card.is-open .dir-ev-strip{position:absolute;top:1.3rem;right:1.3rem;max-width:40%}.direction-room .ideate-dir-card.is-open .ideate-dir-go{margin-top:1rem}
-@media(max-width:720px){.direction-room{display:block}.direction-room-recovery{margin-bottom:1.5rem}.direction-room>.dir-ev-band{position:static;padding:0;margin:0 0 1.5rem}.direction-room .dir-ev-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}.direction-room .dir-ev-face.is-application b{font-size:1.6rem}.direction-room .ideate-routes{display:flex;min-height:0}.direction-room .ideate-dir-card.is-open{padding:1rem}.direction-room .ideate-dir-card.is-open::before{inset:-.7rem 0 auto;width:auto;height:1px}.direction-room .ideate-dir-card.is-open .dir-preview{min-height:18rem}.direction-room .ideate-dir-card.is-open .dir-ev-strip{position:static;max-width:none}.direction-room .ideate-dir-add{width:auto}}
+/* ── Directions · the formation table ──────────────────────────────────────
+   COMPOSITION ONLY. The frame — viewport, ground, ink, scroll, the path edge
+   — belongs to `.cc-stage` in `workroom.css`. What is left here is the one
+   thing this stop actually decides: how a route and the material it was built
+   from are placed on the table.
 
-/* Phase 3C — formation table. A source sheet is physically placed inside the
-   same field as the hypothesis; there is no sidebar or enclosing route panel. */
-.direction-room{display:block;background:var(--bg);color:var(--text-primary);padding:1rem clamp(1rem,5vw,5rem) 3rem}.direction-room-recovery{margin:0 0 1rem}.direction-room>.dir-ev-band{position:absolute;z-index:2;top:clamp(7rem,13vw,11rem);right:clamp(1rem,7vw,9rem);width:clamp(11rem,18vw,16rem);margin:0;transform:rotate(2deg);box-shadow:0 1.5rem 3rem #0002}.direction-room .dir-ev-list{display:block}.direction-room .dir-ev-item{display:block}.direction-room .dir-ev-face{width:100%;aspect-ratio:1.35;height:auto}.direction-room .dir-ev-label{display:none}.direction-room .ideate-routes{display:block;min-height:calc(100dvh - 5rem);margin:0}.direction-room .ideate-dir-card.is-open{position:relative;display:grid;grid-template-columns:minmax(0,1fr) clamp(10rem,18vw,16rem);grid-template-rows:auto 1fr auto;gap:1rem 3rem;min-height:calc(100dvh - 7rem);padding:clamp(2rem,7vw,8rem) clamp(2rem,8vw,10rem);background:transparent;border:0}.direction-room .ideate-dir-card.is-open::before{display:none}.direction-room .ideate-dir-card.is-open .ideate-dir-head{grid-column:1;grid-row:1;align-self:end}.direction-room .ideate-dir-card.is-open .dir-preview{grid-column:1/-1;grid-row:2;min-height:clamp(28rem,57vh,42rem);padding:0;background:transparent!important;border:0;display:flex;align-items:center}.direction-room .ideate-dir-card.is-open .dir-preview-type{max-width:70%}.direction-room .ideate-dir-card.is-open .dir-preview-line--display{font-size:clamp(5rem,12vw,12rem)!important;line-height:.78!important}.direction-room .ideate-dir-card.is-open .dir-ev-strip{position:static;grid-column:2;grid-row:1/3;align-self:start;max-width:none;margin-top:9rem;z-index:3}.direction-room .ideate-dir-card.is-open .ideate-dir-go{grid-column:1;grid-row:3;margin:0}.direction-room .ideate-dir-card.is-open .ideate-dir-quiet{grid-column:1;grid-row:3;align-self:end;margin-left:10rem}.direction-room .ideate-dir-card.is-open .ideate-dir-edit{grid-column:1/-1;grid-row:4}.direction-room .ideate-dir-card:not(.is-open){display:inline-flex;width:min(16rem,25%);margin:1rem 1rem 0 0;padding:0;border:0;background:transparent}.direction-room .ideate-dir-add{position:absolute;right:clamp(1rem,5vw,5rem);bottom:1.5rem}.app.deep~.direction-room,body:has(.app.deep) .direction-room{background:var(--bg);color:var(--text-primary)}
-@media(max-width:720px){.direction-room{padding:1rem}.direction-room>.dir-ev-band{position:relative;top:auto;right:auto;width:min(72%,18rem);margin:1.5rem 0 -2rem auto;transform:rotate(2deg)}.direction-room .ideate-routes{min-height:0}.direction-room .ideate-dir-card.is-open{display:flex;min-height:0;padding:4rem 0 2rem;gap:1rem}.direction-room .ideate-dir-card.is-open .dir-preview{min-height:20rem;display:block}.direction-room .ideate-dir-card.is-open .dir-preview-type{max-width:100%}.direction-room .ideate-dir-card.is-open .dir-preview-line--display{font-size:clamp(4.3rem,20vw,6rem)!important}.direction-room .ideate-dir-card.is-open .dir-ev-strip{order:0;margin:0;width:100%}.direction-room .ideate-dir-card.is-open .ideate-dir-go{order:3}.direction-room .ideate-dir-card.is-open .ideate-dir-quiet{margin:0;align-self:auto}.direction-room .ideate-dir-add{position:static;margin-top:1rem}}
+   WHAT THIS REPLACED, because the shape of the mistake is worth keeping. The
+   room arrived as three stacked minified blocks, each of which redefined
+   `.direction-room` from scratch — first a two-column grid, then a different
+   two-column grid, then a block layout. Only the last one had any effect; the
+   other two were ~4KB of dead declarations that still had to be read by
+   anyone changing this screen and could win a specificity race at any time.
+   A stop is migrated when its old presentation is GONE, not when a newer
+   layer covers it. The stage element no longer carries a `.direction-room`
+   class either — leaving the hook would invite the next override onto it.
 
-/* The reference is a physical sheet on the same table, not a detached
-   sidebar thumbnail. Its hairline points into the hypothesis it informs. */
-.direction-room > .dir-ev-band::after {
+   THE SPREAD. Route being worked on, full width, as an editorial page: its
+   letter and name set as a masthead, the type specimen on real paper beneath
+   it, the material it cites laid on the table beside it, and the routes not
+   being worked on as thumbnails along the bottom. Nothing here is a card. */
+
+.cc-stage--ideate .cc-stage-plane {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(11rem, 17vw, 15rem);
+  column-gap: clamp(var(--space-5), 4vw, 5rem);
+  align-items: start;
+}
+
+/* THE SOURCE MATERIAL IS ON THE TABLE, not in a sidebar. Laid slightly
+   askew, with a hairline running from it into the route it informs — the
+   reference and the thinking share one surface, which is the argument of
+   this whole stop. */
+.cc-stage--ideate .dir-ev-band {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  position: sticky;
+  top: var(--space-5);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: rotate(1.5deg);
+}
+
+.cc-stage--ideate .dir-ev-band::after {
   content: '';
   position: absolute;
-  top: 50%;
+  top: var(--space-6);
   right: 100%;
-  width: clamp(5rem, 14vw, 13rem);
-  border-top: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  width: clamp(var(--space-6), 4vw, 4rem);
+  border-top: 1px solid color-mix(in srgb, currentColor 32%, transparent);
   pointer-events: none;
 }
 
-/* A portaled room does not inherit the app theme variables. Give deep mode
-   its own table tokens rather than accidentally falling back to light paper. */
-body:has(.app.deep) .direction-room {
-  --table-paper: #101613;
-  --table-ink: #edf3ec;
-  --table-muted: #aab7ac;
-  background: #101613;
-  color: #edf3ec;
-}
-body:has(.app.deep) .direction-room .text-link,
-body:has(.app.deep) .direction-room .ideate-dir-letter,
-body:has(.app.deep) .direction-room .ideate-dir-title-text {
-  color: #edf3ec;
-}
-body:has(.app.deep) .direction-room .ideate-dir-go {
-  color: #edf3ec;
-  border-color: #b9cabc;
-  background: transparent;
-}
-body:has(.app.deep) .direction-room .ideate-dir-card.is-open .dir-preview {
-  /* The direction specimen supplies dark ink. It needs real paper inside the
-     dark workroom rather than inheriting the light-room transparent override. */
-  background: #f6f2ea !important;
-}
-body:has(.app.deep) .direction-room .ideate-dir-quiet .text-link,
-body:has(.app.deep) .direction-room .ideate-dir-add {
-  color: #edf3ec;
+/* Nothing cited yet is a sentence, not a sheet. A rotated, shadowed note
+   holding an empty-state apology reads as a bug. */
+.cc-stage--ideate .dir-ev-band:has(.dir-ev-empty) {
+  transform: none;
 }
 
-@media (max-width: 720px) {
-  .direction-room > .dir-ev-band::after {
-    top: 100%;
-    right: auto;
-    left: 36%;
-    width: 0;
-    height: 3.25rem;
-    border-top: 0;
-    border-left: 1px solid color-mix(in srgb, currentColor 38%, transparent);
-  }
-  /* The route citation remains a legible reference sheet on phone rather
-     than inheriting the desktop inline-chip dimensions. */
-  .direction-room .ideate-dir-card.is-open .dir-ev-strip {
+.cc-stage--ideate .dir-ev-band:has(.dir-ev-empty)::after {
+  display: none;
+}
+
+.cc-stage--ideate .dir-ev-head {
+  display: block;
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+}
+
+.cc-stage--ideate .dir-ev-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.cc-stage--ideate .dir-ev-item {
+  display: block;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.cc-stage--ideate .dir-ev-face {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.4;
+  border: 0;
+  border-radius: var(--radius-none);
+  box-shadow: var(--stage-lift-sm);
+}
+
+.cc-stage--ideate .dir-ev-label {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+}
+
+.cc-stage--ideate .dir-ev-item.is-in .dir-ev-face {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.cc-stage--ideate .dir-ev-face.is-application {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding: var(--space-3);
+  font-family: var(--font-sans);
+}
+
+.cc-stage--ideate .dir-ev-face.is-application b {
+  max-width: 5ch;
+  font-size: clamp(var(--fs-4), 2vw, 2.25rem);
+  line-height: 0.82;
+  letter-spacing: -0.08em;
+  white-space: pre-line;
+}
+
+.cc-stage--ideate .dir-ev-face.is-application i {
+  font-size: var(--fs-1);
+  font-style: normal;
+}
+
+.cc-stage--ideate .ideate-start-note,
+.cc-stage--ideate .ideate-split-offer {
+  grid-column: 1;
+  max-width: 46ch;
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+.cc-stage--ideate .ideate-routes {
+  grid-column: 1;
+  display: block;
+  margin: 0;
+}
+
+/* ── The open route, as a page ─────────────────────────────────────────── */
+.cc-stage--ideate .ideate-dir-card.is-open {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-6) 0 var(--space-7);
+  border: 0;
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+/* ORDER, NOT DOM ORDER. `.ideate-dir-card .dir-preview { order: -1 }` is
+   right for a thumbnail — the specimen is the face of a closed card. On the
+   open page it put the sheet above its own masthead, so the page read as an
+   untitled image followed by a caption. Stated once, here, rather than by
+   moving the JSX and changing what a closed card looks like. */
+.cc-stage--ideate .ideate-dir-card.is-open > .ideate-dir-head { order: 0; }
+.cc-stage--ideate .ideate-dir-card.is-open > .dir-preview { order: 1; }
+.cc-stage--ideate .ideate-dir-card.is-open > .ideate-dir-diff { order: 2; }
+.cc-stage--ideate .ideate-dir-card.is-open > .dir-ev-strip { order: 3; }
+.cc-stage--ideate .ideate-dir-card.is-open > .ideate-dir-go { order: 4; }
+.cc-stage--ideate .ideate-dir-card.is-open > .ideate-dir-quiet { order: 5; }
+.cc-stage--ideate .ideate-dir-card.is-open > .ideate-dir-edit { order: 6; }
+
+.cc-stage--ideate .ideate-dir-card.is-open .ideate-dir-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.cc-stage--ideate .ideate-dir-card.is-open .ideate-dir-chosen {
+  margin-left: 0;
+  font-size: var(--fs-2);
+}
+
+
+/* SUBJECT RANK, CONSUMED NOT COPIED. Directions names the route on the table
+   rather than the stop, so its head carries `.cc-stage-display--subject` from
+   workroom.css — the same face, weight, colour and tracking as every other
+   masthead, one step down. The declarations used to be restated here and
+   again in lazy-sketch.css, which is two files to change when the rank moves
+   and the exact "copies of a declared thing" defect this codebase keeps
+   paying for. All that is left here is the wrapping this one head needs. */
+.cc-stage--ideate .ideate-dir-card.is-open .ideate-dir-title-text {
+  white-space: normal;
+  overflow: visible;
+}
+
+/* THE SPECIMEN IS THE POINT. Real paper, real type sizes, left aligned like
+   a printed page — the flex `align-items: center` this inherited was
+   centring the whole column and made a set page look like a title slide. */
+.cc-stage--ideate .ideate-dir-card.is-open .dir-preview {
+  /* A SHEET, NOT A BAND. Given the full column it stretched to ~1090px with
+     type set to 30ch, which is a banner with a caption on it rather than a
+     page. Capped to a page width; the table showing to its right is the
+     composition, not leftover space. */
+  align-items: stretch;
+  justify-content: center;
+  width: min(100%, 52rem);
+  min-height: clamp(20rem, 42vh, 30rem);
+  padding: clamp(var(--space-5), 4vw, 4rem);
+  border: 0;
+  border-radius: var(--radius-none);
+  box-shadow: var(--stage-lift);
+}
+
+.cc-stage--ideate .ideate-dir-card.is-open .dir-preview-type {
+  max-width: 30ch;
+}
+
+.cc-stage--ideate .ideate-dir-card.is-open .dir-ev-strip {
+  margin: 0;
+}
+
+.cc-stage--ideate .ideate-dir-card.is-open .ideate-dir-go {
+  width: auto;
+  justify-self: start;
+}
+
+.cc-stage--ideate .ideate-dir-diff,
+.cc-stage--ideate .ideate-dir-quiet {
+  margin: 0;
+}
+
+/* ── The routes you are not on ─────────────────────────────────────────────
+   A row of thumbnails directly under the page, so "three routes, one open"
+   is one glance rather than a scroll. */
+.cc-stage--ideate .ideate-dir-card:not(.is-open) {
+  display: inline-flex;
+  vertical-align: top;
+  width: min(15rem, 30%);
+  margin: 0 var(--space-4) var(--space-4) 0;
+  padding: var(--space-3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--border-strong);
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+.cc-stage--ideate .ideate-dir-card:not(.is-open) .dir-preview {
+  min-height: 9rem;
+  border: 0;
+  border-radius: var(--radius-none);
+}
+
+.cc-stage--ideate .ideate-dir-card.is-chosen {
+  border-top-color: var(--text-primary);
+}
+
+.cc-stage--ideate .ideate-dir-add {
+  min-height: 0;
+  margin-top: var(--space-2);
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-2);
+}
+
+@media (max-width: 900px) {
+  .cc-stage--ideate .cc-stage-plane {
     display: block;
-    width: min(9rem, 48%);
   }
-  .direction-room .ideate-dir-card.is-open .dir-ev-cited {
-    display: block;
-    width: 100%;
-    padding: 0;
-    border: 0;
+
+  .cc-stage--ideate .dir-ev-band {
+    position: static;
+    margin: 0 0 var(--space-5);
+    transform: none;
   }
-  .direction-room .ideate-dir-card.is-open .dir-ev-cited .dir-ev-face {
-    display: flex;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1.35;
-  }
-  .direction-room .ideate-dir-card.is-open .dir-ev-cited-label {
+
+  .cc-stage--ideate .dir-ev-band::after {
     display: none;
+  }
+
+  .cc-stage--ideate .dir-ev-list {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  }
+
+  .cc-stage--ideate .ideate-dir-card.is-open {
+    padding: var(--space-4) 0 var(--space-6);
+  }
+
+  .cc-stage--ideate .ideate-dir-card.is-open .dir-preview {
+    min-height: 16rem;
+    padding: var(--space-5);
+  }
+
+  .cc-stage--ideate .ideate-dir-card:not(.is-open) {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .cc-stage--ideate .ideate-dir-card.is-open .ideate-dir-go {
+    min-height: 44px;
   }
 }
 
@@ -761,8 +982,4 @@ body:has(.app.deep) .direction-room .ideate-dir-add {
   .ideate-dir-card.is-editing {
     padding: var(--space-3);
   }
-}
-.direction-room.is-suspended {
-  visibility: hidden;
-  pointer-events: none;
 }

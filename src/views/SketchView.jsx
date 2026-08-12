@@ -5,14 +5,8 @@
  * Step 7: immersive portal workroom — same isolation pattern as
  * Directions/Identity. Engine ownership unchanged.
  */
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useState } from 'react'
+import Workroom from '../components/Workroom'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
 import TouchpointMockThumb from '../components/TouchpointMockThumb'
@@ -101,10 +95,12 @@ export function touchpointsStatusLine({
 export default function SketchView(props) {
   const {
     navDir = 'none',
+    journeyNext = null,
     activeProject = null,
     projectPalette = [],
     setActiveView,
     applicationWorkroomLauncherRef,
+    pathCtx = null,
     flashMicro,
     offerUndo,
   } = props
@@ -133,101 +129,8 @@ export default function SketchView(props) {
     proofs: touchpointProofs,
   })
 
-  const roomRef = useRef(null)
-  const launcherRef = useRef(null)
   const projectKey = activeProject?.id || ''
 
-  /* Capture before App's post-navigation effect parks focus in main. The
-     journey control remains mounted under the inert shell, so it is the
-     exact launcher we restore on Escape — same pattern as Identity. */
-  useLayoutEffect(() => {
-    const active = document.activeElement
-    launcherRef.current =
-      applicationWorkroomLauncherRef?.current ||
-      (active instanceof HTMLElement ? active : null)
-  }, [applicationWorkroomLauncherRef])
-
-  const closeApplicationWorkroom = useCallback(() => {
-    const launcher = launcherRef.current
-    /* Path previous: Identity owns the step before Touchpoints. */
-    setActiveView?.('brand')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (launcher?.isConnected) launcher.focus({ preventScroll: true })
-      })
-    })
-  }, [setActiveView])
-
-  /* Portal isolation: shell stays mounted for route continuity but is
-     inert/hidden while this workroom owns the viewport. */
-  useEffect(() => {
-    const root = document.getElementById('root')
-    const hadInert = root?.hasAttribute('inert')
-    const priorAriaHidden = root?.getAttribute('aria-hidden')
-    const priorVisibility = root?.style.visibility
-    const priorOverflow = document.body.style.overflow
-    root?.setAttribute('inert', '')
-    root?.setAttribute('aria-hidden', 'true')
-    if (root) root.style.visibility = 'hidden'
-    document.body.style.overflow = 'hidden'
-
-    const focusables = () =>
-      [
-        ...(roomRef.current?.querySelectorAll(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        ) || []),
-      ].filter((element) => element instanceof HTMLElement)
-
-    const focusRoom = (last = false) => {
-      const items = focusables()
-      ;(last ? items.at(-1) : items[0])?.focus({ preventScroll: true })
-    }
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        closeApplicationWorkroom()
-        return
-      }
-      if (event.key !== 'Tab') return
-      const items = focusables()
-      if (!items.length) {
-        event.preventDefault()
-        roomRef.current?.focus({ preventScroll: true })
-        return
-      }
-      const current = document.activeElement
-      const index = items.indexOf(current)
-      if (event.shiftKey && (current === roomRef.current || index <= 0)) {
-        event.preventDefault()
-        items.at(-1)?.focus({ preventScroll: true })
-      } else if (!event.shiftKey && index === items.length - 1) {
-        event.preventDefault()
-        items[0]?.focus({ preventScroll: true })
-      }
-    }
-
-    const onFocusIn = (event) => {
-      if (roomRef.current && !roomRef.current.contains(event.target)) {
-        focusRoom()
-      }
-    }
-
-    requestAnimationFrame(() =>
-      roomRef.current?.focus({ preventScroll: true })
-    )
-    document.addEventListener('keydown', onKeyDown, true)
-    document.addEventListener('focusin', onFocusIn, true)
-    return () => {
-      document.removeEventListener('keydown', onKeyDown, true)
-      document.removeEventListener('focusin', onFocusIn, true)
-      if (!hadInert) root?.removeAttribute('inert')
-      if (priorAriaHidden == null) root?.removeAttribute('aria-hidden')
-      else root?.setAttribute('aria-hidden', priorAriaHidden)
-      if (root) root.style.visibility = priorVisibility || ''
-      document.body.style.overflow = priorOverflow
-    }
-  }, [closeApplicationWorkroom])
 
   /* UI-only active surface. Navigation does not write identity or proofs.
      Remembered across workroom remounts so reopen keeps the same surface. */
@@ -332,40 +235,47 @@ export default function SketchView(props) {
     if (fresh) selectSurface(fresh)
   }
 
-  const room = (
-    <section
-      ref={roomRef}
+  return (
+    <Workroom
+      stepId="sketch"
+      project={activeProject}
+      pathCtx={pathCtx}
+      setActiveView={setActiveView}
+      launcherRef={applicationWorkroomLauncherRef}
       className="application-workroom"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="application-workroom-title"
-      tabIndex={-1}
-      data-testid="application-workroom"
-      data-nav-dir={navDir}
+      testId="application-workroom"
+      status={
+        activeSurfaceId
+          ? `Working on ${touchpointLabel(activeSurfaceId)}`
+          : labelForStepId('sketch')
+      }
+      /* Touchpoints had NO next-action affordance at all — one of the two
+         stops the census found without one. Same journey target the path edge
+         offers, in the place every other stop now puts it. */
+      ledge={
+        <>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setActiveView?.('brand')}
+          >
+            Back to {labelForStepId('design')}
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary work-path-next"
+            onClick={() => setActiveView?.(journeyNext?.view || 'book')}
+          >
+            {`Next · ${journeyNext?.label || labelForStepId('book')}`}
+          </button>
+        </>
+      }
     >
-      <header className="application-workroom-recovery">
-        <button
-          type="button"
-          className="text-link"
-          data-testid="application-workroom-back"
-          onClick={closeApplicationWorkroom}
-        >
-          Back to Identity
-        </button>
-        <p role="status">
-          {activeSurfaceId
-            ? `Working on ${touchpointLabel(activeSurfaceId)}`
-            : labelForStepId('sketch')}
-        </p>
-      </header>
-
       <div
         className="flow-view surface-desk view-enter sketch-studio touchpoints-studio application-workroom-body"
         data-testid="touchpoints-stage"
+        data-nav-dir={navDir}
       >
-      <h1 id="application-workroom-title" className="sr-only">
-        {labelForStepId('sketch')}
-      </h1>
 
       {/* Empty: quiet surface add — not a dashboard */}
       {!hasBriefSurfaces ? (
@@ -463,7 +373,7 @@ export default function SketchView(props) {
               <div className="app-stage-field-head">
                 <div>
                   <p className="app-stage-proof-kicker">Proofing table</p>
-                  <h2 className="app-stage-proof-title">
+                  <h2 className="app-stage-proof-title cc-stage-display--subject">
                     {touchpointLabel(activeSurfaceId)}
                   </h2>
                 </div>
@@ -711,8 +621,6 @@ export default function SketchView(props) {
         </section>
       </details>
       </div>
-    </section>
+    </Workroom>
   )
-
-  return createPortal(room, document.body)
 }

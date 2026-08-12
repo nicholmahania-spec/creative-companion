@@ -8,12 +8,10 @@ import {
   useEffect,
   useCallback,
   useMemo,
-  useRef,
-  useLayoutEffect,
   Suspense,
   lazy,
 } from 'react'
-import { createPortal } from 'react-dom'
+import Workroom from '../components/Workroom'
 import { labelForStepId } from '../lib/journey/journey'
 import {
   IDENTITY_SUBSTEPS,
@@ -143,6 +141,7 @@ export default function DesignView({
   studioName = '',
   setActiveView,
   identityWorkroomLauncherRef,
+  pathCtx = null,
   flashToast,
   offerUndo,
   flashMicro,
@@ -311,8 +310,6 @@ export default function DesignView({
   const [templateDescription, setTemplateDescription] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [loadingTemplates, setLoadingTemplates] = useState(false)
-  const studioRoomRef = useRef(null)
-  const studioLauncherRef = useRef(null)
 
 
 
@@ -360,88 +357,6 @@ export default function DesignView({
     seedStrategyAttributes(activeProject.id)
   }, [activeProject?.id, seedStrategyAttributes])
 
-  /* Identity is a deliberately isolated making space. The application route
-     still owns entry and exit; the portal changes only the presented room so
-     no legacy shell competes with the artboard. */
-  useLayoutEffect(() => {
-    studioLauncherRef.current = identityWorkroomLauncherRef?.current || null
-  }, [identityWorkroomLauncherRef])
-
-  const closeIdentityStudio = useCallback(() => {
-    const launcher = studioLauncherRef.current
-    setActiveView?.('spark')
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (launcher?.isConnected) launcher.focus({ preventScroll: true })
-      })
-    })
-  }, [setActiveView])
-
-  useEffect(() => {
-    if (suspended) return undefined
-    const root = document.getElementById('root')
-    const hadInert = root?.hasAttribute('inert')
-    const priorAriaHidden = root?.getAttribute('aria-hidden')
-    const priorVisibility = root?.style.visibility
-    const priorOverflow = document.body.style.overflow
-    root?.setAttribute('inert', '')
-    root?.setAttribute('aria-hidden', 'true')
-    if (root) root.style.visibility = 'hidden'
-    document.body.style.overflow = 'hidden'
-
-    const focusables = () =>
-      [...(studioRoomRef.current?.querySelectorAll(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      ) || [])].filter((element) => element instanceof HTMLElement)
-
-    const focusRoom = (last = false) => {
-      const items = focusables()
-      ;(last ? items.at(-1) : items[0])?.focus({ preventScroll: true })
-    }
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        closeIdentityStudio()
-        return
-      }
-      if (event.key !== 'Tab') return
-      const items = focusables()
-      if (!items.length) {
-        event.preventDefault()
-        studioRoomRef.current?.focus({ preventScroll: true })
-        return
-      }
-      const current = document.activeElement
-      const index = items.indexOf(current)
-      if (event.shiftKey && (current === studioRoomRef.current || index <= 0)) {
-        event.preventDefault()
-        items.at(-1)?.focus({ preventScroll: true })
-      } else if (!event.shiftKey && index === items.length - 1) {
-        event.preventDefault()
-        items[0]?.focus({ preventScroll: true })
-      }
-    }
-
-    const onFocusIn = (event) => {
-      if (studioRoomRef.current && !studioRoomRef.current.contains(event.target)) {
-        focusRoom()
-      }
-    }
-
-    requestAnimationFrame(() => studioRoomRef.current?.focus({ preventScroll: true }))
-    document.addEventListener('keydown', onKeyDown, true)
-    document.addEventListener('focusin', onFocusIn, true)
-    return () => {
-      document.removeEventListener('keydown', onKeyDown, true)
-      document.removeEventListener('focusin', onFocusIn, true)
-      if (!hadInert) root?.removeAttribute('inert')
-      if (priorAriaHidden == null) root?.removeAttribute('aria-hidden')
-      else root?.setAttribute('aria-hidden', priorAriaHidden)
-      if (root) root.style.visibility = priorVisibility || ''
-      document.body.style.overflow = priorOverflow
-    }
-  }, [closeIdentityStudio, suspended])
 
 
   const restoreSelectedVersion = async () => {
@@ -1049,24 +964,67 @@ export default function DesignView({
   }
 
   // The one field the brand book's "Direction Decision" page depends on
-  return createPortal(
-    <section
-      ref={studioRoomRef}
-      className={`identity-workroom${suspended ? ' is-suspended' : ''}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="identity-studio-title"
-      tabIndex={-1}
-      aria-hidden={suspended ? true : undefined}
+  return (
+    <Workroom
+      stepId="design"
+      project={activeProject}
+      pathCtx={pathCtx}
+      setActiveView={setActiveView}
+      launcherRef={identityWorkroomLauncherRef}
+      suspended={suspended}
+      className="identity-workroom"
+      status={`Working on ${IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}`}
+      /* IDENTITY NAMES ITSELF, like Brief, Research and Delivery. It was the
+         one stop with no masthead at all — its largest heading was a 34px
+         sans h2 — so the type system visibly changed product between
+         Directions and here. Stop rank, not subject rank: the artefact on
+         this table is being made rather than chosen, and the tool shelf
+         below already says which part of it is on the bench. */
+      masthead={<h1 className="cc-stage-display">{labelForStepId('design')}</h1>}
+      /* Same buttons, same substep logic, same handlers as the footer this
+         replaces — only the place they sit and the treatment around them
+         changed. Back walks the substeps first and falls back to the desk on
+         the first one; Next walks the substeps and falls through to the path.
+         Order flipped so the primary is last, which is where the ledge puts
+         it on every other stop. */
+      ledge={
+        <>
+          {prevSubstep ? (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setIdentitySubstep(prevSubstep.id)}
+            >
+              Back · {prevSubstep.label}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setActiveView?.('desk')}
+            >
+              Back to the desk
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary work-path-next"
+            onClick={() => {
+              if (nextSubstep) {
+                setIdentitySubstep(nextSubstep.id)
+                return
+              }
+              setActiveView?.(journeyNext?.view || 'flow')
+            }}
+          >
+            {nextSubstep
+              ? `Next · ${nextSubstep.label}`
+              : `Next · ${journeyNext?.label || labelForStepId('sketch')}`}
+          </button>
+        </>
+      }
     >
-      <h1 id="identity-studio-title" className="sr-only">
-        {labelForStepId('design')}
-      </h1>
           <div className="brand-layout surface-document system-view design-studio view-enter" data-nav-dir={navDir}>
-            <header className="identity-studio-recovery">
-              <button type="button" className="text-link" onClick={closeIdentityStudio}>Back to Directions</button>
-              <p role="status">Working on {IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}</p>
-            </header>
 
             {/* Labels only. The screens were numbered 01–04, which asserts a
                 sequence the app does not enforce and reads as a four-part
@@ -1212,11 +1170,14 @@ export default function DesignView({
                     ? 'Develop mark'
                     : undefined
                 }
-                note={
-                  directionWorking?.mark?.source === 'none'
-                    ? 'Brand mark system — not this route’s mark until you add and choose a concept.'
-                    : undefined
-                }
+                /* The second prose block is gone rather than reworded. It
+                   read "Brand mark system — not this route's mark until you
+                   add and choose a concept", which explains, in a sentence,
+                   the distinction the two labels beside it already draw: the
+                   lead above says there is no mark on this route yet, and the
+                   Concepts slot below is empty and says "Add your first
+                   mark". A paragraph restating two controls is a third thing
+                   to read before either of them. */
                 testId={
                   directionWorking?.mark?.source === 'none'
                     ? 'dir-route-mark-tool'
@@ -2718,44 +2679,6 @@ export default function DesignView({
             </div>
             </div>
 
-            <div className="path-continue-row design-path-footer">
-              <button
-                type="button"
-                className="btn btn-primary work-path-next"
-                onClick={() => {
-                  if (nextSubstep) {
-                    setIdentitySubstep(nextSubstep.id)
-                    return
-                  }
-                  setActiveView?.(journeyNext?.view || 'flow')
-                }}
-              >
-                {nextSubstep
-                  ? `Next · ${nextSubstep.label}`
-                  : `Next · ${journeyNext?.label || labelForStepId('sketch')}`}
-              </button>
-              {prevSubstep ? (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setIdentitySubstep(prevSubstep.id)}
-                >
-                  Back · {prevSubstep.label}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    const hub = 'desk'
-                    setActiveView?.(hub)
-                  }}
-                >
-                  Back to the desk
-                </button>
-              )}
-            </div>
-
           </div>
 
           {/* Version History Modal */}
@@ -3135,7 +3058,6 @@ export default function DesignView({
             </div>
           )}
 
-    </section>,
-    document.body
+    </Workroom>
   )
 }

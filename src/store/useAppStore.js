@@ -222,6 +222,59 @@ export function composeBriefFromDetective(detective) {
 }
 
 /**
+ * THE ONE PLACE `project.brief` IS DERIVED.
+ *
+ * `detective` is the authored source; `brief` is its composed representation.
+ * Every writer of `detective` must hand the result through here, and no writer
+ * may compute `brief` any other way — `briefIsDerivedOnce.test.js` fails the
+ * build if one does.
+ *
+ * THE DEFECT THIS CLOSES. `updateDetective` recomposed on every keystroke, but
+ * `mergeDetectiveAnswers` and `mergeDiscoveryAnswers` — the two paths a CLIENT's
+ * answers arrive on — wrote `detective` and left `brief` alone. So a submitted
+ * questionnaire updated the answers and not the summary, every export taken
+ * before the designer next typed in Define shipped a brief missing the client's
+ * words, and the gap closed itself on an unrelated keystroke with nothing to
+ * attribute the change to.
+ *
+ * WHY THIS IS NOT A READ-TIME DERIVATION. Composing at every read would make
+ * staleness structurally impossible, and it was the audit's first
+ * recommendation — but `project.brief` can legitimately hold text that
+ * `composeBriefFromDetective` cannot reproduce. `createBlankProject` takes a
+ * `brief` argument, and workspaces imported through `hydrateFromPayload` carry
+ * briefs written before the sheet existed. Deriving at the read would print
+ * nothing for those projects. The `|| project.brief` below is what preserves
+ * them, and it is the same rule the writer has always applied — hoisted, not
+ * invented.
+ *
+ * This is one AUTHOR, not two: `brief` is only ever written as a function of
+ * `detective`, and only ever by this function.
+ *
+ * @param {object} project  the project as it will be after the detective write
+ * @param {object} detective  the detective object being written
+ * @returns {string}
+ */
+export function briefFromDetective(project, detective) {
+  return composeBriefFromDetective(detective) || project?.brief || ''
+}
+
+/**
+ * A project with `detective` written and `brief` re-derived from it, together.
+ *
+ * ONE `set`, NOT TWO. The pair has to move in a single state write for the same
+ * reason `identityEdit()` does: a follow-up call is a second persist round that
+ * can interleave with a project switch, and a `brief` written a tick after the
+ * answers it summarises is exactly the stale window this closes.
+ */
+export function withDetective(project, detective) {
+  return {
+    ...project,
+    detective,
+    brief: briefFromDetective(project, detective),
+  }
+}
+
+/**
  * Default brand identity template fields on each project.
  * Factory so every project gets fresh nested objects (detective,
  * colorRoleWhy, deliverWordsChecked, pathReached) — never shared refs.
@@ -1035,8 +1088,7 @@ const useAppStore = create(
           const projects = state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
             const det = { ...blankDetective(), ...(p.detective || {}), [field]: value }
-            const brief = composeBriefFromDetective(det)
-            return { ...p, detective: det, brief: brief || p.brief }
+            return withDetective(p, det)
           })
           if (field !== 'clientName') return { projects }
 
@@ -1076,17 +1128,23 @@ const useAppStore = create(
          on old projects and is still formatted into terms/export if present. */
 
       /** Compose free brief from detective sheet answers */
-      /** @deprecated brief now auto-syncs from updateDetective(); kept for
-       *  any external callers wanting an explicit one-shot recompute. */
+      /** @deprecated every writer of `detective` now re-derives the brief in
+       *  the same write (see `withDetective`), so there is nothing left for a
+       *  one-shot recompute to repair. Zero callers in `src/`; kept only for
+       *  external ones. Its write goes through the canonical derivation so it
+       *  cannot become a second author of `brief`. */
       applyDetectiveToBrief: () => {
         const state = get()
         const p = state.projects.find((x) => x.id === state.currentProjectId)
         if (!p) return { ok: false }
-        const brief = composeBriefFromDetective(p.detective)
-        if (!brief) return { ok: false, error: 'Fill detective fields first' }
+        if (!composeBriefFromDetective(p.detective)) {
+          return { ok: false, error: 'Fill detective fields first' }
+        }
         set({
           projects: state.projects.map((proj) =>
-            proj.id === state.currentProjectId ? { ...proj, brief } : proj
+            proj.id === state.currentProjectId
+              ? withDetective(proj, proj.detective)
+              : proj
           ),
         })
         return { ok: true }
@@ -1099,13 +1157,12 @@ const useAppStore = create(
           projects: state.projects.map((p) =>
             p.id === state.currentProjectId
               ? {
-                  ...p,
-                  deadline: deadline || '',
-                  detective: {
+                  ...withDetective(p, {
                     ...blankDetective(),
                     ...(p.detective || {}),
                     projectDeadline: deadline || '',
-                  },
+                  }),
+                  deadline: deadline || '',
                 }
               : p
           ),
@@ -2225,9 +2282,6 @@ const useAppStore = create(
       // same "the wall is where the designer actually looks" treatment
       // instead of the image sitting invisible inside a brief chapter.
       mergeDetectiveAnswers: (incoming, projectId) => {
-        const inspirationFiles = Array.isArray(incoming?.inspirationLinksFiles)
-          ? incoming.inspirationLinksFiles
-          : []
         set((state) => ({
           projects: state.projects.map((p) => {
             if (p.id !== (projectId ?? state.currentProjectId)) return p
@@ -2251,21 +2305,29 @@ const useAppStore = create(
               if (isWrongShapeForField(k, v)) return
               if (String(v || '').trim()) merged[k] = v
             })
-            return { ...p, detective: merged }
+            /* The client's reviewed answers are authoritative detective data,
+               so the composed brief moves with them in the same write. */
+            return withDetective(p, merged)
           }),
         }))
-        if (inspirationFiles.length) {
-          const state = get()
-          const target = projectId ?? state.currentProjectId
-          inspirationFiles.forEach((f) => {
-            get().addMoodPin({
-              projectId: target,
-              type: 'image',
-              visual: f.url,
-              note: 'From the client’s brief',
-            })
-          })
-        }
+        /* AUTO-PINNING IS OFF. Accepted at review on 2026-08-12 and DEFERRED
+         to Research — not an oversight, and not to be quietly restored by
+         re-adding an addMoodPin call here. The four facts that decide it:
+
+           1. Client attachments remain available on the brief. Nothing is
+              lost; the Define sheet renders them, signed.
+           2. `client-uploads` is private (20260812123000) and is not
+              anonymously readable, so there is no permanent URL to pin.
+           3. An expiring signed URL must never be persisted as a Research
+              pin visual. A pin's `visual` is stored verbatim and read back
+              for months — by the wall, buildBrandPackSnapshot, the delivered
+              pack and the PDF — while a signed URL lives one hour. Pinning
+              one fills the board with images that work until they quietly do
+              not, which is worse than an empty board: you can act on empty.
+           4. Restoring auto-pin needs a durable object-reference model for
+              pins, owned by Research / Asset Library. That is a data-model
+              change, not a line here, and it was deliberately not attempted
+              in a security pass. */
       },
 
       setDiscoveryShare: (shareId, status = 'pending') =>
@@ -2300,9 +2362,6 @@ const useAppStore = create(
         // scrolls into a chapter is invisible in practice, and the wall is
         // where the designer actually looks. Existing-asset files stay in
         // the brief only: they're the *old* identity, not new inspiration.
-        const inspirationFiles = Array.isArray(clientAnswers?.inspirationLinksFiles)
-          ? clientAnswers.inspirationLinksFiles
-          : []
         set((state) => ({
           projects: state.projects.map((p) => {
             const target = projectId ?? state.currentProjectId
@@ -2358,26 +2417,35 @@ const useAppStore = create(
               detective.projectDeadline = clientDeadline
             }
             return {
-              ...p,
+              /* Same rule as mergeDetectiveAnswers: the answers the client
+                 submitted through the public link are authoritative, so the
+                 derived brief is recomposed in this write rather than waiting
+                 for the designer's next keystroke in Define. */
+              ...withDetective(p, detective),
               deadline: nextDeadline,
               discoveryAnswers: merged,
-              detective,
               discoveryShareStatus: 'submitted',
             }
           }),
         }))
-        if (inspirationFiles.length) {
-          const state = get()
-          const target = projectId ?? state.currentProjectId
-          inspirationFiles.forEach((f) => {
-            get().addMoodPin({
-              projectId: target,
-              type: 'image',
-              visual: f.url,
-              note: 'From the client’s brief',
-            })
-          })
-        }
+        /* AUTO-PINNING IS OFF. Accepted at review on 2026-08-12 and DEFERRED
+         to Research — not an oversight, and not to be quietly restored by
+         re-adding an addMoodPin call here. The four facts that decide it:
+
+           1. Client attachments remain available on the brief. Nothing is
+              lost; the Define sheet renders them, signed.
+           2. `client-uploads` is private (20260812123000) and is not
+              anonymously readable, so there is no permanent URL to pin.
+           3. An expiring signed URL must never be persisted as a Research
+              pin visual. A pin's `visual` is stored verbatim and read back
+              for months — by the wall, buildBrandPackSnapshot, the delivered
+              pack and the PDF — while a signed URL lives one hour. Pinning
+              one fills the board with images that work until they quietly do
+              not, which is worse than an empty board: you can act on empty.
+           4. Restoring auto-pin needs a durable object-reference model for
+              pins, owned by Research / Asset Library. That is a data-model
+              change, not a line here, and it was deliberately not attempted
+              in a security pass. */
       },
 
       /** Partial update of brand identity template fields */
@@ -2525,17 +2593,18 @@ const useAppStore = create(
             const files = Array.isArray(project.detective?.[key])
               ? project.detective[key]
               : []
-            return {
-              ...project,
-              detective: {
-                ...(project.detective || {}),
-                [key]: files.map((file) =>
-                  file?.url === url
-                    ? { ...file, assetRef: assetRef?.kind === 'asset' && assetRef?.id ? assetRef : file.assetRef }
-                    : file
-                ),
-              },
-            }
+            /* Attachment lists are not composed into the brief, so this write
+               cannot change it — routed through `withDetective` anyway so that
+               every writer of `detective` goes through one door and the guard
+               test has nothing to except. */
+            return withDetective(project, {
+              ...(project.detective || {}),
+              [key]: files.map((file) =>
+                file?.url === url
+                  ? { ...file, assetRef: assetRef?.kind === 'asset' && assetRef?.id ? assetRef : file.assetRef }
+                  : file
+              ),
+            })
           }),
         })),
       toggleBodyDoubling: () =>
@@ -3571,10 +3640,16 @@ const useAppStore = create(
          never reach a client surface — `packageFiles`/`buildBrandPackSnapshot`
          do not know it exists, and `clientFacingLeak.test.js` keeps it that
          way. */
-      addLogoConcept: (dataUrl, projectId) =>
+      /**
+       * @returns {string} the new concept's id, so a caller that needs to
+       *   select what it just added can do so through `chooseLogoConcept`
+       *   rather than reaching for `setLogoImage`. The id is minted before the
+       *   `set` for that reason alone — nothing else about this action moved.
+       */
+      addLogoConcept: (dataUrl, projectId) => {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
         set((state) => {
           const owner = projectId ?? state.currentProjectId
-          const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
           return {
             projects: state.projects.map((p) => {
               if (p.id !== owner) return p
@@ -3609,7 +3684,9 @@ const useAppStore = create(
               }
             }),
           }
-        }),
+        })
+        return id
+      },
 
       chooseLogoConcept: (conceptId, projectId) =>
         set((state) => {
@@ -3654,11 +3731,17 @@ const useAppStore = create(
         set((state) => {
           const owner = projectId ?? state.currentProjectId
           const next = Array.isArray(list) ? list : []
-          /* The mirror is re-derived here too, so the invariant holds after
+          /* BOTH mirrors are re-derived here, so the invariant holds after
              every write to the list and not only after the per-concept
              actions. Undoing a removal restores the starred concept; without
              this the brand book would keep printing the rationale of whichever
-             concept had been promoted in its place. */
+             concept had been promoted in its place.
+
+             `logoDirection` was re-derived from the start. `logoImage` was NOT,
+             for a long time, while this comment claimed otherwise — the one
+             caller happened to write it itself, so the gap stayed latent and
+             the next caller to trust the comment would have restored the
+             concepts and left the mark behind. */
           const chosen = next.find((c) => c?.chosen)
           return {
             projects: state.projects.map((p) =>
@@ -3667,6 +3750,27 @@ const useAppStore = create(
                     ...p,
                     logoConcepts: next,
                     logoDirection: chosen?.why || '',
+                    /* ONLY WHEN A CHOSEN CONCEPT ESTABLISHES ONE. A list with
+                       nothing starred names no mark, and that is not the same
+                       statement as "this project has no mark":
+
+                       - a legacy project carries artwork in `logoImage` with no
+                         concepts at all, and no stored field says whether it
+                         was a mark or an old cover drop. Clearing it here would
+                         destroy it on the strength of a guess.
+                       - after a cloud push `applyImageUrlReplacements` swaps
+                         `logoImage` for a Storage URL while the concept still
+                         holds the data URL it was uploaded from. Deriving
+                         unconditionally would drag the fat data URL back and
+                         undo the offload.
+
+                       `logoDirection` above is deliberately NOT conditional:
+                       pre-concept direction text is adopted onto the first
+                       concept by `addLogoConcept`, so there is no orphan
+                       rationale for the guard to protect. Artwork has no
+                       equivalent adoption path, which is exactly why it needs
+                       one. */
+                    ...(chosen ? { logoImage: chosen.image || '' } : null),
                   }
                 : p
             ),
@@ -3688,12 +3792,24 @@ const useAppStore = create(
                  described. */
               const mirrorsDirection =
                 target?.chosen && Object.hasOwn(patch || {}, 'why')
+              /* And the image, for the same reason and in the same write.
+                 `logoDirection` was mirrored here from the start and
+                 `logoImage` was not, so re-imaging the chosen concept moved the
+                 concept and left the mirror — and therefore the pack, the book
+                 and the client's logo file — pointing at the previous artwork.
+                 No caller passes `image` today, so this closed a hole rather
+                 than a live defect; it is here because the mirror has to hold
+                 for every write to the list, not only the ones a screen
+                 currently makes. */
+              const mirrorsImage =
+                target?.chosen && Object.hasOwn(patch || {}, 'image')
               return {
                 ...p,
                 logoConcepts: list.map((c) =>
                   c.id === conceptId ? { ...c, ...patch } : c
                 ),
                 ...(mirrorsDirection ? { logoDirection: patch.why } : null),
+                ...(mirrorsImage ? { logoImage: patch.image || '' } : null),
                 ...identityEdit(),
               }
             }),
@@ -3917,7 +4033,7 @@ const useAppStore = create(
         if (intake.projectDeadline) {
           project.deadline = intake.projectDeadline
         }
-        project.brief = composeBriefFromDetective(detective)
+        project.brief = briefFromDetective(project, detective)
 
         /* Derive the project type ONCE, here, and freeze the stage list with
            it. Never recompute from the brief at read time.

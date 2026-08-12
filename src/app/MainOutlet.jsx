@@ -97,6 +97,7 @@ export default function MainOutlet(p) {
     completeCurrentStep,
     startVoice,
     setActiveView,
+    pathCtx,
     identityWorkroomLauncherRef,
     workroomLauncherRef,
     applicationWorkroomLauncherRef,
@@ -251,6 +252,8 @@ export default function MainOutlet(p) {
         projectPalette={projectPalette}
         forcedBreak={forcedBreak}
         setActiveView={setActiveView}
+        activeProject={activeProject}
+        pathCtx={pathCtx}
         flashToast={flashToast}
         flashMicro={flashMicro}
         notifyAction={notifyAction}
@@ -270,8 +273,15 @@ export default function MainOutlet(p) {
       <>
       <SparkView
         key="directions-workroom"
+        /* Explicit, not defaulted. This is the FIRST `<SparkView` in this
+           file, which is the one `propContract.test.js` reads — the second
+           (co-mounted under Identity) passes it as a bare attribute the test
+           cannot see. Left implicit, `suspended` read as a prop the outlet
+           never delivers. */
+        suspended={false}
         setActiveView={setActiveView}
         workroomLauncherRef={workroomLauncherRef}
+        pathCtx={pathCtx}
         directions={activeProject?.directions}
         updateDirection={updateDirection}
         project={activeProject}
@@ -461,6 +471,7 @@ export default function MainOutlet(p) {
           studioName={studioName}
           setActiveView={setActiveView}
           identityWorkroomLauncherRef={identityWorkroomLauncherRef}
+          pathCtx={pathCtx}
           flashToast={flashToast}
           offerUndo={offerUndo}
           flashMicro={flashMicro}
@@ -487,6 +498,7 @@ export default function MainOutlet(p) {
             journeyNext={journeyNext}
             setActiveView={setActiveView}
             applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
+            pathCtx={pathCtx}
             flashToast={flashToast}
             flashMicro={flashMicro}
             offerUndo={offerUndo}
@@ -578,6 +590,7 @@ export default function MainOutlet(p) {
         prefs={prefs}
         bookSetup={bookSetup}
         setActiveView={setActiveView}
+          pathCtx={pathCtx}
         goToProcessStep={goToProcessStep}
         goSystemSection={goSystemSection}
         buildCurrentBrandPack={buildCurrentBrandPack}
@@ -651,6 +664,7 @@ export default function MainOutlet(p) {
         journeyNext={journeyNext}
         activeProject={activeProject}
         setActiveView={setActiveView}
+        pathCtx={pathCtx}
         updateDetective={updateDetective}
         onOpenShare={() => setOverviewSharePanelOpen(true)}
         setProjectDeadline={setProjectDeadline}

@@ -1275,57 +1275,36 @@
   box-shadow: inset 0 -2px 0 var(--text-primary);
 }
 
-/* Phase 4A — artboard studio: one large identity field with a quiet tool
-   shelf. Existing controls remain in the DOM and keep their writers. */
-.identity-workroom {
-  /* Portaled onto body — cannot inherit .app tokens. Own an opaque room
-     surface the same way Directions owns --table-paper. */
-  --bg: #f0eeeb;
-  --bg-elevated: #ffffff;
-  --bg-muted: #e8e6e1;
-  --text-primary: #1c1917;
-  --text-secondary: #44403c;
-  --text-muted: #78716c;
-  --border-subtle: color-mix(in srgb, #1c1917 12%, transparent);
-  --border-strong: color-mix(in srgb, #1c1917 22%, transparent);
-  position: fixed;
-  z-index: 1000;
-  inset: 0;
-  overflow: auto;
-  background: var(--bg);
-  color: var(--text-primary);
-}
+/* ── Identity · the artboard studio ────────────────────────────────────────
+   COMPOSITION ONLY. `.identity-workroom` used to own a fixed viewport, its
+   own private colour tokens and a second copy of the dark theme, because it
+   was a room in its own right. It is a class on a `.cc-stage` now, and the
+   stage owns every one of those. What is left is the geometry this stop
+   decides: artboard dominant on the left, the one active tool beside it.
 
-/* Co-mounted under Application Stage: keep DOM for launcher restore, no paint. */
-.identity-workroom.is-suspended {
-  visibility: hidden;
-  pointer-events: none;
-}
+   Its private token block is gone rather than narrowed. Two sets of surface
+   tokens for one screen is how the app ended up with a stage whose panels
+   were still shell-white — and Identity was carrying `--bg-elevated: #ffffff`
+   against a warm ground for exactly that reason. */
 
 .design-studio.system-view {
-  max-width: none !important;
-  padding: 1rem clamp(1rem, 4vw, 4rem) 3rem;
+  max-width: none;
+  padding: 0;
   background: transparent;
 }
 
-.identity-studio-recovery {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 44px;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.identity-studio-recovery p { margin: 0; }
-
+/* THE TOOL SHELF IS NOT A SECOND NAVIGATION. Centred, it read as a tab bar
+   competing with the stage's path edge for the same "where am I" glance.
+   Left-aligned at the smallest step, under a hairline, it reads as what it
+   is: which part of one stop is on the bench. */
 .identity-tool-dock {
   display: flex;
-  justify-content: center;
-  gap: 0.25rem;
-  max-width: max-content;
-  margin: 1rem auto 1.5rem;
+  gap: var(--space-4);
+  max-width: none;
+  margin: 0 0 var(--space-5);
+  padding-bottom: var(--space-2);
   border: 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .identity-tool-btn {
@@ -1407,38 +1386,6 @@
 .design-studio .design-section-rule { flex: 1; }
 
 .app.deep .design-studio.system-view { background: transparent; }
-.app.deep .identity-workroom { background: var(--bg); }
-
-/* The studio is portaled above `.app`, so it cannot inherit deep-theme
-   variables from that ancestor. Keep the same intentional dark surface. */
-body:has(.app.deep) .identity-workroom {
-  --bg: #101613;
-  --bg-elevated: #1a1f1c;
-  --bg-muted: #161b18;
-  --text-primary: #edf3ec;
-  --text-secondary: #c5cec6;
-  --text-muted: #aab7ac;
-  --border-subtle: color-mix(in srgb, #edf3ec 14%, transparent);
-  --border-strong: color-mix(in srgb, #edf3ec 24%, transparent);
-  background: #101613;
-  color: #edf3ec;
-}
-
-body:has(.app.deep) .identity-workroom .design-studio.system-view {
-  background: transparent;
-}
-
-body:has(.app.deep) .identity-workroom .identity-studio-recovery,
-body:has(.app.deep) .identity-workroom .identity-tool-btn,
-body:has(.app.deep) .identity-workroom .dir-developing,
-body:has(.app.deep) .identity-workroom .dir-developing-title,
-body:has(.app.deep) .identity-workroom .text-link {
-  color: #edf3ec;
-}
-
-body:has(.app.deep) .identity-workroom .identity-tool-btn.is-active {
-  color: #ffffff;
-}
 
 /* A direction is a provisional source, not a second inspector. Keep its
    route, citation and explicit commit path in a single quiet shelf above the
@@ -1634,12 +1581,22 @@ body:has(.app.deep) .identity-workroom .identity-tool-btn.is-active {
   color: var(--ts-mute, #A1A1A1);
 }
 
+/* Delivery's preview frame, styled from the DESIGN sheet — a cross-view rule,
+   which is why it reached for `!important`: `.deliver-pack-preview` here and
+   `.assets-preview-frame` in lazy-deliver.css are both one class, so which one
+   won depended on which view you had opened first. Four overrides to settle a
+   tie.
+
+   Qualified with `.pack-view` (DeliverView's own root class) instead. That
+   wins the tie on specificity, deterministically, in either load order — and
+   it lets the stage's flattening rule beat it in turn without a fifth
+   override. -4 !important; lazy-design's budget lowered to match. */
 .deliver-studio .pack-preview-artboard,
-.deliver-pack-preview {
-  background: var(--ts-panel, #FFFFFF) !important;
-  border: 1px solid var(--ts-border, #E7E7E7) !important;
-  border-radius: var(--radius-sm) !important;
-  box-shadow: none !important;
+.pack-view .deliver-pack-preview {
+  background: var(--ts-panel, #FFFFFF);
+  border: 1px solid var(--ts-border, #E7E7E7);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   max-height: min(70vh, 48rem);
   overflow: auto;
 }
@@ -2746,4 +2703,153 @@ body:has(.app.deep) .identity-workroom .identity-tool-btn.is-active {
   .type-specimen-sheet {
     padding: var(--space-4);
   }
+}
+
+
+/* ── Identity on the stage ─────────────────────────────────────────────────
+   Everything below is scoped to `.cc-stage--design`, so it says how Identity
+   is composed on the new stage without re-deciding anything for the shell
+   screens that still draw the same components (the pack preview, the brand
+   book). The stop is a bench with a sheet on it: the artboard is a physical
+   sheet lifted off the table, and the tools beside it are hairline-separated
+   stacks rather than a column of panels. */
+
+.cc-stage--design .identity-tool-btn {
+  padding: var(--space-2) 0;
+  font-size: var(--fs-2);
+}
+
+.cc-stage--design .identity-tool-btn.is-active {
+  font-weight: 600;
+  box-shadow: none;
+  text-decoration: underline;
+  text-underline-offset: 0.4em;
+  text-decoration-thickness: 2px;
+}
+
+/* THE ARTBOARD IS A SHEET, NOT A PANEL. It was wrapped in a bordered,
+   rounded, filled container — a card holding a picture of a document, which
+   is two containers doing one job and the loudest remaining legacy tell on
+   this stop. The wrapper draws nothing now; the sheet inside it carries a
+   shadow so it sits ON the table rather than in a box. */
+.cc-stage--design .design-artboard-column {
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-none);
+  background: transparent;
+  overflow: visible;
+}
+
+.cc-stage--design .system-artboard {
+  border-radius: var(--radius-none);
+  box-shadow: var(--stage-lift);
+}
+
+.cc-stage--design .design-edit-column > .panel.brand-section {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.cc-stage--design .design-edit-column > .panel.brand-section:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* Contextual notes are lines on the bench, not tinted trays. */
+.cc-stage--design .dir-route-material,
+.cc-stage--design .dir-route-part-lead {
+  padding: 0 0 0 var(--space-3);
+  border-left: 2px solid var(--border-strong);
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+
+/* ── Identity & Delivery: the last of the card grammar ─────────────────────
+   Both classes are shared — `.logo-lockup-tile` renders on Identity and in
+   the brand book, `.stationery-card` on Identity, Delivery and the book — so
+   both changes are scoped to `.cc-stage`. Off the stage they are unchanged.
+
+   LOCKUPS ARE CELLS, NOT CARDS. Four 326×95 bordered, rounded, filled boxes
+   in a 2×2 grid is dashboard composition: it says "four features" when the
+   fact is "one mark, four ways". A shared hairline grid says the second
+   thing, which is what the tool stacks beside it already do. */
+.cc-stage .logo-lockup-tile {
+  padding: var(--space-3) 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+/* STATIONERY IS A SHEET, so it gets the sheet vocabulary the artboard, the
+   book page and the specimen already use — one shadow from the shared
+   elevation token, square, unframed. Delivery was carrying 15 shadows, more
+   than the other five stops combined, because this grid had grown its own. */
+.cc-stage .stationery-card {
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-none);
+  background: transparent;
+  gap: var(--space-2);
+}
+
+/* The artefacts themselves, named. Delivery's "15 shadows" turned out to be
+   12 brand-book pages and 3 stationery pieces — every one of them a sheet,
+   none of them chrome, so the count was never the defect. Pointing them at
+   the shared token is what makes it a vocabulary rather than three sheets
+   that happen to look similar. */
+.cc-stage :is(.stationery-letterhead, .stationery-envelope, .stationery-signature),
+.cc-stage .book-preview-sheet {
+  box-shadow: var(--stage-lift-sm);
+}
+
+
+/* ── The Direction Sheet reads as a sheet ──────────────────────────────────
+   It is the artboard already — lifted, square, on the table. What still made
+   it "a form pretending to be a document" was its interior: every line on it
+   was a boxed, filled input sitting under a label, so a sheet showing the
+   brand's own words looked like a settings panel with a dark banner on top.
+
+   The fields stay editable and keep every writer they had. They just stop
+   announcing themselves as inputs until you go near them: type set on paper,
+   a hairline where the line is, a real edge on hover and focus. Nothing here
+   is a `readonly` and nothing changes what writes where.
+
+   Scoped to the artboard inside the stage, so the same component keeps its
+   ordinary form chrome in the pack preview and the brand book. */
+.cc-stage--design .system-artboard :is(.field-input, input, textarea) {
+  padding-inline: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+.cc-stage--design .system-artboard :is(.field-input, input, textarea):hover {
+  border-bottom-color: var(--border-subtle);
+}
+
+.cc-stage--design .system-artboard :is(.field-input, input, textarea):focus,
+.cc-stage--design .system-artboard :is(.field-input, input, textarea):focus-visible {
+  border-bottom-color: currentColor;
+}
+
+/* The sheet's own section labels are captions on a document, not form
+   legends — one step down and out of the way of the words they introduce. */
+.cc-stage--design .system-artboard .kicker {
+  margin-bottom: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--fs-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+
+/* The tool's label carried `style={{ margin: 0 }}` inline, and relied on the
+   note below it for its air. With the note gone (it was the second prose
+   block), "Develop mark" sat flush against "Concepts" — two headings reading
+   as one line. An inline style beats any selector, so the space goes on the
+   label's sibling rather than fighting it. */
+.cc-stage--design .dir-route-tool-label + * {
+  margin-top: var(--space-3);
 }
