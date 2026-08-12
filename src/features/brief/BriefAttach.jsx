@@ -11,9 +11,22 @@
  */
 import { useRef, useState } from 'react'
 import { uploadClientFile } from '../../lib/client/clientUploads'
+import { attachmentKey } from '../../lib/client/attachmentUrl'
 
 export default function BriefAttach({ targetId, files = [], onChange, idPrefix, fieldId }) {
   const [pending, setPending] = useState([]) // { key, name, previewUrl, status }
+  /* Previews for files attached in THIS session, keyed the same way the entry
+     is. `client-uploads` went private (20260812123000) on the owner's ruling
+     that attachment confidentiality survives revocation, and the only honest
+     way to hold that is for anonymous screens not to read the bucket at all —
+     an anon SELECT policy would hand back read access to precisely the
+     audience revocation is about, and would restore bucket listing over the
+     share and portal ids besides.
+     So the client sees the picture they just chose, from the file they still
+     hold. After a reload that local copy is gone and the attachment shows as a
+     name. It is still attached, the designer can still see it, and nothing the
+     client needs to DO here requires reading it back. */
+  const [previews, setPreviews] = useState({})
   const inputRef = useRef(null)
 
   const anySending = pending.some((p) => p.status === 'sending')
@@ -28,7 +41,9 @@ export default function BriefAttach({ targetId, files = [], onChange, idPrefix, 
       uploadClientFile(targetId, file).then((res) => {
         if (res.ok) {
           setPending((p) => p.filter((row) => row.key !== key))
-          onChange([...(files || []), { name: res.name, url: res.url }])
+          const entry = { name: res.name, url: res.url }
+          setPreviews((m) => ({ ...m, [attachmentKey(entry)]: previewUrl }))
+          onChange([...(files || []), entry])
         } else {
           setPending((p) =>
             p.map((row) => (row.key === key ? { ...row, status: 'failed', file } : row))
@@ -45,7 +60,9 @@ export default function BriefAttach({ targetId, files = [], onChange, idPrefix, 
     uploadClientFile(targetId, row.file).then((res) => {
       if (res.ok) {
         setPending((p) => p.filter((r) => r.key !== key))
-        onChange([...(files || []), { name: res.name, url: res.url }])
+        const entry = { name: res.name, url: res.url }
+        setPreviews((m) => ({ ...m, [attachmentKey(entry)]: row.previewUrl }))
+        onChange([...(files || []), entry])
       } else {
         setPending((p) => p.map((r) => (r.key === key ? { ...r, status: 'failed' } : r)))
       }
@@ -59,19 +76,35 @@ export default function BriefAttach({ targetId, files = [], onChange, idPrefix, 
   return (
     <div className="brief-attach">
       <div className="brief-attach-row">
-        {files.map((f) => (
-          <div className="brief-attach-thumb" key={f.url}>
-            <img src={f.url} alt={f.name || 'Attachment'} />
-            <button
-              type="button"
-              className="brief-attach-remove"
-              aria-label={`Remove ${f.name || 'attachment'}`}
-              onClick={() => removeSent(f.url)}
-            >
-              ×
-            </button>
-          </div>
-        ))}
+        {/* Local preview or nothing — this screen never reads the bucket.
+            An entry with no preview still renders, with its name and its
+            remove button: the client must always be able to see WHAT is
+            attached and take it off again, and an attachment that silently
+            disappears from the list is the one failure mode worth more than
+            the thumbnail. */}
+        {files.map((f) => {
+          const preview = previews[attachmentKey(f)]
+          return (
+            <div className="brief-attach-thumb" key={attachmentKey(f)}>
+              {preview ? (
+                <img src={preview} alt={f.name || 'Attachment'} />
+              ) : (
+                /* Reuses the existing status class rather than minting a new
+                   one — this pass may not touch stylesheets, and an unstyled
+                   class would render as bare text over the thumb. */
+                <span className="brief-attach-status">{f.name || 'Attached'}</span>
+              )}
+              <button
+                type="button"
+                className="brief-attach-remove"
+                aria-label={`Remove ${f.name || 'attachment'}`}
+                onClick={() => removeSent(f.url)}
+              >
+                ×
+              </button>
+            </div>
+          )
+        })}
         {pending.map((row) => (
           <div
             className={`brief-attach-thumb is-${row.status}`}

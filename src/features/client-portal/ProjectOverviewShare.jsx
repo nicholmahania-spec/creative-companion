@@ -8,11 +8,13 @@
  * an in-progress review survives the panel being closed — losing a
  * half-checked scan to a stray backdrop click is the abandonment case.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { portalPushableSteps } from '../../lib/journey/journey'
 import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/brief/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../../lib/book/exportFiles'
 import { groupMessagesByDay } from '../../lib/client/messageDayLabel'
+import { allAttachments, attachmentKey } from '../../lib/client/attachmentUrl'
+import { useAttachmentUrls } from '../../lib/client/useAttachmentUrls'
 import { copyText } from '../../lib/client/copyText'
 import { ocrOverviewForm, ocrOverviewPdf, readOverviewPdfForm } from '../../lib/overviewOcr'
 import {
@@ -720,6 +722,12 @@ function PortalMode({
 function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
   const { answers, current = {}, source, unmatched = {} } = draft
   const missed = ALL_FIELDS.filter((f) => !(f.id in answers))
+  /* One hook for the whole screen — attachments are spread across several
+     `${id}Files` arrays and a hook cannot be called per array. Signed now that
+     the bucket is private; the studio user is authenticated, so the
+     `client-uploads owner read` policy is what actually authorises this. */
+  const attachments = useMemo(() => allAttachments(answers), [answers])
+  const attachmentUrls = useAttachmentUrls(attachments)
 
   return (
     <div className="overview-share-review">
@@ -753,19 +761,45 @@ function ReviewAnswers({ draft, onChange, onCancel, onApply }) {
           return (
             <div className="field-block" key={fieldId}>
               <label className="field-label">{fieldLabel(baseId)} — attached</label>
+              {/* Never `f.url` (audit P2-1). These pairs come out of the
+                  client's own submission, so the URL is theirs to choose. The
+                  key is validated, then signed against the private bucket —
+                  the stored string is never fetched. Target id is not threaded
+                  in because this same review screen also shows OCR and
+                  PDF-form answers, which have no portal behind them;
+                  folder-to-target binding is enforced at submit time by
+                  sanitize_client_attachments(), and ownership by the storage
+                  policy. */}
               <div className="define-attach-thumbs">
-                {value.map((f) => (
-                  <a
-                    key={f.url}
-                    href={f.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="define-attach-thumb"
-                    title={f.name || 'Attachment'}
-                  >
-                    <img src={f.url} alt={f.name || 'Attachment'} />
-                  </a>
-                ))}
+                {value.map((f) => {
+                  const src = attachmentUrls[attachmentKey(f)]
+                  if (!src) {
+                    /* Name only. Null here covers "still signing", "failed to
+                       sign", "not yours" and "failed validation", and naming a
+                       cause would be a guess in three of the four — the first
+                       one resolves a moment later, so any accusation would
+                       also be transiently false. The file is still listed,
+                       because a file that disappears without trace is the
+                       failure this audience least recovers from. */
+                    return (
+                      <span className="define-attach-note" key={attachmentKey(f)}>
+                        {f?.name || 'Attachment'}
+                      </span>
+                    )
+                  }
+                  return (
+                    <a
+                      key={attachmentKey(f)}
+                      href={src}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="define-attach-thumb"
+                      title={f.name || 'Attachment'}
+                    >
+                      <img src={src} alt={f.name || 'Attachment'} />
+                    </a>
+                  )
+                })}
               </div>
             </div>
           )

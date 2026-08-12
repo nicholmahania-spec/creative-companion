@@ -10,6 +10,8 @@ import {
   isFilled,
 } from '../../lib/brief/detectiveBrief'
 import useIsMobile from '../../lib/useIsMobile'
+import { allAttachments, attachmentKey } from '../../lib/client/attachmentUrl'
+import { useAttachmentUrls } from '../../lib/client/useAttachmentUrls'
 import DefineStartHere from './DefineStartHere'
 import BriefSpectrum from './BriefSpectrum'
 import '../../styles/lazy-define.css'
@@ -114,6 +116,13 @@ export default function DetectiveSheet({
   projectDeadline = '',
   setProjectDeadline,
 }) {
+  /* One hook for every attachment on the sheet. `client-uploads` is private
+     since 20260812123000, so these are signed per object and expire; the
+     shared cache in attachmentAccess collapses the repeats this re-memoises
+     on each keystroke. The designer is authenticated — the storage policy is
+     what authorises the read, not anything on this screen. */
+  const attachments = useMemo(() => allAttachments(detective), [detective])
+  const attachmentUrls = useAttachmentUrls(attachments)
   /* FLAT, not an accordion (adhd-executive-function-advisor ruling for the
      2026 design handoff). The accordion billed a five-way chapter decision
      on every arrival, made four chapters a memory test ("hidden, not one
@@ -382,18 +391,39 @@ export default function DetectiveSheet({
                         {f.attach && Array.isArray(detective?.[`${f.id}Files`]) &&
                           detective[`${f.id}Files`].length > 0 && (
                             <div className="define-attach-thumbs">
-                              {detective[`${f.id}Files`].map((file) => (
-                                <a
-                                  key={file.url}
-                                  href={file.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="define-attach-thumb"
-                                  title={file.name || 'Attachment'}
-                                >
-                                  <img src={file.url} alt={file.name || 'Attachment'} />
-                                </a>
-                              ))}
+                              {/* Rebuilt, never the stored string — see
+                                  attachmentUrl.js. These rows were merged in
+                                  from a client submission, so the URL was
+                                  theirs to write. */}
+                              {detective[`${f.id}Files`].map((file) => {
+                                const src = attachmentUrls[attachmentKey(file)]
+                                if (!src) {
+                                  /* Name only — see the matching note in
+                                     ProjectOverviewShare. Null covers signing
+                                     in progress as well as refusal, so any
+                                     stated cause would be transiently wrong. */
+                                  return (
+                                    <span
+                                      className="define-attach-note"
+                                      key={attachmentKey(file)}
+                                    >
+                                      {file?.name || 'Attachment'}
+                                    </span>
+                                  )
+                                }
+                                return (
+                                  <a
+                                    key={attachmentKey(file)}
+                                    href={src}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="define-attach-thumb"
+                                    title={file.name || 'Attachment'}
+                                  >
+                                    <img src={src} alt={file.name || 'Attachment'} />
+                                  </a>
+                                )
+                              })}
                               {f.id === 'inspirationLinks' && (
                                 <span className="define-attach-note">Also on the Research wall</span>
                               )}

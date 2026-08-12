@@ -143,6 +143,10 @@ import {
   changeAccessPassword,
 } from './lib/auth'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import {
+  revokeProjectLinks,
+  restoreProjectLinks,
+} from './lib/client/projectLinks'
 import { createAssetStorage } from './lib/assets/assetStorage'
 import { adoptBriefAttachments } from './lib/assets/adoptBriefAttachments'
 import { syncAllProjects } from './services/syncEngine'
@@ -3060,12 +3064,31 @@ function App() {
     }
     if (result.empty) setActiveView('create')
     else if (wasActive) setActiveView('project')
+
+    /* A deleted project must not keep serving its client link (audit P2-3).
+       The desk deletes offline and always has, so this cannot gate the delete
+       on a round trip — but it must not fail silently either, because the
+       whole point is that the designer has just lost the handle to revoke it
+       by hand. Kick it off here, say so if it did not land, and hold the ids
+       so undo can put back exactly what this took down. */
+    const revoking = revokeProjectLinks(id).then((r) => {
+      if (!r.ok) {
+        flashToast(
+          'Project deleted. The client link is still live — revoke it from the client inbox.'
+        )
+      }
+      return r
+    })
+
     flashToast(
       result.empty ? 'Project deleted — desk is empty' : 'Project deleted'
     )
     offerUndo(name || 'Project deleted', () => {
       result.restore?.()
       setActiveView(prevView)
+      revoking.then((r) => {
+        if (r.ok) restoreProjectLinks(r)
+      })
     })
   }
 
