@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adoptBriefAttachments } from './adoptBriefAttachments.js'
+import { adoptBriefAttachments, adoptionSummary } from './adoptBriefAttachments.js'
 
 const PROJECT_A = 'project-a'
 const PROJECT_B = 'project-b'
@@ -166,5 +166,119 @@ describe('adoptBriefAttachments', () => {
     expect(result.failed).toEqual([
       { url: URL, reason: 'Could not check whether this source was already preserved.' },
     ])
+  })
+})
+
+/**
+ * PARTIAL FAILURE, AND SAYING SO.
+ *
+ * The audit found this result discarded at its only call site, which turned
+ * every failure — including the one where the whole durable path was broken —
+ * into silence. A designer who accepts a Brief and is told nothing concludes
+ * the artwork was filed. These prove the two halves of the fix: successes are
+ * kept whatever else happened, and the sentence the designer sees never
+ * reports work that did not happen.
+ */
+describe('a partly successful adoption keeps what worked and names what did not', () => {
+  const GOOD = 'https://example.test/client-upload/good.png'
+  const BAD = 'https://example.test/client-upload/bad.png'
+
+  const run = () =>
+    adoptBriefAttachments({
+      projectId: PROJECT_A,
+      attachments: [
+        { name: 'Good.png', url: GOOD },
+        { name: 'Bad.png', url: BAD },
+      ],
+      fetchFile: async (url) => (url === GOOD ? response() : { ok: false }),
+      durableStore: {
+        findBriefSource: notFound,
+        save: async (asset) => ({ ok: true, asset: { ...asset, storage_path: 'owner/p/a.png' } }),
+      },
+      makeId: () => 'brief-good',
+      now: 0,
+    })
+
+  it('preserves the successful copy', async () => {
+    const result = await run()
+    expect(result.assets.map((a) => a.source_ref)).toEqual([GOOD])
+    expect(result.links).toEqual([{ url: GOOD, assetRef: { kind: 'asset', id: 'brief-good' } }])
+  })
+
+  it('identifies the failed item with a reason, by url', async () => {
+    const result = await run()
+    expect(result.failed).toEqual([
+      { url: BAD, reason: 'The original image could not be read.' },
+    ])
+  })
+
+  it('does not link the failed attachment to an asset that was never made', async () => {
+    const result = await run()
+    expect(result.links.some((l) => l.url === BAD)).toBe(false)
+  })
+
+  it('reports a durable project that does not exist yet, rather than filing nothing quietly', async () => {
+    /* `save` refusing because the project has never been pushed is the one
+       failure a designer can act on directly, so its sentence travels all the
+       way out instead of being flattened into a count. */
+    const result = await adoptBriefAttachments({
+      projectId: PROJECT_A,
+      attachments: [{ name: 'Logo.png', url: GOOD }],
+      fetchFile: async () => response(),
+      durableStore: {
+        findBriefSource: notFound,
+        save: async () => ({ ok: false, error: 'This project has not been sent to the cloud yet.' }),
+      },
+      now: 0,
+    })
+    expect(result.assets).toEqual([])
+    expect(adoptionSummary(result).line).toBe('This project has not been sent to the cloud yet.')
+    expect(adoptionSummary(result).ok).toBe(false)
+  })
+})
+
+describe('adoptionSummary', () => {
+  it('says nothing when there was nothing to do', () => {
+    /* A Brief with no attachments must not produce a toast about
+       attachments. An empty line is the signal not to speak. */
+    expect(adoptionSummary({})).toEqual({ line: '', ok: true })
+  })
+
+  it('counts newly copied and already-preserved images as one fact', () => {
+    expect(adoptionSummary({ assets: [{}], hydratedAssets: [{}] })).toEqual({
+      line: 'Kept 2 client images with the project',
+      ok: true,
+    })
+  })
+
+  it('uses the singular for one', () => {
+    expect(adoptionSummary({ assets: [{}] }).line).toBe('Kept 1 client image with the project')
+  })
+
+  it('never says filed when nothing was filed', () => {
+    const said = adoptionSummary({ failed: [{ reason: 'The original image could not be read.' }] })
+    expect(said.ok).toBe(false)
+    expect(said.line).not.toMatch(/kept|filed|saved/i)
+  })
+
+  it('reports both sides when some worked and some did not', () => {
+    const said = adoptionSummary({ assets: [{}], failed: [{ reason: 'x' }, { reason: 'y' }] })
+    expect(said).toEqual({ line: 'Kept 1, 2 could not be kept with the project', ok: false })
+  })
+
+  it('does not stack reasons when several failed', () => {
+    const said = adoptionSummary({ failed: [{ reason: 'x' }, { reason: 'y' }] })
+    expect(said.line).toBe('2 client images could not be kept with the project')
+  })
+
+  it('stays in the non-punitive register', () => {
+    const lines = [
+      adoptionSummary({ assets: [{}] }).line,
+      adoptionSummary({ failed: [{ reason: 'x' }, { reason: 'y' }] }).line,
+      adoptionSummary({ assets: [{}], failed: [{ reason: 'x' }] }).line,
+    ]
+    for (const line of lines) {
+      expect(line).not.toMatch(/fail|error|invalid|!|success/i)
+    }
   })
 })

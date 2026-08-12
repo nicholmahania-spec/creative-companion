@@ -150,7 +150,7 @@ import {
   restoreProjectLinks,
 } from './lib/client/projectLinks'
 import { createAssetStorage } from './lib/assets/assetStorage'
-import { adoptBriefAttachments } from './lib/assets/adoptBriefAttachments'
+import { adoptBriefAttachments, adoptionSummary } from './lib/assets/adoptBriefAttachments'
 import { syncAllProjects } from './services/syncEngine'
 import { stepsForProject } from './lib/journey/projectTypes'
 
@@ -698,7 +698,23 @@ function App() {
           link.assetRef
         )
       }
+
+      /* SAY WHAT HAPPENED. This result used to be discarded, so a client's
+         artwork that was never copied into the private bucket left the
+         designer believing it had been — the one outcome the adoption path
+         exists to prevent. `important: true` because a durable operation that
+         did not complete is not a micro success, and because it makes the
+         toast bypass both quiet mode and batching, so this callback's stale
+         closure over those two prefs is never read. */
+      const said = adoptionSummary(adopted)
+      if (said.line) flashToast(said.line, { important: true })
     },
+    /* flashToast is a new function each render; listing it would rebuild this
+       callback — a prop handed down to the brief surfaces — on every one. The
+       only bindings it closes over are toastMode and toastBatchWindow, and
+       `important: true` skips both branches that read them, so the stale
+       closure cannot change what the designer sees. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
     []
   )
   const portalSeen = useAppStore((s) => s.portalSeen)

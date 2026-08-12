@@ -91,13 +91,41 @@ export const DB_VERSION = 1
  * device. "Failed" is an accusation.
  */
 export const BYTE_STATES = {
-  /** Bytes are in the local cache. Renders immediately, online or not. */
+  /** Bytes are in the local cache, verified this render. Renders immediately. */
   ready: 'ready',
+  /**
+   * The row records a copy written to this device's cache (`local_key`), not
+   * re-verified this render.
+   *
+   * ADDED because its absence was producing a lie. `ingestFiles` writes the
+   * bytes to IndexedDB, records `local_key`, and correctly leaves
+   * `storage_path` null because nothing was uploaded — and this function, which
+   * only ever looked at `storage_path`, then reported every successfully filed
+   * file as an upload that did not finish. The designer was told "Filed 1 file"
+   * and then shown, on the card, that it had failed. The rational response is
+   * to push it again, forever.
+   *
+   * A local copy is a REAL outcome and not a lesser version of a remote one.
+   * It is also not the same outcome, so it does not borrow `ready`'s silence:
+   * the card says where the file actually is, because "saved here" and "saved
+   * in the cloud" differ in exactly the way that matters when the laptop is
+   * lost. Never phrased as cloud storage — see assetBytes' header on why this
+   * cache must not be described as a backup.
+   */
+  local: 'local',
   /** Row says bytes exist remotely; this device has not fetched them. */
   remote: 'remote',
   /** Fetching now. */
   loading: 'loading',
-  /** The row never got a storage_path — the upload did not complete. */
+  /**
+   * No copy is recorded anywhere — neither a local key nor a storage path.
+   *
+   * Since `ingestFiles` refuses a file it could not write, and the durable
+   * path only commits a row after the upload succeeds, this state now has one
+   * real cause: a workspace restored from a backup, which carries metadata
+   * and never carries bytes. The label says that, rather than diagnosing an
+   * upload failure that did not happen.
+   */
   missing: 'missing',
 }
 
@@ -110,11 +138,18 @@ export const BYTE_STATES = {
  *
  * @param {object} args
  * @param {string|null} args.storagePath  assets.storage_path
- * @param {boolean} args.cached           bytes present locally
+ * @param {string|null} args.localKey     assets.local_key — this device's cache key
+ * @param {boolean} args.cached           bytes verified present locally
  * @param {boolean} args.loading          a fetch is in flight
  * @param {boolean} args.online           navigator.onLine at call time
  */
-export function assetByteState({ storagePath, cached, loading, online = true } = {}) {
+export function assetByteState({
+  storagePath,
+  localKey,
+  cached,
+  loading,
+  online = true,
+} = {}) {
   /* Cache first, unconditionally — before the storagePath check, before the
      online check. A cached asset renders even if the row lost its path and
      even with no network; those are facts about the server and this is a
@@ -122,11 +157,28 @@ export function assetByteState({ storagePath, cached, loading, online = true } =
      gets hidden behind a server problem. */
   if (cached) return { state: BYTE_STATES.ready, label: null, canRetry: false }
 
+  /* Then the recorded local copy, and it outranks the remote one for the same
+     reason: a file on this disk is available now, with no network and no
+     account, and saying "not on this device yet" over a file that IS on this
+     device is the failure this state was added to end. */
+  if (localKey) {
+    return {
+      state: BYTE_STATES.local,
+      /* States where it is. No "only", no "not yet backed up" — a warning
+         about the copy the designer just made would turn filing a file into
+         a thing they did wrong. */
+      label: 'Saved on this desk.',
+      canRetry: false,
+    }
+  }
+
   if (!storagePath) {
     return {
       state: BYTE_STATES.missing,
-      // Names what happened and what to do. Not "upload failed".
-      label: 'The file did not finish uploading. Push it again when you can.',
+      /* The bytes are not here and the row cannot say where they are. Names
+         the fact and the one action that recovers it, without diagnosing a
+         cause it cannot know. */
+      label: 'The file itself isn’t in this workspace. Add it again from the original.',
       canRetry: true,
     }
   }
