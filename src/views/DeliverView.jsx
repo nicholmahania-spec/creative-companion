@@ -96,6 +96,12 @@ export default function DeliverView({
   const [creditOpen, setCreditOpen] = useState(!studioName)
 
   const updateBrandField = useAppStore((s) => s.updateBrandField)
+  /* Page setup is the PROJECT's, not a studio pref. These three controls used
+     to write `prefs.book*` while the Brand Book Builder wrote its own
+     per-project copy, so the two surfaces could disagree about the trim the
+     client would actually receive. Same three controls, one home. */
+  const setBookBuilder = useAppStore((s) => s.setBookBuilder)
+  const setBookSetup = (patch) => setBookBuilder(patch)
   const addContact = useAppStore((s) => s.addContact)
   const updateContact = useAppStore((s) => s.updateContact)
   const removeContact = useAppStore((s) => s.removeContact)
@@ -370,19 +376,19 @@ export default function DeliverView({
               label="Page size"
               options={BOOK_PAGE_SIZES}
               value={bookSetup.pageSize}
-              onChange={(v) => setPref('bookPageSize', v)}
+              onChange={(v) => setBookSetup({ pageSize: v })}
             />
             <SetupChoice
               label="Edge space"
               options={BOOK_EDGE_SPACE}
               value={bookSetup.edgeSpace}
-              onChange={(v) => setPref('bookEdgeSpace', v)}
+              onChange={(v) => setBookSetup({ edgeSpace: v })}
             />
             <label className="book-setup-shop">
               <input
                 type="checkbox"
                 checked={bookSetup.printShop}
-                onChange={(e) => setPref('bookPrintShop', e.target.checked)}
+                onChange={(e) => setBookSetup({ printShop: e.target.checked })}
               />
               <span>Going to a print shop</span>
             </label>
