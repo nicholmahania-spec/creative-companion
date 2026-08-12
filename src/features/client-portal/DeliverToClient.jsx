@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   brandRevealUrl,
   defaultDeliveryNote,
+  deliveryGaps,
   deliveryStage,
   deliveryStatusLine,
   publishDelivery,
@@ -42,9 +43,6 @@ export default function DeliverToClient({
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  /* What buildDeliveryPack had to leave out, said out loud. A delivered book
-     quietly missing its moodboard is the failure this names. */
-  const [dropped, setDropped] = useState([])
 
   const clientName = project?.detective?.clientName || ''
 
@@ -81,6 +79,10 @@ export default function DeliverToClient({
   }, [portalId, cloud, portal?.delivery_status, portal?.delivery_viewed_at, portal?.delivery_reaction, refresh])
 
   const stage = deliveryStage(portal, previewing)
+  /* Derived from the delivered row, not remembered from the send. A designer
+     who reloads still learns why their client's copy differs from the preview —
+     the sentence used to live in component state and vanish. */
+  const dropped = deliveryGaps(portal, pack)
 
   const startPreview = () => {
     setError('')
@@ -101,13 +103,16 @@ export default function DeliverToClient({
       note,
       pack,
       book,
+      /* Which project's book this is. `publishDelivery` scopes the write to the
+         portal AND this id, so a link that belongs to another project of the
+         same studio cannot receive it. */
+      projectLocalId: project?.id,
     })
     setBusy(false)
     if (!r.ok) {
       setError(r.error)
       return
     }
-    setDropped(r.dropped || [])
     setPreviewing(false)
     await refresh()
     flashToast?.('Sent — they have the link', { important: true })

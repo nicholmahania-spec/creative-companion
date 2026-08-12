@@ -538,8 +538,7 @@ class VersionService {
       // Get current state
       const store = useAppStore.getState()
       const { currentProjectId, setProjectPalette, updateBrandField, updateDetective,
-              updateDirection, setProjectDeadline, setLogoDirection, setLogoImage,
-              updateProjectBrief } = store
+              updateDirection, setLogoDirection, setLogoImage } = store
 
       // Verify this version belongs to current project
       if (version.projectId !== currentProjectId) {
@@ -549,9 +548,24 @@ class VersionService {
       // Restore the data
       const data = version.data || {}
 
-      // Restore basic project info
-      await updateProjectBrief(data.brief || '')
-      await setProjectDeadline(data.deadline || '')
+      /* A RESTORE MAY ONLY WRITE WHAT THE SNAPSHOT HOLDS.
+         `brief` and `deadline` were restored from `data.brief` / `data.deadline`,
+         and `createVersionSnapshot` writes neither — so every restore passed
+         `undefined || ''` into the two setters and blanked both fields.
+
+         Neither belongs in the snapshot, so the fix is to stop restoring them
+         rather than to start storing them:
+
+         `brief` is DERIVED from `detective`, which IS snapshotted and IS
+         restored below — see `briefFromDetective` in the store. Snapshotting
+         the composed summary would put a second copy of the client's answers in
+         the version record and let a restore reinstate a brief that disagrees
+         with the answers it was composed from.
+
+         `deadline` is a SCHEDULE, not design work. These snapshots hold "the
+         design-relevant parts of the project" (see createVersionSnapshot), and
+         rolling the identity back to v1 must not move the project's due date
+         back with it. */
       await setLogoDirection(data.logoDirection || '')
       /* Snapshots store '[image-omitted]' instead of the data URL — do not
          wipe the live mark with that sentinel. */
@@ -608,6 +622,13 @@ class VersionService {
       if (data.detective && typeof st.updateDetective === 'function') {
         Object.entries(data.detective).forEach(([field, value]) => {
           if (field.endsWith('Files')) return
+          /* The brief's copy of the deadline is skipped for the same reason
+             `deadline` is no longer restored above: the schedule is not design
+             work. Replaying it here would restore one half of the pair and
+             leave `project.deadline` — its canonical home — untouched, which is
+             the divergence the audit logged as F7. Leaving both alone keeps
+             them in step. */
+          if (field === 'projectDeadline') return
           try {
             st.updateDetective(field, value)
           } catch {

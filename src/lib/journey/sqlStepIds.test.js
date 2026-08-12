@@ -116,7 +116,20 @@ describe('SQL step-id lists track journey.js', () => {
     const withheld = declared.filter(
       (id) => !PORTAL_PUSHABLE_STEP_IDS.includes(id)
     )
-    expect(withheld).toEqual(['ideate', 'book'])
+    /* R4, 2026-08-12: withheld is now everything without a showable artifact,
+       not just the two that had never been wired. The SQL list may still
+       ACCEPT more than is pushable — 'research' and 'sketch' stay in the
+       allowlist and nothing sends them, which the assertion above calls
+       harmless — but the RPC now also refuses any step with no artifact
+       stamped, so a stale allowlist entry cannot become an approval. */
+    expect(withheld).toEqual(
+      declared.filter((id) => !PORTAL_PUSHABLE_STEP_IDS.includes(id))
+    )
+    /* Named explicitly as well, so the set is a decision rather than a
+       tautology: everything except Identity. */
+    expect(new Set(withheld)).toEqual(
+      new Set(['define', 'research', 'ideate', 'sketch', 'book', 'deliver'])
+    )
 
     const sqlKnows = (id) => lists.every(({ ids }) => ids.includes(id))
     /* Not a requirement either way — recorded so the asymmetry is visible.

@@ -1764,3 +1764,35 @@
   color: var(--text-secondary);
   align-self: center;
 }
+
+/* ── Brief on the stage ────────────────────────────────────────────────────
+   The footer bleeds to the table edge, and the value it cancels has to be
+   the stage's gutter — it was written against `--space-4`, which is what the
+   shell's content column used. On the stage that left a 32px lip on each
+   side at desk width: a bar that is ALMOST full width reads as a misaligned
+   panel, which is worse than one that is obviously inset. */
+.cc-stage--define .define-brief {
+  padding-bottom: 0;
+}
+
+/* THE SECOND STICKY LAYER. `.define-chapter-head` sticks to
+   `top: var(--header-h, 61px)` — an offset measured against the SHELL's
+   header, which does not exist on a stage. It therefore parked 61px below the
+   path edge, a second bar competing with the first for the same glance, and
+   with the action ledge that was already at the other edge the brief had
+   three fixed layers around one form.
+
+   Static here. The chapter heading still reads as a heading; it just does not
+   follow you. The stage owns both edges now, and it owns exactly one of each. */
+.cc-stage--define .define-chapter-head {
+  position: static;
+  top: auto;
+  z-index: auto;
+  background: transparent;
+}
+
+/* The brief is a form, and a form at 1344px is unreadable. The questions
+   keep a measure; the masthead and the footer keep the table. */
+.cc-stage--define .define-split-form {
+  max-width: 54rem;
+}

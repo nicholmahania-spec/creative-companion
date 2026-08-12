@@ -32,7 +32,24 @@ import { ESLint } from 'eslint'
 /** Measured 2026-08-05. Lowered 140→139 when the readability rewrite removed
     orphaned code. A ceiling, not a target — lower it whenever you gain ground. */
 /* 137 → 136: deleting the dead `brandBookReady` chain took one with it. */
-const BUDGET = 136
+/* 136 → 121: CLAIMING STALE SLACK, not ground this branch earned.
+
+   Measured on four trees while auditing the app-wide visual reset: base
+   6a86208 reports 121 errors, origin/main reports 121, this branch reports
+   121. The count had already drifted 15 below the recorded ceiling before the
+   reset changed anything, and `lint:ratchet` had been printing its "15 under
+   budget — lower BUDGET" notice on main the whole time.
+
+   An earlier version of this comment credited the reduction to the reset
+   deleting three hand-rolled portal lifecycles. That was wrong: those
+   deletions removed real dead code, but the error count is identical with and
+   without them. Recorded here rather than quietly rewritten, because a budget
+   whose stated provenance is false is worse than one with no comment — the
+   next person lowers the wrong number for the wrong reason.
+
+   The value is still correct. The header above says why banked slack is worse
+   than slack never gained: it refills silently. */
+const BUDGET = 121
 
 /** Rules that are never allowed, whatever the budget says. */
 const ZERO_TOLERANCE = new Set([

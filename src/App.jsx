@@ -23,6 +23,8 @@ import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
 import { downscaleDataUrl } from './lib/moodPins'
 import { resolveStudioName } from './lib/studio/studioIdentity'
+/* The reconnect's server half — see the onAttachPortal handler below. */
+import { rebindPortalToProject } from './lib/client/clientPortal'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   toISODate,
@@ -318,8 +320,16 @@ function App() {
     (...a) => useAppStore.getState().renameProject(...a),
     []
   )
-  const setLogoImage = useCallback(
-    (...a) => useAppStore.getState().setLogoImage(...a),
+  /* NO `setLogoImage` HERE. The export surface had one, for the image drop
+     below, and that made it the second author of the brand's mark — see
+     `handleCoverImageDrop`. The mark is written through the concept system and
+     nowhere else. */
+  const addLogoConcept = useCallback(
+    (...a) => useAppStore.getState().addLogoConcept(...a),
+    []
+  )
+  const chooseLogoConcept = useCallback(
+    (...a) => useAppStore.getState().chooseLogoConcept(...a),
     []
   )
   const setProjectLastView = useCallback(
@@ -2415,11 +2425,28 @@ function App() {
 
   const [coverDropActive, setCoverDropActive] = useState(false)
 
-  /** Lets a user drop their own image straight onto the export preview's
-   * cover to use it as the brand book's cover art — same upload this project
-   * already supports from Design → Logo, just reachable without navigating
-   * away first. Doing nothing keeps the existing generic cover, so this adds
-   * zero required steps. */
+  /**
+   * Drop an image on the export preview to use it as the project's mark —
+   * the same upload Design → Logo already offers, reachable without
+   * navigating away first. Doing nothing keeps what is there, so this adds
+   * zero required steps.
+   *
+   * IT WRITES A CONCEPT, NOT THE MIRROR. This used to call `setLogoImage`
+   * directly, which made the export preview a second author of the brand's
+   * mark. `project.logoImage` is a mirror of `logoConcepts[chosen].image`, so
+   * writing it behind the concept system's back desynced the two: the dropped
+   * image was not on any concept, and the next concept edit — starring one,
+   * editing its `why`, deleting one — re-derived the mirror and silently threw
+   * the dropped image away. In the other direction it was worse: `packagePlan`
+   * builds the client's logo file from `logoImage`, so a dropped image shipped
+   * as the brand's mark in the delivered package.
+   *
+   * There is no separate cover-art field to write instead, because nothing
+   * renders one: the brand book's cover draws a monogram, and its only read of
+   * `logoImage` picks the status line. The dropped image IS a mark, so it goes
+   * where marks live and is selected, exactly as if it had been added on the
+   * Mark screen and starred.
+   */
   const handleCoverImageDrop = (file) => {
     if (!file || !file.type?.startsWith('image/')) return
     if (file.size > 2.5 * 1024 * 1024) {
@@ -2433,14 +2460,24 @@ function App() {
     const reader = new FileReader()
     reader.onerror = () =>
       flashToast('Could not read that image. Try another file.')
+    /* One path for both the downscaled and the fallback bytes: whichever image
+       we end up with goes through the same two canonical operations, so there
+       is no branch in which the mirror is written directly. `addLogoConcept`
+       hands back the new id; `chooseLogoConcept` selects it, which is what
+       re-derives `logoImage`. Selecting explicitly rather than relying on
+       `addLogoConcept`'s first-concept-is-chosen rule, because a project that
+       already has concepts would otherwise gain an unstarred one and the drop
+       would appear to do nothing. */
+    const adoptAsMark = (dataUrl) => {
+      const conceptId = addLogoConcept(dataUrl, ownerProjectId)
+      if (conceptId) chooseLogoConcept(conceptId, ownerProjectId)
+      flashMicro('Cover image updated')
+    }
     reader.onload = async () => {
       try {
-        const scaled = await downscaleDataUrl(reader.result, file.type)
-        setLogoImage(scaled, ownerProjectId)
-        flashMicro('Cover image updated')
+        adoptAsMark(await downscaleDataUrl(reader.result, file.type))
       } catch {
-        setLogoImage(reader.result, ownerProjectId)
-        flashMicro('Cover image updated')
+        adoptAsMark(reader.result)
       }
     }
     reader.readAsDataURL(file)
@@ -4135,6 +4172,11 @@ function App() {
           completeCurrentStep={completeCurrentStep}
           startVoice={startVoice}
           setActiveView={setActiveView}
+          /* The stage's path edge ticks its stops from this. Passed as ONE
+             already-derived value rather than its five ingredients, because a
+             second derivation of "has this stop got content" is exactly the
+             restated-copy defect journey.js's header records. */
+          pathCtx={pathProgressCtx}
           identityWorkroomLauncherRef={identityWorkroomLauncherRef}
           workroomLauncherRef={workroomLauncherRef}
           applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
@@ -4364,10 +4406,22 @@ function App() {
         onGoToView={goToInboxTarget}
         onOpenPortal={openInboxPortal}
         currentProjectName={activeProject?.name || ''}
-        onAttachPortal={(portalId) => {
+        onAttachPortal={async (portalId) => {
           /* `setClientPortalId` writes to the CURRENT project, which is
              exactly the promise the button makes — the label names the
-             project it will attach to. */
+             project it will attach to.
+
+             The server is re-stamped FIRST. The local link alone used to leave
+             the portal row still naming the project it was created for, and
+             `publishDelivery` now refuses to send a book through a link bound
+             to a different project — so a reconnect that only wrote locally
+             would produce a link that looks attached and cannot be delivered
+             through. Rebinding is what makes the reconnect complete. */
+          const r = await rebindPortalToProject(portalId, activeProject?.id)
+          if (!r.ok) {
+            flashToast(r.error || 'Couldn’t link it — try again in a moment')
+            return
+          }
           setClientPortalId(portalId)
           flashToast(
             `Linked to ${activeProject?.name || 'this project'} — their answers are on the Project screen`,

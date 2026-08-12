@@ -610,96 +610,58 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Phase 5 Step 7 — Application Stage portal workroom
-   Same isolation pattern as Directions / Identity:
-   - fixed body layer owns viewport
-   - #root stays mounted but inert + hidden
-   - Step 6 proofing column content is unchanged inside
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ── Touchpoints on the stage ──────────────────────────────────────────────
+   The viewport, the ground, the ink, the frozen page scroll and the header
+   were all declared here and are all `.cc-stage`'s now. What is left is the
+   body: the approved Step 6 proofing field, with no measure cap and no
+   container of its own, because the specimen IS the interface on this stop.
 
-.application-workroom {
-  position: fixed;
-  inset: 0;
-  /* Above suspended Identity (1000) so Application owns the stack */
-  z-index: 1100;
-  isolation: isolate;
-  overflow: auto;
-  overscroll-behavior: contain;
-  background: var(--bg, #f0eeeb);
-  color: var(--text-primary, #1c1917);
-  padding: 0.75rem clamp(0.75rem, 2vw, 1.5rem) 2.5rem;
-  box-sizing: border-box;
-}
-
-.application-workroom:focus {
-  outline: 0;
-}
-
-.application-workroom-recovery {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 44px;
-  margin: 0 0 0.5rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.application-workroom-recovery p {
-  margin: 0;
-}
-
-.application-workroom-recovery .text-link {
-  color: inherit;
-  background: none;
-  border: 0;
-  padding: 0.35rem 0;
-  font: inherit;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-}
+   The deep-mode block that lived here is gone with the rest of the frame —
+   it was a second copy of the dark theme, hardcoded, and it disagreed with
+   both the app's dark theme and the other two rooms' private copies of it. */
 
 .application-workroom-body {
-  /* The approved Step 6 field lives here — no shell chrome. */
   max-width: none;
   margin: 0;
   padding: 0;
   background: transparent;
 }
 
-/* Portaled room does not inherit .app theme tokens. Mirror deep deliberately. */
-body:has(.app.deep) .application-workroom {
-  background: #101613;
-  color: #edf3ec;
+/* ONE VOICE ACROSS THE SIX. Touchpoints names the SURFACE rather than the
+   stop, which is the right information — it just used to be set in the UI
+   sans at a UI size, so it was the one stop that did not look like the
+   others. It carries `.cc-stage-display--subject` now (workroom.css X1)
+   rather than restating that rank's declarations here. */
+
+/* THE FILMSTRIP THUMBS ARE MINIATURES OF SHEETS, not tiles. `.tp-mock-sheet`
+   is the older thumbnail grammar — 1px border, 4px radius, its own shadow —
+   and it renders beside the new filmstrip on this stop and again in the brand
+   book. Stage-scoped so the book keeps what it has, and pointed at the shared
+   small-elevation token so a miniature of a sheet reads as one. */
+.cc-stage--sketch .tp-mock-sheet {
+  border: 0;
+  border-radius: var(--radius-none);
+  box-shadow: var(--stage-lift-sm);
 }
 
-body:has(.app.deep) .application-workroom-recovery,
-body:has(.app.deep) .application-workroom-recovery .text-link {
-  color: #aab7ac;
+/* THE PROOFING LIGHT IS THE TABLE, not a panel on it. Left inside the
+   plane's gutter it drew a lighter rectangle with two visible vertical
+   edges, which is the shape of a card — the one thing this stop is not. */
+.cc-stage--sketch .app-stage-proof {
+  width: auto;
+  margin-inline: calc(-1 * var(--stage-gutter));
 }
 
-body:has(.app.deep) .application-workroom .app-stage-proof {
+/* The proof field pools light around the specimen. In dark it needs the same
+   pooling against the stage ground rather than a lit rectangle on it. */
+body:has(.app.deep) .cc-stage--sketch .app-stage-proof {
   background:
     radial-gradient(
       ellipse 80% 55% at 50% 42%,
-      color-mix(in srgb, #1a1f1c 90%, transparent),
+      color-mix(in srgb, var(--stage-raise) 90%, transparent),
       transparent 72%
     ),
-    #101613;
-}
-
-@media (max-width: 520px) {
-  .application-workroom {
-    padding: 0.5rem 0.5rem 2rem;
-  }
-
-  .application-workroom-recovery {
-    font-size: 0.78rem;
-    min-height: 44px;
-  }
+    var(--stage-ground);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -864,14 +826,23 @@ body:has(.app.deep) .application-workroom .app-stage-proof {
   height: 2.1rem;
   opacity: 0.42;
   overflow: hidden;
-  border-radius: 1px;
+  /* NAV CONTROL, NOT A SPECIMEN. This is the filmstrip thumbnail's wrapper —
+     a control you click to change surface. It was grouped with the
+     `.app-specimen-*` scale models and inherited their sub-pixel radius, but
+     nothing here represents a physical object at reduced scale, so it takes
+     the container token like every other control in the app. */
+  border-radius: var(--radius);
   pointer-events: none;
 }
 
-/* Crush TouchpointMockThumb into a quiet nav preview — not a miniature workspace */
+/* Crush TouchpointMockThumb into a quiet nav preview — not a miniature
+   workspace. No `!important` needed: this selector is two classes and the
+   `max-width: 8rem` it is beating is one, so it already wins. The overrides
+   were a bet that some rule could not be found, and the rule was `.tp-mock`
+   forty lines up in this same file. */
 .app-stage-film-thumb .tp-mock {
-  width: 100% !important;
-  max-width: none !important;
+  width: 100%;
+  max-width: none;
   height: 100%;
   gap: 0;
 }
@@ -879,7 +850,7 @@ body:has(.app.deep) .application-workroom .app-stage-proof {
 .app-stage-film-thumb .tp-mock-sheet {
   min-height: 0;
   height: 100%;
-  border-radius: 1px;
+  border-radius: var(--radius);
   box-shadow: none;
   border: 0;
   outline: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
@@ -929,7 +900,8 @@ body:has(.app.deep) .application-workroom .app-stage-proof {
   color: var(--text-muted);
   padding: 0.4rem 0.55rem;
   border: 1px dashed color-mix(in srgb, var(--text-muted) 45%, transparent);
-  border-radius: 3px;
+  /* A <summary> disclosure control. UI. */
+  border-radius: var(--radius);
   white-space: nowrap;
   user-select: none;
 }
@@ -1025,7 +997,8 @@ body:has(.app.deep) .application-workroom .app-stage-proof {
   margin: 0;
   padding: 0.4rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--text-primary) 22%, transparent);
-  border-radius: 2px;
+  /* "This mock is good" — a button. UI. */
+  border-radius: var(--radius);
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
@@ -1332,7 +1305,9 @@ body:has(.app.deep) .application-workroom .app-stage-proof {
 .app-stage-forensic-swatch {
   width: 1.1rem;
   height: 1.1rem;
-  border-radius: 2px;
+  /* Colour chips in the forensic readout — a data display, not a drawing of
+     an object. UI. */
+  border-radius: var(--radius);
   border: 1px solid color-mix(in srgb, var(--text-primary) 18%, transparent);
   box-sizing: border-box;
 }
@@ -1500,9 +1475,16 @@ body:has(.app.deep) .application-workroom .app-stage-proof {
     padding: 0.3rem 0.4rem;
   }
 
-  /* Specimen still dominates below the thin strip */
+  /* Specimen still dominates below the thin strip. On the stage the title
+     keeps the editorial scale the other five stops use — a 1.1rem heading
+     here was the one phone screen whose masthead read as a widget label. The
+     clamp already tops out well below the desk size. */
   .app-stage-field .app-stage-proof-title {
     font-size: 1.1rem;
+  }
+
+  .cc-stage--sketch .app-stage-field .app-stage-proof-title {
+    font-size: clamp(var(--fs-5), 9vw, 2.25rem);
   }
 
   .app-stage-field-head {
@@ -2021,7 +2003,7 @@ body:has(.app.deep) .application-workroom .app-stage-proof {
   padding: 0.45rem 1.1rem;
   font-size: 0.72rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 /* —— Packaging —— */
