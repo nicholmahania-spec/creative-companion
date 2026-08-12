@@ -28,8 +28,15 @@ describe('bookBuilderFor', () => {
     const got = bookBuilderFor({})
     expect(got).toEqual(blankBookBuilder())
     expect(got.grid.columns).toBe(12)
-    expect(got.print.pageSize).toBe('a4')
-    expect(got.grid.edge).toBe('roomy')
+    /* Page setup is now one canonical trio on the project, replacing
+       `print.pageSize` / `grid.edge` — this surface's half of the two-home
+       split. Defaults are the app's (`DEFAULT_BOOK_SETUP`), so a project that
+       never opens the Builder and one that does agree about the trim. */
+    expect(got.pageSize).toBe('letter')
+    expect(got.edgeSpace).toBe('standard')
+    expect(got.printShop).toBe(false)
+    expect(got.print).toBeUndefined()
+    expect(got.grid.edge).toBeUndefined()
   })
 
   it('survives a null project', () => {
@@ -44,8 +51,9 @@ describe('bookBuilderFor', () => {
     expect(got.grid.columns).toBe(4)
     expect(got.grid.rows).toBe(1)
     expect(got.grid.gutter).toBe(3)
-    /* Blank default margin (roomy-on-A4 %) fills siblings; edge not inferred
-       onto legacy partial saves that never chose a stop. */
+    /* `grid.margin` fills from the blank and is GUIDE-ONLY — it places the
+       overlay, never the page's content margin, which comes from the
+       canonical `edgeSpace`. The two used to be coupled here. */
     expect(got.grid.margin).toBe(blankBookBuilder().grid.margin)
     expect(got.grid.edge).toBeUndefined()
     expect(got.grid.show).toBe(blankBookBuilder().grid.show)
