@@ -30,6 +30,8 @@
  * producing a stage artifact, and it has no place in the production sequence.
  */
 
+import { APPROVAL_CAPABLE_STEP_IDS } from '../client/reviewArtifact'
+
 export const JOURNEY_STEPS = [
   {
     id: 'define',
@@ -156,7 +158,25 @@ export const JOURNEY_STEPS = [
  * Derived from the ids rather than written out, so a stop removed from the
  * path cannot linger here.
  */
-const NOT_PUSHABLE = new Set(['ideate', 'book'])
+/* R4, owner decision 2026-08-12: a stop may be pushed to a client only when
+   the portal can SHOW its artifact. `APPROVAL_UNITS` in
+   `lib/client/reviewArtifact.js` is where that list is decided and argued —
+   this set is its complement, so the two cannot drift.
+
+   The reduction is deliberate and is the fix, not a regression. Five stops
+   used to be pushable with nothing behind them but their own label:
+
+     research  private working space, by explicit product statement
+     sketch    its only real artifacts are packageAssets, which are private
+     review    a Tool, whose subject is the identity approved under `design`
+     deliver   delivery_pack stays gated on delivery_status='delivered'
+     define    the brief is the client's OWN work; `form_status` already
+               records that they submitted it
+
+   Restoring one means building its artifact first. That is the point. */
+const NOT_PUSHABLE = new Set(
+  JOURNEY_STEPS.map((s) => s.id).filter((id) => !APPROVAL_CAPABLE_STEP_IDS.includes(id))
+)
 export const PORTAL_PUSHABLE_STEP_IDS = Object.freeze(
   JOURNEY_STEPS.map((s) => s.id).filter((id) => !NOT_PUSHABLE.has(id))
 )

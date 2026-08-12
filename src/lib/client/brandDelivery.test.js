@@ -64,9 +64,15 @@ describe('buildDeliveryPack', () => {
     expect(pack.logoImage).toBeTruthy()
   })
 
+  /* The oversize vehicle is `story` rather than `brief`. `brief` used to work
+     because everything on the pack travelled; it is a client-facing field the
+     book deliberately does not print (bookContent.js says why — it is the
+     auto-composed run-on summary, not prose anyone wrote), so the delivery
+     allow-list leaves it behind and it can no longer make a payload too big.
+     `story` is real prose the book does print. The assertion is unchanged. */
   it('reports tooLarge rather than silently sending a broken book', () => {
     const huge = packFixture()
-    huge.brief = 'x'.repeat(DELIVERY_PACK_LIMIT + 1)
+    huge.story = 'x'.repeat(DELIVERY_PACK_LIMIT + 1)
     expect(buildDeliveryPack(huge).tooLarge).toBe(true)
   })
 

@@ -16,6 +16,7 @@ import {
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
 import { clientFacingName } from '../lib/client/clientRecord'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
+import { deliverStatusLine } from '../lib/deliver/deliverStatus'
 import {
   BOOK_PAGE_SIZES,
   BOOK_EDGE_SPACE,
@@ -147,13 +148,7 @@ export default function DeliverView({
 
   /* Named gap beside ship — download never blocked; hollowness must not feel ready. */
   const firstCoreGap = coreGaps[0] || null
-  const statusLine = ready.allDone
-    ? 'Ready to ship'
-    : firstCoreGap
-      ? `Still to add · ${firstCoreGap.label}`
-      : gaps.length > 0
-        ? 'Add a handoff note when you ship'
-        : 'Preview the book, then download'
+  const statusLine = deliverStatusLine(ready, firstCoreGap, gaps.length)
   const moreCoreCount = Math.max(0, coreGaps.length - 1)
 
   return (

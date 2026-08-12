@@ -27,7 +27,11 @@ import {
 } from '../brief/detectiveBrief'
 import { OVERVIEW_FIELD_PREFIX } from '../overviewOcr'
 import { packageFiles } from '../deliver/packageFiles'
-import { packageReadme } from '../deliver/packagePlan'
+import {
+  deliverableChecklist,
+  packagePlan,
+  packageReadme,
+} from '../deliver/packagePlan'
 import { markSource, markGapSentence } from '../deliver/markSource'
 import {
   extFromRawBytes,
@@ -586,21 +590,69 @@ export function packReadiness(pack) {
   const scopedChecks = checks.filter((c) => progressItemInScope(c.id, picked))
   const okCount = scopedChecks.filter((c) => c.ok).length
   const gaps = scopedChecks.filter((c) => !c.ok)
-  // Thin if core brand pieces missing (not handoff/learnings — those are ship polish)
+
+  /* ── What the client actually BOUGHT, and whether it can be handed over ──
+     Everything above this line asks one question eight times: is this project
+     field non-empty? That is a fair measure of how much has been written down
+     and a poor one for whether anything can be sent, and the two were being
+     reported as the same fact. A project with a tagline, a palette and a voice
+     but NO STORED MARK answered "ready" here while `deliverableChecklist` — on
+     the same screen — listed the primary logo as not in the package. Two
+     authorities, one sentence, no reference between them.
+
+     So readiness now asks the package. Nothing new is invented: the checklist
+     derives its rows from `detective.deliverablesPicked`, which is what the
+     brief bought, and a project that bought no logo is never asked for one.
+     What satisfies a row is `packagePlan`'s decision and only that — so a file
+     held back on usage rights cannot tick anything, and neither can an accepted
+     Touchpoints mock, because neither reaches the plan.
+
+     Pure and read-only, like the rest of this function: `packagePlan` builds a
+     description of a package, it does not build one. */
+  const deliverables = deliverableChecklist(
+    pack || {},
+    packagePlan(pack || {}, { assets: pack?.packageAssets || [] })
+  )
+  const deliverableGaps = deliverables.filter((d) => !d.ok)
+
+  /* Thin if core brand pieces missing (not handoff/learnings — those are ship
+     polish), OR if something the client bought cannot go in the package. The
+     second arm is what stops "Ready to send to the client" appearing over a
+     package with no logo in it: `packHandoffStatus` reads `thin`, so this is
+     where the claim is governed. "Not enough here to send yet" is then the
+     literal truth — there is not enough TO SEND, whatever else is written. */
   const coreOk = scopedChecks
     .filter((c) => !['handoff', 'learnings'].includes(c.id))
     .filter((c) => c.ok).length
-  const thin = coreOk < 3
+  const thin = coreOk < 3 || deliverableGaps.length > 0
   /* "Done" ignores handoff/learnings for the same reason coreOk does — they
      are ship polish, not requirements, and a job is shippable without a
      personal learnings note. Blocking "ready to ship" on an optional note
-     would nag a finished job, which is the whole thing this scoping removes. */
+     would nag a finished job, which is the whole thing this scoping removes.
+     A bought deliverable that is not in the package is not ship polish. */
   const coreChecks = scopedChecks.filter(
     (c) => !['handoff', 'learnings'].includes(c.id)
   )
   const allDone =
-    coreChecks.length > 0 && coreChecks.every((c) => c.ok)
-  return { checks: scopedChecks, okCount, thin, hasName, coreOk, gaps, allDone }
+    coreChecks.length > 0 &&
+    coreChecks.every((c) => c.ok) &&
+    deliverableGaps.length === 0
+  return {
+    checks: scopedChecks,
+    okCount,
+    thin,
+    hasName,
+    coreOk,
+    gaps,
+    allDone,
+    /* Named, not counted, and carried out whole so a caller can say WHICH
+       bought item is missing rather than that something is. Nothing reads
+       these yet — the screens that make the "ready" claim are owned
+       elsewhere — but the claim they already make is now correct, and the
+       words to improve it are here when that work happens. */
+    deliverables,
+    deliverableGaps,
+  }
 }
 
 /** Markdown brand direction pack */
