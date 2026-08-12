@@ -1183,3 +1183,39 @@
     padding: var(--space-3);
   }
 }
+
+
+/* ── Research on the stage ─────────────────────────────────────────────────
+   The wall is the work; the capture controls are not. Every container on
+   this stop was a `.panel` because the shell drew panels, and on the table
+   they turn a wall of pins into a stack of trays. */
+
+.cc-stage--research .research-status {
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+}
+
+/* "Star the rest" was a full-width outlined button — 1328px of chrome above
+   the pins, reading as the primary action on a page whose primary action is
+   pinning something. */
+.cc-stage--research .research-pack-bulk {
+  align-self: flex-start;
+  width: auto;
+  margin-inline: 0;
+  padding-inline: 0;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.cc-stage--research :is(.board-add-compact, .research-wall) {
+  border: 0;
+  border-radius: var(--radius-none);
+  background: transparent;
+}
+
+.cc-stage--research .board-add-compact {
+  padding: 0 0 var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-5);
+}
