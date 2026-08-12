@@ -459,6 +459,13 @@ describe('mock ≠ produced ≠ delivered', () => {
         deliverable: 'businessCard',
         group: 'application',
         dataUrl: 'data:application/pdf;base64,JVBERi0=',
+        /* Attribution and a mime type are what an UPLOAD carries, so they
+           cannot answer where a file came from. Only a produce path stamps
+           `producedBy`, so a row without it is package material rather than
+           this app's output — see lib/brand/productionProvenance. Added here
+           so the fixture is an actual produced card; the assertion below is
+           unchanged and still rejects an image claiming to be one. */
+        producedBy: 'businessCardProduce',
       })
     ).toBe(true)
     expect(
