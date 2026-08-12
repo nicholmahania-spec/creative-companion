@@ -52,8 +52,25 @@ const BUDGET = {
   'src/styles/lazy-buddy.css': 40,
   'src/styles/lazy-settings.css': 36,
   /* 18 → 16: deleting the Preview sub-screen's rules took two of them
-     with it. The budget only moves DOWN. */
-  'src/styles/lazy-design.css': 16,
+     with it. The budget only moves DOWN.
+
+     16 → 12, and the arithmetic is worth stating because it does not read as
+     a clean subtraction. FIVE overrides went, not four: the real count in
+     this sheet was 17 → 12. Four were on `.deliver-pack-preview`, which
+     styles DELIVERY's preview frame from the DESIGN sheet — a cross-view rule
+     that reached for `!important` only to win a one-class-vs-one-class tie
+     against `.assets-preview-frame` in lazy-deliver.css; qualifying it with
+     `.pack-view` settles that on specificity instead. The fifth was
+     `max-width: none !important` on `.design-studio.system-view`, which went
+     when the stage took over the frame that rule was fighting.
+
+     The budget fell by four while the count fell by five because this file
+     was ALREADY OVER at 6a86208 — 17 against a budget of 16, one of the
+     failures in that commit's baseline. 12 is the only correct value here:
+     it equals the real count, which `budgets are not padded` enforces, and
+     16 − 5 = 11 would sit below the count and fail `no file exceeds its
+     budget`. */
+  'src/styles/lazy-design.css': 12,
   'src/styles/lazy-sketch.css': 0,
   'src/styles/lazy-worklog.css': 0,
   'src/styles/lazy-define.css': 18,
