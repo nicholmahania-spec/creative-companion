@@ -134,16 +134,65 @@ export function extensionForMime(mime) {
 }
 
 /**
+ * Every segment of an object key must be a bare identifier.
+ *
+ * ASCII alphanumerics, underscore and hyphen only, and it must not open with a
+ * separator-ish character. That is not a blocklist of dangerous inputs; it is
+ * the complete description of what the three identity values actually are —
+ * `auth.uid()` and the cloud project id are uuids, and an asset id is either a
+ * uuid or the `a-<stamp>-<index>-<slug>` form `ingestFiles` mints. Nothing
+ * legitimate is excluded, so anything excluded is illegitimate.
+ *
+ * Note what it forbids without naming any of them: `/` and `\` (not in the
+ * class), `..` and `.` (a dot is not in the class at all, so a traversal
+ * segment cannot even be spelled), a leading `/` for an absolute path, `%2e`
+ * and every other percent-encoding (`%` is not in the class), empty segments,
+ * whitespace, and every non-ASCII codepoint. A blocklist would have had to
+ * anticipate each of those; an allowlist of the identifier shape gets them for
+ * free and stays correct against the next encoding somebody thinks of.
+ */
+const KEY_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9_-]*$/
+
+/**
  * Object key for an asset's bytes.
  *
  * `${ownerId}/${projectId}/${assetId}.${ext}` — the owner MUST be the first
  * segment, because every storage policy on this bucket is
  * `(storage.foldername(name))[1] = auth.uid()`. Changing this shape silently
  * breaks read, write and delete at once, so it is built in one place.
+ *
+ * THE INVARIANT: identity determines the namespace. The owner, the project and
+ * the asset id decide where bytes live, and nothing else contributes a single
+ * character. In particular the ORIGINAL FILENAME never appears — the extension
+ * comes from `extensionForMime`, a closed map, so a file called
+ * `../../../etc/passwd.png` lands at `<owner>/<project>/<asset-id>.png` like
+ * every other PNG.
+ *
+ * Segments are VALIDATED, not scrubbed. Rewriting a bad segment into a good
+ * one invents a key nobody asked for: two different inputs can collapse onto
+ * one object, which is how one asset silently overwrites another, and the
+ * caller is never told that the thing it stored is not the thing it named.
+ * Returning null instead fails closed — `assetStorage.save` already answers a
+ * null key with "This file could not be filed" and writes nothing, which is
+ * the correct outcome for an identity the app cannot account for.
+ *
+ * @returns {string|null} the object key, or null when any part is unusable.
  */
 export function assetStorageKey({ ownerId, projectId, assetId, mimeType } = {}) {
-  if (!ownerId || !projectId || !assetId) return null
-  return `${ownerId}/${projectId}/${assetId}.${extensionForMime(mimeType)}`
+  const segments = [ownerId, projectId, assetId]
+  /* STRINGS, not stringifiable things. Coercing first would let `0`, `false`
+     and `NaN` through — each stringifies to something that passes the pattern
+     and produces a confident, well-formed key for an identity nobody holds.
+     An object written under `NaN/…` is unreachable by the row that names it
+     and unreadable through a policy that compares against auth.uid(), and the
+     caller is told it was stored. A non-string here means the caller has a
+     bug, and inventing a plausible key on its behalf is how that bug becomes
+     a lost file instead of a refusal. */
+  if (!segments.every((seg) => typeof seg === 'string' && KEY_SEGMENT.test(seg))) {
+    return null
+  }
+  const [owner, project, asset] = segments
+  return `${owner}/${project}/${asset}.${extensionForMime(mimeType)}`
 }
 
 /* ---------------------------------------------------------------- ingest --- */

@@ -671,6 +671,13 @@ export function blankWorkspaceState() {
     tasks: [],
     moodItems: [],
     deletedProjects: [],
+    /* Asset Library metadata. Declared here because this function is what
+       "an empty workspace" MEANS — `clearToEmpty` spreads it, `hydrateFromPayload`
+       reads its prefs defaults from it, and a slice missing from it is a slice
+       that survives every reset in the app. `assets` was missing, so clearing
+       the workspace to nothing kept every asset row from the workspace just
+       discarded, attached to project ids that no longer existed. */
+    assets: [],
     breakKit: [],
     theme: deviceTheme(),
     /* 'auto' until the user actually toggles. Without this there is no way
@@ -2441,22 +2448,61 @@ const useAppStore = create(
           return { assets: [...(state.assets || []), ...fresh] }
         }),
 
-      /** Refile one asset. The view has called this since it was written; it
-          was never defined, and the call site used `?.()` so the miss was
-          silent rather than a crash. */
+      /* PROJECT SCOPING ON BOTH MUTATIONS BELOW, and it is a boundary rather
+         than a tidy-up.
+
+         Both used to match on asset id ALONE. `state.assets` is one flat
+         workspace-level list holding every project's rows, so knowing an id
+         was sufficient to refile or destroy a row belonging to a project the
+         designer did not have open — and local ids are minted as
+         `a-<timestamp>-<index>-<filename-slug>`, which two projects handed the
+         same file in the same millisecond will collide on. The only thing
+         standing between that and a cross-project write was the view happening
+         to pass ids it had already filtered. UI filtering is not an ownership
+         rule; it is a coincidence that holds until another caller appears.
+         `ClientPackagePanel`'s own header records a package that once shipped
+         three files belonging to a different client, so this class of bleed is
+         not hypothetical in this codebase.
+
+         So the row must belong to the CURRENT project, which is the same gate
+         `updatePackageAsset` and `removePackageAsset` already apply to their
+         slice. A mismatch is a silent no-op: the only legitimate caller is the
+         shelf, which can only offer rows it already filtered, so reaching this
+         guard means a bug rather than a designer action — and there is nothing
+         a designer could usefully be told about it.
+
+         WHAT THIS IS NOT. It is not account isolation. Every row here belongs
+         to one workspace on one device; cross-ACCOUNT separation is the
+         database's, enforced by owner-scoped RLS on `assets` and by the
+         `(storage.foldername(name))[1] = auth.uid()` policies on the bucket.
+         Nothing local replaces that, and nothing here should be read as
+         doing so. */
+
+      /** Refile one asset, if it belongs to the open project. */
       setAssetCategory: (assetId, category) =>
         set((state) => ({
           assets: (state.assets || []).map((a) =>
-            String(a.id) === String(assetId)
+            String(a.id) === String(assetId) &&
+            sameProjectId(a.project_id, state.currentProjectId)
               ? { ...a, category: String(category || 'other') }
               : a
           ),
         })),
 
+      /** Forget one asset, if it belongs to the open project.
+
+          Metadata only. The bytes behind `local_key` and `storage_path`
+          outlive this call, deliberately — the reclamation lifecycle and why
+          it cannot run here are pinned in assetLifecycle.test.js under
+          "byte reclamation", and owed in PHASES.md Phase 7. */
       removeAsset: (assetId) =>
         set((state) => ({
           assets: (state.assets || []).filter(
-            (a) => String(a.id) !== String(assetId)
+            (a) =>
+              !(
+                String(a.id) === String(assetId) &&
+                sameProjectId(a.project_id, state.currentProjectId)
+              )
           ),
         })),
 
@@ -2658,6 +2704,42 @@ const useAppStore = create(
           typeof data.oppositeIndex === 'number' ? data.oppositeIndex : 0
         const sparksTried =
           typeof data.sparksTried === 'number' ? data.sparksTried : 0
+        /* ASSETS COME BACK, WITHOUT THEIR BYTES, AND SAY SO.
+           `exportAllData` has always carried this slice; nothing here ever
+           applied it, so a cloud pull or a JSON restore rebuilt every project
+           and silently dropped the whole Asset Library. That is the exact
+           `templates` defect this payload's own comment memorialises,
+           recurring in the slice added next to it.
+
+           WHAT TRAVELS: id, project ownership, name, category, provenance
+           (source_app / source_ref / role / origin), status, and `replaces_id`
+           — so version chains survive a restore intact and a superseded
+           version stays superseded.
+
+           WHAT DOES NOT: `local_key`. The payload is JSON and the bytes live
+           in IndexedDB, so they were never in it. Keeping the key would make
+           the card claim "Saved on this desk" about a desk that has never seen
+           the file — which is the same class of lie, pointed the other way, as
+           the one that made a filed file look like a failed upload. Dropping
+           it leaves the row honest: metadata restored, bytes absent, and the
+           card says the file itself is not in this workspace.
+
+           `storage_path` DOES travel, because it names an object in the bucket
+           that genuinely still exists and can still be fetched by whoever owns
+           it. Absent means absent; present means present. Neither is a guess.
+
+           Rows are kept only for projects that survived the tombstone filter,
+           for the same reason the projects themselves are: a deletion this
+           device made must not be undone by a payload that predates it. */
+        const liveProjectIds = new Set(live.map((p) => String(p.id)))
+        const restoredAssets = (Array.isArray(data.assets) ? data.assets : [])
+          .filter((a) => a && a.id && liveProjectIds.has(String(a.project_id)))
+          .map((a) => {
+            const row = { ...a }
+            delete row.local_key
+            return row
+          })
+
         set({
           projects: live.map((p) => ({
             ...p,
@@ -2665,6 +2747,7 @@ const useAppStore = create(
           })),
           currentProjectId,
           deletedProjects: mergedDeleted,
+          assets: restoredAssets,
           tasks: data.tasks,
           moodItems: Array.isArray(data.moodItems) ? data.moodItems : [],
           breakKit: Array.isArray(data.breakKit) ? data.breakKit : [],
@@ -2748,16 +2831,41 @@ const useAppStore = create(
        * gets made.
        *
        * The restore is honest rather than approximate, which is the condition
-       * for offering it at all. Deletion touches exactly three slices —
-       * `projects`, `tasks`, `moodItems` — so putting those three back, at the
-       * original index and with the original selection, returns the workspace
-       * to precisely its prior state. If deletion ever grows to touch a fourth,
-       * this closure must grow with it: a restore that silently drops data is
-       * worse than the dialog it replaced, because the user has been told it
-       * was safe.
+       * for offering it at all. Deletion touches exactly four slices —
+       * `projects`, `tasks`, `moodItems`, `assets` — so putting those four
+       * back, at the original index and with the original selection, returns
+       * the workspace to precisely its prior state. If deletion ever grows to
+       * touch a fifth, this closure must grow with it: a restore that silently
+       * drops data is worse than the dialog it replaced, because the user has
+       * been told it was safe.
+       *
+       * `assets` WAS that fourth slice and was missed when the Asset Library
+       * landed. The rows outlived the project, kept its dead `project_id`,
+       * persisted, and travelled in the workspace payload — while being
+       * invisible in every UI, because the library filters on the CURRENT
+       * project and the project was gone. Nothing could surface them and
+       * nothing could remove them. For unreleased identity work that is a
+       * privacy fact and not only an untidy one.
+       *
+       * ONLY THIS PROJECT'S ASSETS. Filtering is by `project_id` on the row,
+       * with the same `sameProjectId` comparison the projects filter uses, so
+       * a numeric id stored on an old row and a string id from a `<select>`
+       * still name the same project. Rows belonging to other projects are
+       * never touched, and rows carrying no project at all are KEPT — an
+       * unattributed row is not evidence of belonging to the project being
+       * deleted, and deleting on a guess is the one mistake undo cannot make
+       * safe.
+       *
+       * BYTES ARE NOT TOUCHED HERE, deliberately. The IndexedDB blobs behind
+       * `local_key` and the bucket objects behind `storage_path` outlive this
+       * call. Removing them would make `restore` a lie — it hands back rows
+       * whose bytes it could not bring back — and this action is synchronous
+       * while both stores are async. Reclaiming them belongs to a sweep that
+       * can run after the undo window has closed, and is recorded as owed
+       * rather than done.
        */
       deleteProject: (id) => {
-        const { projects, tasks, moodItems, currentProjectId, deletedProjects } =
+        const { projects, tasks, moodItems, assets, currentProjectId, deletedProjects } =
           get()
         /* `sameProjectId`, not `!==`. Ids arrive as numbers on old projects
            and strings on new ones, and a round trip through import or a
@@ -2775,6 +2883,7 @@ const useAppStore = create(
         const prevProjects = projects
         const prevTasks = tasks
         const prevMoodItems = moodItems
+        const prevAssets = assets
         const prevCurrentId = currentProjectId
         /* The fourth slice. This closure's own docstring said deletion touched
            exactly three and that it must grow if that changed — it has.
@@ -2788,12 +2897,18 @@ const useAppStore = create(
             projects: prevProjects,
             tasks: prevTasks,
             moodItems: prevMoodItems,
+            assets: prevAssets,
             currentProjectId: prevCurrentId,
             deletedProjects: prevDeleted,
           })
           return { ok: true }
         }
         const nextDeleted = withTombstone(deletedProjects, id)
+        /* Keep everything that is not this project's. A row with no
+           project_id at all stays — see the note above. */
+        const keptAssets = (Array.isArray(assets) ? assets : []).filter(
+          (a) => !(a && a.project_id != null && sameProjectId(a.project_id, id))
+        )
 
         if (remaining.length === 0) {
           set({
@@ -2801,6 +2916,7 @@ const useAppStore = create(
             currentProjectId: null,
             tasks: tasks.filter((t) => !sameProjectId(t.projectId, id)),
             moodItems: moodItems.filter((m) => !sameProjectId(m.projectId, id)),
+            assets: keptAssets,
             deletedProjects: nextDeleted,
           })
           return { ok: true, empty: true, restore }
@@ -2816,6 +2932,7 @@ const useAppStore = create(
           currentProjectId: nextId,
           tasks: tasks.filter((t) => !sameProjectId(t.projectId, id)),
           moodItems: moodItems.filter((m) => !sameProjectId(m.projectId, id)),
+          assets: keptAssets,
           deletedProjects: nextDeleted,
         })
         return { ok: true, empty: false, restore }
@@ -2877,6 +2994,11 @@ const useAppStore = create(
           currentProjectId: null,
           tasks: [],
           moodItems: [],
+          /* Spelled out rather than left to the spread, for the same reason
+             the three above it are: this list is what a reader checks to
+             answer "what does clearing actually clear?", and a slice that is
+             only implied by `...blank` is one nobody can see is handled. */
+          assets: [],
         })
       },
 

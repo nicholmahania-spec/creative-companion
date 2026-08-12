@@ -18,6 +18,41 @@
  * as-records, or a document model. Kinds for those are declared so the grammar
  * is stable when they arrive, and `resolveRef` returns null for a kind nothing
  * stores yet. An honest null beats a kind added later with a different shape.
+ *
+ * AND IT DOES NOT NAME ASSET LIBRARY FILES. There is a second `{kind, id}`
+ * shape in the tree — `{ kind: 'asset', id }`, written onto Brief attachments
+ * by `lib/assets/adoptBriefAttachments.js` — and the resemblance is close
+ * enough that adding `asset` here looks like tidying up. It is not. The two
+ * grammars are separate on purpose, for three reasons that all point the same
+ * way:
+ *
+ * 1. THIS GRAMMAR NAMES CREATIVE MATERIAL; that one names a FILE. Every kind
+ *    above is something a Direction, a presentation or a brand book COMPOSES —
+ *    a mark, a palette, a pairing, a pin, a sample. An Asset Library row is a
+ *    stored artefact with bytes, provenance and a version chain. The product
+ *    model separates SOURCE ASSET from GENERATED ARTIFACT as a first-order
+ *    distinction, and this is where that distinction is spelled.
+ *
+ * 2. THE CONSUMERS ARE COMPOSITION SURFACES. Anything valid here can be
+ *    dropped into a Direction and carried onward toward a book. Making an
+ *    asset addressable by this grammar would let the Asset Library feed the
+ *    composition and delivery path directly — which is precisely the outcome
+ *    the ownership contract forbids: the library must never become a second
+ *    production or delivery system. Package truth is `packageAssets`, and it
+ *    stays that way because assets cannot be spelled in the language the
+ *    composers read.
+ *
+ * 3. THEY RESOLVE FROM DIFFERENT PLACES. `resolveRef` takes a PROJECT and
+ *    reads project-scoped collections. Assets live in a flat workspace-level
+ *    list carrying a `project_id`, like `moodItems` — which is exactly why
+ *    evidence already needs `resolveEvidenceRef` as a separate function. An
+ *    `asset` kind would be a third special case that cannot honour the
+ *    signature it is declared under.
+ *
+ * If assets ever SHOULD be composable, that is a product decision about what a
+ * Direction may contain, not a refactor of this file — and it changes the
+ * Directions and Brand Book contracts, not this one. A guard test in
+ * `lib/assets/referenceGrammar.test.js` holds the two apart in the meantime.
  */
 
 /**

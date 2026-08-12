@@ -7,6 +7,19 @@
  * the client. The accepted image is therefore copied once into brand-assets;
  * the old public URL remains on the Brief only so legacy previews continue to
  * work. `assetRef` is the canonical identity from this point onward.
+ *
+ * PARTIAL SUCCESS IS THE NORMAL CASE, not an edge one — three images where the
+ * second one's host times out is an ordinary afternoon. So every attachment is
+ * accounted for individually: the ones that were preserved are returned and
+ * committed, the ones that were not are named with a reason, and neither
+ * outcome is inferred from the other. `adoptionSummary` below turns that into
+ * the one sentence the designer sees.
+ *
+ * The rule this exists to enforce: NEVER report "filed" for a durable
+ * operation that did not complete. The designer's next action depends on it —
+ * a client's artwork believed to be privately preserved, but actually still
+ * sitting only on a public intake URL, is a promise the studio has made on the
+ * app's word.
  */
 import { normaliseIngest } from './assetLibrary.js'
 
@@ -142,4 +155,50 @@ export async function adoptBriefAttachments({
   }
 
   return { assets: accepted, hydratedAssets, links, failed }
+}
+
+/**
+ * One sentence for what the adoption actually did.
+ *
+ * Counts, plainly, in the same register as `ingestSummary`: no exclamation, no
+ * "success", and a refusal stated as a fact about a file rather than as
+ * something the designer got wrong. A client's server refusing a download is
+ * not a mistake anyone made.
+ *
+ * Returns '' when there was nothing to do — an empty string is the signal not
+ * to speak at all. A Brief with no attachments must not produce a toast about
+ * attachments.
+ *
+ * @param {{assets?: object[], hydratedAssets?: object[], failed?: {reason?: string}[]}} result
+ * @returns {{line: string, ok: boolean}}
+ */
+export function adoptionSummary({ assets = [], hydratedAssets = [], failed = [] } = {}) {
+  /* Newly copied AND already-preserved both count as kept: from the
+     designer's side "this image is safe with the project" is one fact, and
+     splitting it would invite the question "what's the difference?" at a
+     moment when the answer does not matter. */
+  const kept = assets.length + hydratedAssets.length
+  const lost = failed.length
+
+  if (!kept && !lost) return { line: '', ok: true }
+  if (kept && !lost) {
+    return {
+      line: kept === 1 ? 'Kept 1 client image with the project' : `Kept ${kept} client images with the project`,
+      ok: true,
+    }
+  }
+  if (!kept) {
+    /* One failure gets its own reason — it is specific, actionable and
+       already written as a sentence. Several get a count, because a stack of
+       reasons on a toast is a wall nobody reads. */
+    const only = String(failed[0]?.reason || '').trim()
+    return {
+      line: lost === 1 && only ? only : `${lost} client images could not be kept with the project`,
+      ok: false,
+    }
+  }
+  return {
+    line: `Kept ${kept}, ${lost} could not be kept with the project`,
+    ok: false,
+  }
 }

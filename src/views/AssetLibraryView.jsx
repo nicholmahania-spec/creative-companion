@@ -75,7 +75,7 @@ export default function AssetLibraryView({
 
   /* Every display judgement is made in the view model, so this component has
      none to make and none to get subtly wrong per render. */
-  const { groups, total, showHeadings, allRemote } = useMemo(
+  const { groups, total, showHeadings, allRemote, allLocal } = useMemo(
     () => assetShelf(mine, { online: typeof navigator === 'undefined' || navigator.onLine }),
     [mine]
   )
@@ -94,6 +94,15 @@ export default function AssetLibraryView({
       {allRemote && (
         <p className="assets-lib-note" role="status">
           Files aren’t on this device. Names, versions and sources are.
+        </p>
+      )}
+
+      {/* The mirror image, said the same way and for the same reason. Every
+          file here is on this desk, which is one fact about the shelf rather
+          than a sentence each card has to carry. */}
+      {allLocal && (
+        <p className="assets-lib-note" role="status">
+          These files are saved on this desk.
         </p>
       )}
 
@@ -177,7 +186,7 @@ export default function AssetLibraryView({
                   </p>
                   {/* Per-card state ONLY in the mixed case, where it says
                       something true of this file and not that one. */}
-                  {!allRemote && c.bytes.label && (
+                  {!allRemote && !allLocal && c.bytes.label && (
                     <p className="assets-lib-state">{c.bytes.label}</p>
                   )}
 

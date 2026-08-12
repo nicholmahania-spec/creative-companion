@@ -10,9 +10,10 @@
  * WHAT IS AND IS NOT AVAILABLE OFFLINE, since this is the file that decides
  * it. Rows are local, so the shelf itself — names, categories, provenance,
  * version numbers, counts — is fully readable with no network and no account.
- * Only the BYTES are remote, and each card says honestly which of the four
- * states it is in. A local-only desk gets a real library that cannot yet hold
- * pixels, rather than a screen that says "sign in" and shows nothing.
+ * Bytes may be on this desk, in the bucket, both or neither, and each card
+ * says honestly which of those it is (BYTE_STATES). A local-only desk gets a
+ * real library holding real files, rather than a screen that says "sign in"
+ * and shows nothing.
  */
 
 import {
@@ -36,6 +37,10 @@ export function assetCard(assets, asset, { cachedKeys, loadingKeys, online } = {
   const loading = !!loadingKeys?.has?.(asset.id)
   const bytes = assetByteState({
     storagePath: asset.storage_path || null,
+    /* The row's own record that its bytes were written to this device's
+       cache. Passed because a card that ignores it reports a filed file as a
+       failed upload — see BYTE_STATES.local. */
+    localKey: asset.local_key || null,
     cached,
     loading,
     online: online !== false,
@@ -118,7 +123,17 @@ export function assetShelf(assets = [], opts = {}) {
   const allRemote =
     cards.length > 0 && cards.every((c) => c.bytes.state === 'remote')
 
-  return { groups, total: cards.length, showHeadings, allRemote }
+  /* The same collapse for the opposite case, and it needs the same treatment
+     for a different reason. A shelf where every file is on this desk — which
+     is every shelf built by dropping files, since ingest writes locally — would
+     otherwise carry "Saved on this desk." twenty times over. That is one fact
+     read twenty times, and a reassurance repeated until it is wallpaper stops
+     being read at all. Said once above the shelf it is information; said on
+     every card it is texture. */
+  const allLocal =
+    cards.length > 0 && cards.every((c) => c.bytes.state === 'local')
+
+  return { groups, total: cards.length, showHeadings, allRemote, allLocal }
 }
 
 /**
