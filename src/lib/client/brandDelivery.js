@@ -19,6 +19,7 @@
  */
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { publicUrl } from '../appPaths'
+import { decisionLineFromPack } from '../brandSystem'
 import { CLOUD_REQUIRED } from './cloudRequired.js'
 
 /** Client-facing URL for a delivered brand book. */
@@ -27,18 +28,167 @@ export function brandRevealUrl(portalId) {
 }
 
 /**
- * Fields on a brand pack that the delivered book does not print, and that the
- * client has no business receiving.
+ * THE CLIENT DELIVERY ALLOW-LIST — the only fields that cross into a client's
+ * copy of the brand book.
  *
- * Not a guess — `deliveryPackPrivacy.test.js` checks that nothing under
- * `src/lib/book/` reads any of them, so stripping them cannot change a single
- * page of the book the designer previewed. If a future page starts printing
- * one of these, that test fails and this list has to be argued about rather
- * than silently drifting.
+ * WHY THIS IS AN ALLOW-LIST AND NOT A DENY-LIST. Until this pass the rule was
+ * "send everything on the pack except these fourteen", which means every field
+ * added to `buildBrandPackSnapshot` for a designer-side reader became
+ * client-visible the moment it was added, and stayed that way until somebody
+ * noticed. Two did: `packageAssets` carried the designer's uploads — including
+ * the ones `packagePlan` refuses to ship on usage rights — and `feedbackNotes`
+ * carried the designer's private critique of their own work. Neither was
+ * rendered by anything. Both were in the payload for months.
+ *
+ * That is not a list that was maintained badly. It is a list whose default is
+ * wrong: a deny-list fails open, and the failure is silent on both sides of the
+ * transaction. The default here is now the other way round — a field nobody has
+ * thought about does not travel, and the test that proves it invents a field
+ * this module has never heard of and checks it does not appear.
+ *
+ * HOW A FIELD EARNS ITS PLACE. Only two categories qualify:
+ *
+ *   A  the client-facing book actually prints it
+ *   B  the delivery itself needs it to behave correctly
+ *
+ * Not qualifying, however harmless it looks: designer working material,
+ * package/production truth, and residue nothing reads. "It is already crossing
+ * the boundary" is not a reason — that was true of both defects above.
+ *
+ * The membership test is empirical, not editorial. `deliveryContract.test.js`
+ * renders the real book from the full snapshot and from the delivered pack and
+ * asserts the two documents are identical, so a field the book needs cannot be
+ * left out of this list without a test naming it, and a field the book does not
+ * need gains nothing by being added.
+ */
+export const CLIENT_DELIVERY_FIELDS = [
+  // ── Whose brand this is, and who made it ────────────────────────────────
+  'projectName',
+  /* The studio credit printed in the book's footer — the designer's own name
+     on their own work, which is the one piece of designer identity that is
+     supposed to reach the client. */
+  'studio',
+  /* THE DATE ON THE COVER (B).
+
+     Left off this list when it was written, because at that moment nothing in
+     the client render path read it — the cover stamped `new Date()` and the
+     field was residue. That stopped being true in `brandBookPdf.js`, which now
+     reads `pack?.exportedAt || Date.now()` so a book dates itself from when it
+     was exported rather than from whenever it happens to be opened.
+
+     Strip it and the fallback fires: the designer proofs a book dated the day
+     they finished it and the client opens one dated today — the same document
+     disagreeing with itself about when it was made, which is exactly the
+     preview-is-not-the-delivery failure the whole projection exists to prevent.
+
+     Not private. It is a timestamp about the client's own book, and after that
+     change it is printed ON the client's own book. */
+  'exportedAt',
+
+  // ── Page setup (B) ──────────────────────────────────────────────────────
+  /* The reveal page renders the book by generating the real PDF, the same
+     construction the studio preview uses. Leave these behind and the client's
+     copy comes out on a different page size, grid and type scale to the one
+     the designer chose and checked — `publishDelivery` has always said page
+     setup must travel with the pack, and this is where that promise is kept. */
+  'bookPageBg',
+  'bookGrid',
+  'bookRunning',
+  'bookTypeColor',
+  'bookTypeScale',
+
+  // ── The brand system the book prints ────────────────────────────────────
+  'palette',
+  'colorRoles',
+  'typeHeading',
+  'typeBody',
+  'typeWhy',
+  'logoImage',
+  'logoWordmark',
+  'logoDirection',
+  'logoClearspace',
+  'logoMinSize',
+  /* Read through `logoDontsList` in brandSystem.js rather than directly by any
+     file under src/lib/book/ — which is exactly why the older privacy guard,
+     which scans that one directory, could never have caught its absence. */
+  'logoDonts',
+  'pins',
+
+  // ── The words the book prints ───────────────────────────────────────────
+  'tagline',
+  'positioning',
+  'voice',
+  'toneOfVoice',
+  'story',
+  'usp',
+  'messagingPromise',
+  'messagingProof',
+  'messagingPersonality',
+  'messagingPlan',
+  'messagingCta',
+  'writingCase',
+  'writingCaps',
+  'writingNotes',
+  'doUse',
+  'dontUse',
+  'imageryStyle',
+  'imageryDo',
+  'imageryDont',
+  'printPantone',
+  'printStock',
+  'printFinish',
+  'technical',
+  'accessibilityNeeds',
+  /* The Handoff appendix. These two read like private notes and are not —
+     the book prints them under "Handoff note" and "What we learned", which is
+     copy written for the client to read. `feedbackNotes` is the one that sits
+     beside them and IS private; it is on the other list. */
+  'handoffNote',
+  'learnings',
+
+  // ── Where the brand lives ───────────────────────────────────────────────
+  'brandSurfaces',
+  'touchpointApps',
+
+  // ── The client's own answers, which the book prints as the agreed brief ──
+  'detective',
+
+  // ── The back page ───────────────────────────────────────────────────────
+  /* The brand's own contact details, not the studio's — the same values the
+     stationery is set from. */
+  'contacts',
+  'orgEmail',
+  'orgPhone',
+  'orgWebsite',
+
+  // ── One derived line, resolved by the projection ────────────────────────
+  /* See `buildDeliveryPack`. The book prints a decision line that
+     `decisionLineFromPack` computes from `decisionLog` and `directions`, both
+     of which are private. Resolving it here sends the sentence without the
+     material behind it. */
+  'decisionLine',
+]
+
+/**
+ * Fields that must never reach a client — the REGRESSION RECORD, not the
+ * mechanism.
+ *
+ * `CLIENT_DELIVERY_FIELDS` above is what actually decides the payload now, and
+ * because it is an allow-list every one of these is already excluded by not
+ * being on it. This list survives for two jobs the allow-list cannot do:
+ *
+ *   1. It names the ones that were genuinely leaking — `packageAssets` and
+ *      `feedbackNotes` — so the defect cannot quietly return by someone adding
+ *      a plausible-looking name to the allow-list. A test asserts the two lists
+ *      never intersect.
+ *   2. `deliveryPackPrivacy.test.js` walks it to prove nothing under
+ *      `src/lib/book/` reads any of them, which is what makes it safe to say
+ *      the client's book is the same document the designer previewed.
  *
  * The cost of getting this wrong is not abstract: `openTasks` is the
- * designer's own to-do list, and `feedbackLog` / `revisionRounds` are the
- * record of how many times the client changed their mind.
+ * designer's own to-do list, `feedbackLog` / `revisionRounds` are the record of
+ * how many times the client changed their mind, and `packageAssets` is FILES —
+ * including the uploads whose usage rights `packagePlan` refuses to ship.
  */
 export const PRIVATE_PACK_FIELDS = [
   'openTasks',
@@ -53,10 +203,45 @@ export const PRIVATE_PACK_FIELDS = [
   'scopeApprover',
   'scopeOutOf',
   'deadline',
+  /* The designer's own critique of their own work — the Review stop's notes
+     field, placeholdered "Change · why · keep". It sits next to `learnings`
+     and `handoffNote` in the snapshot and reads like them, which is why it was
+     missed: those two ARE client-facing and the book genuinely prints them in
+     its Handoff appendix under client-facing labels. Nothing prints this one.
+     It was carried to the client and displayed to no one. */
+  'feedbackNotes',
+  /* THE FILES THEMSELVES, and the reason this list is worth reading twice.
+
+     `buildBrandPackSnapshot` carries `packageAssets` so the PACKAGE PLANNER
+     can read the designer's uploads off the pack — that is a local, designer-
+     side concern and it is the right place for it. But the pack is also what
+     `publishDelivery` writes into `client_portals.delivery_pack`, which
+     `get_brand_delivery` serves to any holder of /d/<portalId>. So the array
+     travelled, bytes and all, over the one boundary in this app that actually
+     transmits anything to a client.
+
+     `packagePlan` refuses to ship a file whose rights are `thirdParty`,
+     `designerOwned`, `doNotDistribute` or unset — it holds each one back and
+     prints the reason in the client's README. Every one of those files was in
+     the delivery pack anyway. The app asserted rights on the designer's behalf
+     on the path it does not send, and silently overrode itself on the path it
+     does.
+
+     Stripping it here costs the client nothing: no page of the book reads
+     `packageAssets`, so the client's copy is the same document the designer
+     previewed, and the legitimate files still reach the client the way they
+     always did — through the zip the designer builds and hands over. */
+  'packageAssets',
 ]
 
 /** Bytes. Past this the row is silly to store and slow to open on a phone. */
 export const DELIVERY_PACK_LIMIT = 3_000_000
+
+/* Named once. `buildDeliveryPack` reports these at send time and
+   `deliveryGaps` derives the same facts from the delivered row afterwards; two
+   spellings of "the moodboard images" would read as two different problems. */
+const DROPPED_PINS = 'the moodboard images'
+const DROPPED_LOGO = 'the logo artwork'
 
 const bytes = (value) => {
   try {
@@ -68,13 +253,18 @@ const bytes = (value) => {
 }
 
 /**
- * Turn a brand pack snapshot into the payload the client receives.
+ * PROJECT a brand pack snapshot onto the payload the client receives.
  *
- * Strips the designer's private working data, then — only if the result is
- * still too big to be sensible — drops the board pins, which are the heaviest
- * thing in a pack by an order of magnitude (each carries an image data URL).
+ * Projection, not a filtered copy: it starts from nothing and takes only what
+ * `CLIENT_DELIVERY_FIELDS` names. A field the snapshot grows tomorrow is absent
+ * from the client's copy by default, and stays absent until somebody decides
+ * otherwise in the one place that decision belongs.
  *
- * Returns what was dropped so the caller can SAY so. Silence here would mean a
+ * Then — only if the result is still too big to be sensible — it drops the
+ * board pins, which are the heaviest thing left in a pack by an order of
+ * magnitude (each carries an image data URL), and after that the logo artwork.
+ *
+ * Returns what was dropped so the caller can SAY so. Silence there would mean a
  * designer previews a book with a moodboard page and delivers one without,
  * with nothing on screen to explain the difference.
  *
@@ -85,19 +275,66 @@ export function buildDeliveryPack(pack) {
   if (!pack || typeof pack !== 'object') {
     return { pack: null, dropped: [], tooLarge: false }
   }
-  const out = { ...pack }
-  for (const key of PRIVATE_PACK_FIELDS) delete out[key]
+  const out = {}
+  /* `in` rather than a truthiness check: `false` and `0` are real answers on
+     this pack, and a projection that silently dropped them would change the
+     book rather than merely shrink the payload. */
+  for (const key of CLIENT_DELIVERY_FIELDS) {
+    if (key in pack) out[key] = pack[key]
+  }
+
+  /* The one value the client's copy has to CARRY rather than compute.
+     `decisionLineFromPack` prints a sentence derived from `decisionLog`, then
+     from `directions` — the designer's decision history and their unchosen
+     routes, neither of which is the client's. Resolving it here sends the
+     sentence the designer previewed without any of the material behind it; the
+     renderer reads `decisionLine` first, so it never reaches for the rest.
+     Set only when there is one: an empty key would be a field with no answer. */
+  const decision = decisionLineFromPack(pack)
+  if (decision) out.decisionLine = decision
 
   const dropped = []
   if (bytes(out) > DELIVERY_PACK_LIMIT && (out.pins || []).length) {
     out.pins = []
-    dropped.push('the moodboard images')
+    dropped.push(DROPPED_PINS)
   }
   if (bytes(out) > DELIVERY_PACK_LIMIT && out.logoImage) {
     out.logoImage = ''
-    dropped.push('the logo artwork')
+    dropped.push(DROPPED_LOGO)
   }
   return { pack: out, dropped, tooLarge: bytes(out) > DELIVERY_PACK_LIMIT }
+}
+
+/**
+ * What the client's copy is missing, read off the delivery itself.
+ *
+ * `buildDeliveryPack` returns `dropped` at the moment of sending, and the
+ * screen used to hold it in component state — so the one sentence explaining
+ * why the client's book differs from the preview survived exactly until the
+ * next reload, on a screen a designer returns to for the rest of the project.
+ *
+ * It does not need storing. The delivered pack IS the record: it is on the row,
+ * the studio view already fetches it, and a pack that reached the client with no
+ * pins while the project has pins is the fact the sentence was reporting. So
+ * this derives it instead — no new column, no second copy to keep in step, and
+ * true after a reload, after a re-send, and on another machine.
+ *
+ * Deliberately compares against the DELIVERED pack rather than recomputing
+ * `buildDeliveryPack` on today's project: the question is what the client
+ * actually holds, not what a fresh send would leave out now.
+ *
+ * @param {object|null} portal  a client_portals row
+ * @param {object|null} pack    the current local snapshot
+ * @returns {string[]} phrases, in the order they were shed
+ */
+export function deliveryGaps(portal, pack) {
+  if (portal?.delivery_status !== 'delivered') return []
+  const { pack: sent } = readDeliveryEnvelope(portal?.delivery_pack)
+  if (!sent) return []
+  const out = []
+  if ((pack?.pins || []).length && !(sent.pins || []).length) out.push(DROPPED_PINS)
+  if (pack?.logoImage && !sent.logoImage) out.push(DROPPED_LOGO)
+  return out
 }
 
 /**
@@ -164,15 +401,34 @@ export function deliveryStatusLine(portal) {
  * copy quietly comes out on a different page size to the one the designer
  * chose and checked.
  *
+ * WHICH PROJECT'S BOOK, AND WHOSE LINK. Owner RLS already makes it impossible
+ * to publish into another studio's portal. What it cannot see is a portal that
+ * belongs to a different project of the SAME studio — and the inbox's reconnect
+ * makes that reachable by hand, because it attaches whatever portal is selected
+ * to whatever project is open. Pick the wrong project there and this would send
+ * one client's brand book to another client's live link, silently.
+ *
+ * So the write is scoped to both ids at once. `project_local_id` is stamped at
+ * creation and re-stamped by `rebindPortalToProject` on every reconnect, so a
+ * legitimate rebind still publishes and a mismatch cannot. Both filters are in
+ * the same statement rather than a read followed by a write: a check that
+ * happens before the update is a check something can change underneath.
+ *
  * @param {string} portalId
- * @param {{ note?: string, pack?: object, book?: object }} payload
+ * @param {{ note?: string, pack?: object, book?: object, projectLocalId?: string }} payload
  */
 export async function publishDelivery(
   portalId,
-  { note = '', pack = null, book = null } = {}
+  { note = '', pack = null, book = null, projectLocalId = '' } = {}
 ) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: CLOUD_REQUIRED }
+  }
+  /* Refused rather than published unguarded. An absent project id is a caller
+     bug, and the permissive reading of it — publish anyway — is exactly the
+     hole this parameter exists to close. */
+  if (projectLocalId == null || projectLocalId === '') {
+    return { ok: false, error: 'Couldn’t send it — no project is open' }
   }
   const built = buildDeliveryPack(pack)
   if (built.tooLarge) {
@@ -182,7 +438,7 @@ export async function publishDelivery(
     }
   }
   const now = new Date().toISOString()
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('client_portals')
     .update({
       delivery_status: 'delivered',
@@ -196,11 +452,24 @@ export async function publishDelivery(
       updated_at: now,
     })
     .eq('id', portalId)
+    .eq('project_local_id', String(projectLocalId))
+    .select('id')
   if (error) {
     // Log the driver's message, show the human one — this string is rendered
     // to the designer at the end of a project, not to a console reader.
     console.warn('Couldn’t send the delivery', error)
     return { ok: false, error: 'Couldn’t send it — try again in a moment' }
+  }
+  /* Nothing updated means the row exists but is bound to a different project —
+     a portal reconnected before rebinding recorded it, or the wrong project is
+     open. Says which thing to do about it rather than "try again", because
+     trying again does nothing at all here. */
+  if (!Array.isArray(data) || data.length === 0) {
+    return {
+      ok: false,
+      error:
+        'This client link belongs to a different project — open Client activity and link it to this one first',
+    }
   }
   return { ok: true, dropped: built.dropped }
 }
