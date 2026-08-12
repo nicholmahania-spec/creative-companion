@@ -6,8 +6,9 @@ import {
   readPaletteTokens,
   resolvePageBg,
   EDGE_STOPS,
+  marginPercentForEdge,
+  projectBookSetup,
   EDGE_ORDER,
-  nearestEdgeStop,
 } from '../lib/book/bookBuilder'
 import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES, fieldHome, FIELD_HOMES } from '../lib/book/bookContent'
 import { currentBrandPack } from '../lib/book/currentPack'
@@ -830,7 +831,10 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
   const setPageBg = patch('pageBg')
   const setGrid = patch('grid')
   const setRunning = patch('running')
-  const setPrintSettings = patch('print')
+  /* Page setup writes the canonical top-level keys, not `print`/`grid.edge`.
+     Those were this surface's half of the two-home split — the Builder kept
+     its own trim while every client-facing consumer read `prefs.book*`. */
+  const setBookSetup = (p) => setBookBuilder(p)
 
   const setType = (field) => (value) =>
     setBookBuilder({ type: { ...bb.type, [field]: value } })
@@ -878,7 +882,9 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
   const pageBg = bb.pageBg
   const grid = bb.grid
   const running = bb.running
-  const printSettings = bb.print
+  /* The project's page setup — the same three values the PDF, the package
+     and the delivery resolve through `projectBookSetup`. */
+  const printSettings = { pageSize: bb.pageSize, bleed: bb.printShop }
 
   /* Fetch whatever families are named, so the pages render the real faces
      rather than silently falling back to the UI font. */
@@ -981,12 +987,19 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
   const swatchCols = Math.min(6, Math.max(2, Math.round(grid.columns / 2)));
   const dims = PAGE_SIZES[printSettings.pageSize];
   const bleedIn = printSettings.bleed ? 0.125 : 0;
-  const marginIn = (grid.margin / 100) * dims.w;
+  /* The active Edge chip reads the canonical value directly. It used to fall
+     back to a nearest-stop guess off `grid.margin` — the GUIDE-overlay
+     number, a different quantity the PDF never used for its content margin. */
+  const activeEdge = bb.edgeSpace;
 
-  /* The active Edge chip: an explicit choice if one was ever made, else the
-     stop the current margin reads closest to — display-only, never written
-     back (see bookBuilderFor's no-migration read of grid.edge). */
-  const activeEdge = grid.edge || nearestEdgeStop(grid.margin, printSettings.pageSize);
+  /* PAGE PADDING ON SCREEN = PAGE MARGIN IN THE PDF.
+     This was `(grid.margin / 100) * dims.w` — the guide-overlay percentage,
+     derived from an edge table that disagreed with the generator's by 2-3mm
+     per stop. `marginPercentForEdge` now resolves through the same
+     BOOK_EDGE_SPACE points `resolveBookSetup` uses, so what is proofed here
+     is the edge that prints. `grid.margin` keeps its own job: the guides. */
+  const edgePercent = marginPercentForEdge(activeEdge, printSettings.pageSize);
+  const marginIn = (edgePercent / 100) * dims.w;
 
   /* The top-bar setup line, stated from the real settings — never a fixed
      string. e.g. "A4 · Standard edge · print-shop bleed on". */
@@ -1102,7 +1115,8 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
     return { bg: hex, dark: !isLight(hex) };
   };
 
-  const gridMarginVar = { "--space-md": `${grid.margin}%` };
+  /* The page's own padding var — the canonical edge, not the guide number. */
+  const gridMarginVar = { "--space-md": `${edgePercent}%` };
 
   const sheetW = (dims.w + bleedIn * 2).toFixed(3)
   const sheetH = (dims.h + bleedIn * 2).toFixed(3)
@@ -1168,11 +1182,10 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
     if (exporting) return
     setExporting(true)
     setExportNote('')
-    const book = {
-      pageSize: printSettings.pageSize === 'a4' ? 'a4' : 'letter',
-      edgeSpace: EDGE_STOPS[activeEdge] ? activeEdge : 'standard',
-      printShop: !!printSettings.bleed,
-    }
+    /* Derived once, in the module every other consumer uses, so the Builder's
+       own download cannot describe the page differently from the package,
+       the kit or the client's copy. */
+    const book = projectBookSetup(project)
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready
       const res = await downloadBrandPackVectorPdf(pack, null, { book })
@@ -1440,20 +1453,20 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
           <ChipRow
             label="Sheet"
             value={printSettings.pageSize}
-            onChange={(v) => setPrintSettings((p) => ({ ...p, pageSize: v }))}
+            onChange={(v) => setBookSetup({ pageSize: v })}
             options={Object.entries(PAGE_SIZES).map(([id, v]) => ({ id, label: v.label.split(' (')[0] }))}
           />
           <ChipRow
             label="Edge space"
             value={activeEdge}
-            onChange={(v) => setGrid((g) => ({ ...g, edge: v }))}
+            onChange={(v) => setBookSetup({ edgeSpace: v })}
             options={EDGE_ORDER.map((id) => ({ id, label: EDGE_STOPS[id].label }))}
           />
           <PillToggle
             id="bbb-printShop"
             label="Going to a print shop"
             checked={printSettings.bleed}
-            onChange={(v) => setPrintSettings((p) => ({ ...p, bleed: v }))}
+            onChange={(v) => setBookSetup({ printShop: v })}
           />
         </Section>
 

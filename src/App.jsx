@@ -23,6 +23,8 @@ import { DEFAULT_PALETTE } from './lib/color'
 import { clampFocusMaskPct } from './lib/uiPrefs'
 import { downscaleDataUrl } from './lib/moodPins'
 import { resolveStudioName } from './lib/studio/studioIdentity'
+/* The reconnect's server half — see the onAttachPortal handler below. */
+import { rebindPortalToProject } from './lib/client/clientPortal'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   toISODate,
@@ -104,6 +106,9 @@ import {
   printElementById,
   slugifyFilename,
 } from './lib/book/exportFiles'
+/* The project's own page setup. Prefs seed a project and are not read here —
+   see bookBuilder.js. */
+import { projectBookSetup } from './lib/book/bookBuilder'
 import {
   hoursForRange,
   workLogsFromProjects,
@@ -572,12 +577,6 @@ function App() {
      this prefill existed; nothing implemented it. Now it does. */
   const studioName = resolveStudioName(prefs)
   const studioLogo = String(prefs.studioLogo || '').trim()
-  /** Brand book page setup — sticky prefs, honoured by the vector generator */
-  const bookSetup = {
-    pageSize: prefs.bookPageSize,
-    edgeSpace: prefs.bookEdgeSpace,
-    printShop: !!prefs.bookPrintShop,
-  }
   // toastMode read inside flashToast
   const forceBreaksEnabledRef = useRef(forceBreaksEnabled)
   forceBreaksEnabledRef.current = forceBreaksEnabled
@@ -585,6 +584,13 @@ function App() {
 
   const activeProjectId = currentProjectId
   const activeProject = projects.find((p) => p.id === activeProjectId)
+  /** Brand book page setup — THE PROJECT'S, resolved from its own record.
+      This read `prefs.book*` while the Builder stored its own copy per
+      project, so the book a designer laid out and the book the client
+      received could differ in trim and margin. The prefs now only seed a new
+      project (`seededBookSetup`); every consumer below — download, package,
+      kit, delivery, preview — reads the project. */
+  const bookSetup = projectBookSetup(activeProject)
   const runningTodo = activeProject?.runningTodo || null
   // Open items only — never "3 of 11". A denominator turns a next-action cue
   // into a progress verdict, which invites the "I'm behind" read.
@@ -4344,10 +4350,22 @@ function App() {
         onGoToView={goToInboxTarget}
         onOpenPortal={openInboxPortal}
         currentProjectName={activeProject?.name || ''}
-        onAttachPortal={(portalId) => {
+        onAttachPortal={async (portalId) => {
           /* `setClientPortalId` writes to the CURRENT project, which is
              exactly the promise the button makes — the label names the
-             project it will attach to. */
+             project it will attach to.
+
+             The server is re-stamped FIRST. The local link alone used to leave
+             the portal row still naming the project it was created for, and
+             `publishDelivery` now refuses to send a book through a link bound
+             to a different project — so a reconnect that only wrote locally
+             would produce a link that looks attached and cannot be delivered
+             through. Rebinding is what makes the reconnect complete. */
+          const r = await rebindPortalToProject(portalId, activeProject?.id)
+          if (!r.ok) {
+            flashToast(r.error || 'Couldn’t link it — try again in a moment')
+            return
+          }
           setClientPortalId(portalId)
           flashToast(
             `Linked to ${activeProject?.name || 'this project'} — their answers are on the Project screen`,
