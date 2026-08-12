@@ -2269,9 +2269,6 @@ const useAppStore = create(
       // same "the wall is where the designer actually looks" treatment
       // instead of the image sitting invisible inside a brief chapter.
       mergeDetectiveAnswers: (incoming, projectId) => {
-        const inspirationFiles = Array.isArray(incoming?.inspirationLinksFiles)
-          ? incoming.inspirationLinksFiles
-          : []
         set((state) => ({
           projects: state.projects.map((p) => {
             if (p.id !== (projectId ?? state.currentProjectId)) return p
@@ -2300,18 +2297,24 @@ const useAppStore = create(
             return withDetective(p, merged)
           }),
         }))
-        if (inspirationFiles.length) {
-          const state = get()
-          const target = projectId ?? state.currentProjectId
-          inspirationFiles.forEach((f) => {
-            get().addMoodPin({
-              projectId: target,
-              type: 'image',
-              visual: f.url,
-              note: 'From the client’s brief',
-            })
-          })
-        }
+        /* AUTO-PINNING IS OFF. Accepted at review on 2026-08-12 and DEFERRED
+         to Research — not an oversight, and not to be quietly restored by
+         re-adding an addMoodPin call here. The four facts that decide it:
+
+           1. Client attachments remain available on the brief. Nothing is
+              lost; the Define sheet renders them, signed.
+           2. `client-uploads` is private (20260812123000) and is not
+              anonymously readable, so there is no permanent URL to pin.
+           3. An expiring signed URL must never be persisted as a Research
+              pin visual. A pin's `visual` is stored verbatim and read back
+              for months — by the wall, buildBrandPackSnapshot, the delivered
+              pack and the PDF — while a signed URL lives one hour. Pinning
+              one fills the board with images that work until they quietly do
+              not, which is worse than an empty board: you can act on empty.
+           4. Restoring auto-pin needs a durable object-reference model for
+              pins, owned by Research / Asset Library. That is a data-model
+              change, not a line here, and it was deliberately not attempted
+              in a security pass. */
       },
 
       setDiscoveryShare: (shareId, status = 'pending') =>
@@ -2346,9 +2349,6 @@ const useAppStore = create(
         // scrolls into a chapter is invisible in practice, and the wall is
         // where the designer actually looks. Existing-asset files stay in
         // the brief only: they're the *old* identity, not new inspiration.
-        const inspirationFiles = Array.isArray(clientAnswers?.inspirationLinksFiles)
-          ? clientAnswers.inspirationLinksFiles
-          : []
         set((state) => ({
           projects: state.projects.map((p) => {
             const target = projectId ?? state.currentProjectId
@@ -2415,18 +2415,24 @@ const useAppStore = create(
             }
           }),
         }))
-        if (inspirationFiles.length) {
-          const state = get()
-          const target = projectId ?? state.currentProjectId
-          inspirationFiles.forEach((f) => {
-            get().addMoodPin({
-              projectId: target,
-              type: 'image',
-              visual: f.url,
-              note: 'From the client’s brief',
-            })
-          })
-        }
+        /* AUTO-PINNING IS OFF. Accepted at review on 2026-08-12 and DEFERRED
+         to Research — not an oversight, and not to be quietly restored by
+         re-adding an addMoodPin call here. The four facts that decide it:
+
+           1. Client attachments remain available on the brief. Nothing is
+              lost; the Define sheet renders them, signed.
+           2. `client-uploads` is private (20260812123000) and is not
+              anonymously readable, so there is no permanent URL to pin.
+           3. An expiring signed URL must never be persisted as a Research
+              pin visual. A pin's `visual` is stored verbatim and read back
+              for months — by the wall, buildBrandPackSnapshot, the delivered
+              pack and the PDF — while a signed URL lives one hour. Pinning
+              one fills the board with images that work until they quietly do
+              not, which is worse than an empty board: you can act on empty.
+           4. Restoring auto-pin needs a durable object-reference model for
+              pins, owned by Research / Asset Library. That is a data-model
+              change, not a line here, and it was deliberately not attempted
+              in a security pass. */
       },
 
       /** Partial update of brand identity template fields */
