@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { APPROVAL_CAPABLE_STEP_IDS } from '../client/reviewArtifact'
 import {
   JOURNEY_STEPS,
   PATH_VIEWS,
@@ -134,19 +135,33 @@ describe('JOURNEY_STEPS — the seven-stop path', () => {
     expect(isToolsMenuView('project')).toBe(false)
   })
 
-  it('withholds the two artifact-less stops from client approval', () => {
-    expect(PORTAL_PUSHABLE_STEP_IDS).toEqual([
-      'define',
-      'research',
-      'design',
-      'sketch',
-      'deliver',
-    ])
+  /**
+   * R4, owner decision 2026-08-12. The pushable set is now exactly the stops
+   * whose artifact the portal can SHOW, and the rule that decides it lives in
+   * `APPROVAL_UNITS` rather than being restated here.
+   *
+   * This used to list five. The other four were pushable with nothing behind
+   * them but their own label — the client pressed Approve next to the word
+   * "Research" — which is what DESIGN_GRAMMAR G10.5 forbids and what this
+   * assertion previously described as correct. Shrinking the set IS the fix.
+   */
+  it('lets a stop be pushed only when its artifact can be shown', () => {
+    expect(PORTAL_PUSHABLE_STEP_IDS).toEqual(['design'])
     expect(portalPushableSteps().map((s) => s.id)).toEqual([
       ...PORTAL_PUSHABLE_STEP_IDS,
     ])
-    expect(PORTAL_PUSHABLE_STEP_IDS).not.toContain('book')
-    expect(PORTAL_PUSHABLE_STEP_IDS).not.toContain('ideate')
+    /* Derived from the approval units, never restated — adding a unit with a
+       real artifact makes its stop pushable with no edit here. */
+    expect([...PORTAL_PUSHABLE_STEP_IDS]).toEqual([...APPROVAL_CAPABLE_STEP_IDS])
+  })
+
+  /* The four that lost approval capability, named so that restoring one is a
+     decision someone makes rather than a line that drifts back. Each needs an
+     artifact built first — see the reasons in `APPROVAL_UNITS`. */
+  it('names the stops that lost approval capability and why they cannot show', () => {
+    for (const id of ['research', 'sketch', 'deliver', 'define', 'ideate', 'book']) {
+      expect(PORTAL_PUSHABLE_STEP_IDS).not.toContain(id)
+    }
   })
 
   it('keeps the pushable set a subset of the declared path', () => {
