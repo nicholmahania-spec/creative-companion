@@ -7,11 +7,11 @@
  * No milestones / Scope strip under the form (owner — brief is the work).
  * Footer: Back to desk · Next · Research · short needed count.
  */
-import { Suspense, lazy, useCallback, useEffect, useMemo } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import Workroom from '../components/Workroom'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
-import { getRequiredEmpty } from '../lib/brief/detectiveBrief'
+import { getRequiredEmpty, DETECTIVE_CHAPTERS } from '../lib/brief/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'
 import StrategyWords from '../components/StrategyWords'
 import '../styles/lazy-define.css'
@@ -50,6 +50,16 @@ export default function DefineView(props) {
     setProjectDeadline: setProjectDeadlineProp,
     projectDeadline: projectDeadlineProp = '',
   } = props
+
+  /* CALL MODE — the Brief's designer-led capture mode.
+     The client answers this same schema at /f/:shareId; this is the designer
+     answering it while the client talks. One question at a time, written
+     straight to `detective` by the same sheet — no second form, no second
+     store. Index only: the answers live where they always did, so leaving
+     and re-entering the call loses nothing. */
+  const [callMode, setCallMode] = useState(false)
+  const [callIndex, setCallIndex] = useState(0)
+  const callFields = useMemo(() => DETECTIVE_CHAPTERS.flatMap((c) => c.fields), [])
 
   const activeProject = useAppStore((s) => {
     const id = activeProjectProp?.id || s.currentProjectId
@@ -123,6 +133,10 @@ export default function DefineView(props) {
           <h1 className="cc-stage-display">{labelForStepId('define')}</h1>
           <div className="cc-stage-masthead-aside">
             {/* Share never competes with path Continue (audit P1). */}
+            {/* TWO CAPTURE MODES OF ONE BRIEF, side by side, because they
+                answer the same question — "how do these answers get here?" —
+                and the designer picks by who is available, not by which form
+                they want. Neither is a separate destination. */}
             <button
               type="button"
               className="btn btn-secondary define-brief-send"
@@ -130,10 +144,62 @@ export default function DefineView(props) {
             >
               {showSend ? 'Send the brief' : 'Share'}
             </button>
+            <button
+              type="button"
+              className="btn btn-secondary define-brief-call"
+              aria-pressed={callMode}
+              onClick={() => {
+                setCallMode((on) => !on)
+                setCallIndex(0)
+              }}
+            >
+              {callMode ? 'Leave call mode' : 'Call mode'}
+            </button>
           </div>
         </>
       }
       ledge={
+        callMode ? (
+          /* The call's own controls. Path Continue is deliberately absent
+             here: mid-call the next thing is the next question, and a button
+             that leaves the Brief while the client is still talking is the
+             one mistake this mode can make. Leaving is the masthead toggle. */
+          <>
+            <p className="cc-stage-ledge-note">
+              {`Question ${Math.min(callIndex + 1, callFields.length)} of ${callFields.length}`}
+            </p>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={callIndex === 0}
+              onClick={() => setCallIndex((i) => Math.max(0, i - 1))}
+            >
+              Previous
+            </button>
+            {callIndex >= callFields.length - 1 ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setCallMode(false)
+                  setCallIndex(0)
+                }}
+              >
+                Done — back to the brief
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() =>
+                  setCallIndex((i) => Math.min(callFields.length - 1, i + 1))
+                }
+              >
+                Next question
+              </button>
+            )}
+          </>
+        ) : (
         <>
           {neededLine ? (
             <p className="cc-stage-ledge-note">{neededLine}</p>
@@ -157,6 +223,7 @@ export default function DefineView(props) {
             {`Next · ${journeyNext?.label || labelForStepId('research')}`}
           </button>
         </>
+        )
       }
     >
       {/* The view's layout classes stay on a wrapper INSIDE the plane, never
@@ -183,6 +250,8 @@ export default function DefineView(props) {
             <DetectiveSheet
               detective={activeProject?.detective}
               updateDetective={updateDetective}
+              callMode={callMode}
+              callIndex={callIndex}
               splitMode
               showStartHere={false}
               showChapterRail={false}
