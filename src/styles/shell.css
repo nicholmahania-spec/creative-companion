@@ -2973,13 +2973,17 @@ h3 {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.85rem 1.25rem;
-  margin-bottom: 1.75rem;
-  /* 2026 design dressing: the hard 2px baseline under every page title —
-     the one intentional heavy rule per screen, anchoring the head the way
-     the handoff draws it on all of its screens. */
+  /* Same rhythm the Research row uses, so the two kinds of head sit on one
+     grid instead of two hand-set ones. */
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  /* The baseline under a page title stays — a utility page is allowed to
+     anchor its head in a way a stage does not. What changed is WHAT it is
+     drawn in: full ink at 2px was the heaviest line in the app and, against
+     the warm ground, read as a bar rather than a baseline. `--border-strong`
+     is the same token the rest of the system draws its firm edges with. */
   padding-bottom: var(--space-4);
-  border-bottom: 2px solid var(--text-primary);
+  border-bottom: 2px solid var(--border-strong);
 }
 
 /* ——— Material system: desk / wall / document (flat Tech-Studio) ——— */
@@ -5445,14 +5449,6 @@ body.cc-printing-page button {
 
 /* ——— Redline v1.0.0 craft pass ——— */
 
-.work-page-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  margin: 0 0 0.2rem;
-}
-
 .app.is-pack-view .app-footer {
   display: none;
 }
@@ -6614,12 +6610,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .flow-view .flow-top:hover {
   opacity: 1;
-}
-
-.work-page-title {
-  font-size: clamp(1.15rem, 2vw, 1.35rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
 }
 
 .work-context-line,

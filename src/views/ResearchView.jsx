@@ -347,7 +347,7 @@ export default function ResearchView({
       }
     >
           <div className="studio-view surface-wall view-enter research-studio" data-nav-dir={navDir}>
-            <div className="flow-top research-studio-top">
+            <div className="research-studio-top">
               <div className="research-top-text">
                 {/* One button, never two, and only when it does something.
                     Showing both leaves one inert in most states, which is a
