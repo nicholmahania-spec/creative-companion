@@ -227,36 +227,8 @@ function App() {
     (...a) => useAppStore.getState().toggleTask(...a),
     []
   )
-  const updateTaskTitle = useCallback(
-    (...a) => useAppStore.getState().updateTaskTitle(...a),
-    []
-  )
   const updateTaskMeta = useCallback(
     (...a) => useAppStore.getState().updateTaskMeta(...a),
-    []
-  )
-  const updateTaskWhy = useCallback(
-    (...a) => useAppStore.getState().updateTaskWhy(...a),
-    []
-  )
-  const removeTask = useCallback(
-    (...a) => useAppStore.getState().removeTask(...a),
-    []
-  )
-  const breakIntoSteps = useCallback(
-    (...a) => useAppStore.getState().breakIntoSteps(...a),
-    []
-  )
-  const addMoodPin = useCallback(
-    (...a) => useAppStore.getState().addMoodPin(...a),
-    []
-  )
-  const nextSpark = useCallback(
-    (...a) => useAppStore.getState().nextSpark(...a),
-    []
-  )
-  const oppositeSpark = useCallback(
-    (...a) => useAppStore.getState().oppositeSpark(...a),
     []
   )
   const createNewProject = useCallback(
@@ -269,10 +241,6 @@ function App() {
   )
   const setProjectDeadline = useCallback(
     (...a) => useAppStore.getState().setProjectDeadline(...a),
-    []
-  )
-  const setTaskDueDate = useCallback(
-    (...a) => useAppStore.getState().setTaskDueDate(...a),
     []
   )
   const prefs = useAppStore((s) => s.prefs) || {}
@@ -432,7 +400,7 @@ function App() {
      beside the workspace payload rather than inside it. */
   const [quickInput, setQuickInput] = useState(() => loadCapturePad())
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false)
-  const [captureEnergy, setCaptureEnergy] = useState('med')
+  const [captureEnergy] = useState('med')
   const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
   const [isFocusRunning, setIsFocusRunning] = useState(false)
   const [sessionComplete, setSessionComplete] = useState(false)
@@ -506,7 +474,6 @@ function App() {
   const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
   const [restoreSelect, setRestoreSelect] = useState('')
   const [navOpen, setNavOpen] = useState(false)
-  const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
   /* The wizard's own seven fields live in TaskBreakdown. This counter is the
      whole of what App still needs: bumping it remounts the wizard, which is
@@ -517,14 +484,10 @@ function App() {
     const n = new Date()
     return { year: n.getFullYear(), month: n.getMonth() }
   })
-  const [queueOpen, setQueueOpen] = useState(false)
-  const [doneOpen, setDoneOpen] = useState(false)
   const [actionToast, setActionToast] = useState('')
   const toastBatchRef = useRef([])
   const toastBatchTimerRef = useRef(null)
   const toastTimeoutId = useRef(null)
-  const [stepFocusKey, setStepFocusKey] = useState(0)
-  const [stepDueOpen, setStepDueOpen] = useState(false)
   /** Which client the record view ('clientRecord') is showing. */
   const [clientRecordName, setClientRecordName] = useState('')
   /** Client name the intake pre-fills when opened from a client record. */
@@ -562,8 +525,6 @@ function App() {
   const skipNextCloudPush = useRef(false)
   const lastSyncErrorToast = useRef('')
 
-  const showHowItWorks = !!prefs.showHowItWorks
-  const queueCollapsed = prefs.queueCollapsed !== false
   const soundEnabled = prefs.soundEnabled !== false
   const [osReduceMotion, setOsReduceMotion] = useState(() => {
     try {
@@ -975,7 +936,6 @@ function App() {
     }
   }, [activeProject?.id, activeProject?.palette, setProjectPalette])
 
-  const hideHowItWorks = () => setPref('showHowItWorks', false)
 
   const toastMode = prefs.toastMode === 'all' ? 'all' : 'quiet'
   /** Seconds non-error toasts queue before flushing together; 0 = show instantly (default) */
@@ -1039,14 +999,11 @@ function App() {
     const doneId = nextTask.id
     const doneTitle = nextTask.title
     toggleTask(doneId)
-    setStepDueOpen(false)
     setBuddyWinPulse((n) => n + 1)
     offerUndo(doneTitle, () => {
       toggleTask(doneId)
-      setStepFocusKey((k) => k + 1)
     })
     flashToast('Step done', { important: true })
-    setStepFocusKey((k) => k + 1)
   }
 
   /**
@@ -2942,18 +2899,6 @@ function App() {
   }
   runExportRef.current = runExport
 
-  const startVoice = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      flashToast?.('Voice is not supported in this browser.')
-      return
-    }
-    const recognition = new SpeechRecognition()
-    recognition.onresult = (e) => setQuickInput(e.results[0][0].transcript)
-    recognition.onerror = () => {}
-    recognition.start()
-  }
 
   /* Bumping the run id remounts the wizard, so "open" and "More" are the same
      action — a fresh run either way. */
@@ -2969,10 +2914,7 @@ function App() {
   const commitBreakdown = ({ steps, energy, goalLabel }) => {
     const n = addMicroStepsBatch({ steps, energy, goalLabel })
     setPref('queueCollapsed', true)
-    setQueueOpen(false)
-    setDoneOpen(false)
     setActiveView('flow')
-    setStepFocusKey((k) => k + 1)
     flashToast(
       n === 1
         ? 'One tiny step is ready — do only that one'
@@ -4166,34 +4108,6 @@ function App() {
           projectPalette={projectPalette}
           deskMood={deskMood}
           deskTasks={deskTasks}
-          doneTasks={doneTasks}
-          queueTasks={queueTasks}
-          stepFocusKey={stepFocusKey}
-          setStepFocusKey={setStepFocusKey}
-          hideHowItWorks={hideHowItWorks}
-          openBreakdown={openBreakdown}
-          quickInput={quickInput}
-          setQuickInput={setQuickInput}
-          captureEnergy={captureEnergy}
-          setCaptureEnergy={setCaptureEnergy}
-          captureDue={captureDue}
-          setCaptureDue={setCaptureDue}
-          captureOptionsOpen={captureOptionsOpen}
-          setCaptureOptionsOpen={setCaptureOptionsOpen}
-          addQuickTask={addQuickTask}
-          queueOpen={queueOpen}
-          setQueueOpen={setQueueOpen}
-          doneOpen={doneOpen}
-          setDoneOpen={setDoneOpen}
-          updateTaskTitle={updateTaskTitle}
-          updateTaskWhy={updateTaskWhy}
-          removeTask={removeTask}
-          breakIntoSteps={breakIntoSteps}
-          setTaskDueDate={setTaskDueDate}
-          stepDueOpen={stepDueOpen}
-          setStepDueOpen={setStepDueOpen}
-          completeCurrentStep={completeCurrentStep}
-          startVoice={startVoice}
           setActiveView={setActiveView}
           /* The stage's path edge ticks its stops from this. Passed as ONE
              already-derived value rather than its five ingredients, because a
@@ -4227,13 +4141,7 @@ function App() {
           setTimerFocusSource={setTimerFocusSource}
           setResearchAddOpen={setResearchAddOpen}
           nextTask={nextTask}
-          currentSpark={currentSpark}
-          nextSpark={nextSpark}
-          oppositeSpark={oppositeSpark}
-          addMoodPin={addMoodPin}
           updateDirection={updateDirection}
-          sparksTried={sparksTried}
-          addTask={addTask}
           focusMinutes={focusMinutes}
           focusSeconds={focusSeconds}
           sessionLabel={sessionLabel}
@@ -4289,16 +4197,10 @@ function App() {
           syncState={syncState}
           syncError={syncError}
           runCloudPush={runCloudPush}
-          exportAllData={exportAllData}
-          setSyncState={setSyncState}
-          setSyncError={setSyncError}
           theme={theme}
           toggleTheme={toggleTheme}
           setShortcutsOpen={setShortcutsOpen}
           reduceMotion={reduceMotion}
-          soundEnabled={soundEnabled}
-          showHowItWorks={showHowItWorks}
-          queueCollapsed={queueCollapsed}
           pwCurrent={pwCurrent}
           setPwCurrent={setPwCurrent}
           pwNext={pwNext}

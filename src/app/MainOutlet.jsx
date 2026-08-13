@@ -68,34 +68,6 @@ export default function MainOutlet(p) {
     projectPalette,
     deskMood,
     deskTasks,
-    doneTasks,
-    queueTasks,
-    stepFocusKey,
-    setStepFocusKey,
-    hideHowItWorks,
-    openBreakdown,
-    quickInput,
-    setQuickInput,
-    captureEnergy,
-    setCaptureEnergy,
-    captureDue,
-    setCaptureDue,
-    captureOptionsOpen,
-    setCaptureOptionsOpen,
-    addQuickTask,
-    queueOpen,
-    setQueueOpen,
-    doneOpen,
-    setDoneOpen,
-    updateTaskTitle,
-    updateTaskWhy,
-    removeTask,
-    breakIntoSteps,
-    setTaskDueDate,
-    stepDueOpen,
-    setStepDueOpen,
-    completeCurrentStep,
-    startVoice,
     setActiveView,
     pathCtx,
     identityWorkroomLauncherRef,
@@ -189,16 +161,10 @@ export default function MainOutlet(p) {
     syncState,
     syncError,
     runCloudPush,
-    exportAllData,
-    setSyncState,
-    setSyncError,
     theme,
     toggleTheme,
     setShortcutsOpen,
     reduceMotion,
-    soundEnabled,
-    showHowItWorks,
-    queueCollapsed,
     pwCurrent,
     setPwCurrent,
     pwNext,
@@ -484,62 +450,12 @@ export default function MainOutlet(p) {
             navDir={navDir}
             activeProject={activeProject}
             projectPalette={projectPalette}
-            projectDeadline={projectDeadline}
-            completedCount={completedCount}
-            deskTasks={deskTasks}
-            doneTasks={doneTasks}
-            queueTasks={queueTasks}
-            nextTask={nextTask}
-            stepFocusKey={stepFocusKey}
-            setStepFocusKey={setStepFocusKey}
-            showHowItWorks={showHowItWorks}
-            hideHowItWorks={hideHowItWorks}
-            openBreakdown={openBreakdown}
             journeyNext={journeyNext}
             setActiveView={setActiveView}
             applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
             pathCtx={pathCtx}
-            flashToast={flashToast}
             flashMicro={flashMicro}
             offerUndo={offerUndo}
-            notifyAction={notifyAction}
-            quickInput={quickInput}
-            setQuickInput={setQuickInput}
-            captureEnergy={captureEnergy}
-            setCaptureEnergy={setCaptureEnergy}
-            captureDue={captureDue}
-            setCaptureDue={setCaptureDue}
-            captureOptionsOpen={captureOptionsOpen}
-            setCaptureOptionsOpen={setCaptureOptionsOpen}
-            addQuickTask={addQuickTask}
-            queueCollapsed={queueCollapsed}
-            queueOpen={queueOpen}
-            setQueueOpen={setQueueOpen}
-            doneOpen={doneOpen}
-            setDoneOpen={setDoneOpen}
-            toggleTask={toggleTask}
-            updateTaskTitle={updateTaskTitle}
-            updateTaskWhy={updateTaskWhy}
-            removeTask={removeTask}
-            breakIntoSteps={breakIntoSteps}
-            setTaskDueDate={setTaskDueDate}
-            stepDueOpen={stepDueOpen}
-            setStepDueOpen={setStepDueOpen}
-            completeCurrentStep={completeCurrentStep}
-            startVoice={startVoice}
-            setDeskConfirm={setDeskConfirm}
-            forcedBreak={forcedBreak}
-            setSessionComplete={setSessionComplete}
-            startOrPauseFocus={startOrPauseFocus}
-            resetFocus={resetFocus}
-            isFocusRunning={isFocusRunning}
-            focusLeft={focusLeft}
-            setFocusLeft={setFocusLeft}
-            setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
-            setIsFocusRunning={setIsFocusRunning}
-            setTimerFocusSource={setTimerFocusSource}
-            sessionLabel={sessionLabel}
-            sessionComplete={sessionComplete}
           />
         ) : null}
       </>
