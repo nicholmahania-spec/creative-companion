@@ -2,7 +2,7 @@
  * Board (Research) — wall primary; ★ pack pins; sticky Next → System.
  * ADHD: short chrome, goal anchor, note focus without sibling blur.
  */
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import Workroom from '../components/Workroom'
 import { labelForStepId } from '../lib/journey/journey'
 import useAppStore from '../store/useAppStore'
@@ -14,6 +14,26 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { validateBoardUrl } from '../lib/safeBoardUrl'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import '../styles/lazy-mood.css'
+
+/**
+ * THE WALL'S OWN EMPTY MARK, BACK WHERE IT CAME FROM.
+ *
+ * `EmptyIllustration` was written for this exact container — `.empty-state
+ * .empty-state-craft` — and Research used `variant="board"` here until a
+ * densify pass (8778fdd) swapped the block for an upload button and dropped
+ * the import with it. The other call sites went the same way, one rebuild at
+ * a time, until nothing imported the component and `noOrphanModules` started
+ * naming it. This is a recovery, not a new decision: same variant, same
+ * container, same place.
+ *
+ * `board` is the variant that means this wall — three reference frames with
+ * the middle one starred, which is the pack star this screen's own pins carry.
+ * None of the other four describes a wall of refs.
+ *
+ * Lazy, as every previous call site had it: an illustration for an empty
+ * screen must never sit in the path to a full one.
+ */
+const EmptyIllustration = lazy(() => import('../components/EmptyIllustration'))
 
 export default function ResearchView({
   navDir = 'none',
@@ -632,6 +652,13 @@ export default function ResearchView({
               >
                 {deskMood.length === 0 ? (
                   <div className="empty-state empty-state-craft research-empty">
+                    {/* Above the sentence, never instead of it. The plane is
+                        `pointer-events: none` and the copy is the instruction;
+                        this is the quiet mark that says which surface you are
+                        looking at. */}
+                    <Suspense fallback={null}>
+                      <EmptyIllustration variant="board" />
+                    </Suspense>
                     <p className="empty-state-subtitle">
                       Drop an image here, or use Upload, URL or Note above.
                       Colours, links and notes live on the wall too — and
