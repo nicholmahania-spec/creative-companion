@@ -34,12 +34,6 @@ import {
   discoveryBriefToPlainText,
   countAnswered,
 } from '../../lib/client/discoveryBrief'
-import {
-  createDiscoveryShare,
-  discoveryShareUrl,
-  fetchDiscoveryShare,
-  revokeDiscoveryShare,
-} from '../../lib/client/discoveryShare'
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 
@@ -63,11 +57,6 @@ export function DiscoveryBriefPanel({
   upload = null,
   onSetUpload,
   flashToast,
-  projectId = null,
-  shareId = null,
-  shareStatus = null,
-  onSetShare,
-  onMergeAnswers,
 }) {
   const [mode, setMode] = useState('menu')
 
@@ -151,11 +140,6 @@ export function DiscoveryBriefPanel({
             onSetUpload={onSetUpload}
             onBack={backToMenu}
             flashToast={flashToast}
-            projectId={projectId}
-            shareId={shareId}
-            shareStatus={shareStatus}
-            onSetShare={onSetShare}
-            onMergeAnswers={onMergeAnswers}
           />
         )}
       </div>
@@ -217,71 +201,18 @@ function HandoffMode({
   onSetUpload,
   onBack,
   flashToast,
-  projectId,
-  shareId,
-  shareStatus,
-  onSetShare,
-  onMergeAnswers,
 }) {
-  const [creatingLink, setCreatingLink] = useState(false)
-  const [checkingLink, setCheckingLink] = useState(false)
-  // Two-tap confirm for revoke — destructive/outbound, so a word + inline
-  // confirm, no modal. `revoked` reflects the kill locally (this surface
+  // The revoke confirm and the link controls left with the share UI — the
+  // Brief owns them now. What is below is the hand-off: markdown, plain
+  // text, and accepting a completed form back.
+  // (
   // doesn't re-fetch the share's revoked_at).
-  const [revoked, setRevoked] = useState(false)
-  const [revokeArmed, setRevokeArmed] = useState(false)
-  const [revoking, setRevoking] = useState(false)
 
-  const handleRevokeShare = async () => {
-    if (!revokeArmed) {
-      setRevokeArmed(true)
-      return
-    }
-    setRevoking(true)
-    const r = await revokeDiscoveryShare(shareId)
-    setRevoking(false)
-    setRevokeArmed(false)
-    if (r.ok) {
-      setRevoked(true)
-      flashToast?.('Link revoked — the old link no longer opens')
-    } else {
-      flashToast?.(r.error || 'Couldn’t revoke the link')
-    }
-  }
 
-  const handleCreateLink = async () => {
-    setCreatingLink(true)
-    const r = await createDiscoveryShare({ projectLocalId: projectId, clientName, answers })
-    setCreatingLink(false)
-    if (!r.ok) {
-      flashToast?.(r.error || 'Couldn’t create the link')
-      return
-    }
-    onSetShare?.(r.shareId, 'pending')
-    navigator.clipboard?.writeText(discoveryShareUrl(r.shareId))
-    flashToast?.('Client link created and copied')
-  }
 
-  const handleCheckSubmission = async () => {
-    if (!shareId) return
-    setCheckingLink(true)
-    const r = await fetchDiscoveryShare(shareId)
-    setCheckingLink(false)
-    if (!r.ok) {
-      flashToast?.(r.error || 'Couldn’t check the link')
-      return
-    }
-    if (r.status !== 'submitted') {
-      flashToast?.('Client hasn’t submitted yet')
-      return
-    }
-    // Pass the project this check was started for, not whatever is current
-    // when the fetch resolves — the user can switch projects mid-request,
-    // and the merge only fills blanks, so landing on the wrong client would
-    // be silent.
-    onMergeAnswers?.(projectId, r.answers)
-    flashToast?.('Client’s answers merged in')
-  }
+
+
+
 
   const handleUpload = (file) => {
     if (!file) return
@@ -318,13 +249,7 @@ function HandoffMode({
     return `mailto:?subject=${subject}&body=${body}`
   }
 
-  const linkMailtoHref = () => {
-    const subject = encodeURIComponent(`Quick brand questionnaire${clientName ? ` — ${clientName}` : ''}`)
-    const body = encodeURIComponent(
-      `Hi — before we start, could you fill out this quick brand questionnaire?\n\n${discoveryShareUrl(shareId)}\n\nTakes about 10 minutes, and you can leave anything blank if you're not sure yet.`
-    )
-    return `mailto:?subject=${subject}&body=${body}`
-  }
+
 
   return (
     <div className="discovery-brief-handoff">
@@ -332,86 +257,17 @@ function HandoffMode({
         ← Back
       </button>
 
-      <div className="discovery-brief-handoff-block">
-        <p className="discovery-brief-hint">
-          Send a link the client fills out themselves — no account needed. Their answers
-          come back into this project once submitted.
-        </p>
-        {!shareId ? (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={creatingLink}
-            onClick={handleCreateLink}
-          >
-            {creatingLink ? 'Creating link…' : 'Create client link'}
-          </button>
-        ) : revoked ? (
-          <p className="client-portal-revoked-note">
-            Link revoked — the old link no longer opens. Anything the client
-            already submitted is kept. Create a new link to share again.
-          </p>
-        ) : (
-          <>
-            <div className="discovery-brief-share-row">
-              <input
-                className="field-input"
-                readOnly
-                value={discoveryShareUrl(shareId)}
-                onFocus={(e) => e.target.select()}
-              />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  navigator.clipboard?.writeText(discoveryShareUrl(shareId))
-                  flashToast?.('Link copied')
-                }}
-              >
-                Copy
-              </button>
-            </div>
-            <div className="discovery-brief-handoff-actions">
-              <a className="btn btn-secondary" href={linkMailtoHref()}>
-                Email link to client
-              </a>
-              {shareStatus === 'submitted' ? (
-                <span className="discovery-brief-hint">Client submitted — merged in.</span>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  disabled={checkingLink}
-                  onClick={handleCheckSubmission}
-                >
-                  {checkingLink ? 'Checking…' : 'Check for client’s answers'}
-                </button>
-              )}
-            </div>
-            <div className="client-portal-revoke-row">
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm client-portal-revoke-btn"
-                onClick={handleRevokeShare}
-                onBlur={() => setRevokeArmed(false)}
-                disabled={revoking}
-              >
-                {revoking
-                  ? 'Revoking…'
-                  : revokeArmed
-                    ? 'Tap again to revoke'
-                    : 'Revoke link'}
-              </button>
-              {revokeArmed && !revoking ? (
-                <span className="client-portal-revoke-hint">
-                  Kills this link for anyone holding it. Submitted answers are
-                  kept.
-                </span>
-              ) : null}
-            </div>
-          </>
-        )}
-      </div>
+      {/* THE CLIENT-LINK CONTROLS WERE HERE — create, copy, email, check,
+          revoke. They moved to the Brief masthead (d6382cf), which is the
+          canonical home: the Brief owns the thing being shared, and two sets
+          of controls over one link means two places to look and two places a
+          revoke could be missed.
+
+          Nothing about the share system moved with them. `discoveryShare`'s
+          functions, the share ids, `discoveryShareId` / `discoveryShareStatus`
+          and `/f/:shareId` are all untouched — only this duplicate way in is
+          gone. What remains below is this surface's own job: handing the
+          historical answers over as markdown or plain text. */}
 
       <div className="discovery-brief-handoff-block">
         <p className="discovery-brief-hint">

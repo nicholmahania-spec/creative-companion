@@ -91,3 +91,50 @@ describe('the studio Discovery intake is retired', () => {
     expect(link).toContain('revokeDiscoveryShare')
   })
 })
+
+describe('the client link has exactly one home', () => {
+  it('only the Brief control offers create or revoke', () => {
+    /* Two sets of controls over one link means two places to look, and two
+       places a revoke could be missed — on the one action whose whole point
+       is that it must not be missed. The Brief owns the thing being shared,
+       so the Brief owns the link to it. */
+    const owners = sourceFiles()
+      .filter((f) => {
+        const src = stripComments(readFileSync(f, 'utf8'))
+        return /createDiscoveryShare\s*\(|revokeDiscoveryShare\s*\(/.test(src)
+      })
+      .map((f) => f.replace(srcDir, 'src'))
+      .sort()
+    expect(owners).toEqual([
+      /* The definitions themselves. */
+      'src/lib/client/discoveryShare.js',
+      /* The new-project intake, which has always created the first link. */
+      'src/views/NewProjectIntake.jsx',
+      /* The canonical home. */
+      'src/features/brief/BriefClientLink.jsx',
+    ].sort())
+  })
+
+  it('the notes surface kept its hand-off and lost only the duplicate', () => {
+    /* Removing the duplicate must not have taken the reason the file exists
+       with it. */
+    const modal = read('features/client-portal/DiscoveryBrief.jsx')
+    expect(modal).toContain('discoveryBriefToMarkdown')
+    expect(modal).toContain('discoveryBriefToPlainText')
+    expect(stripComments(modal)).not.toContain('revokeDiscoveryShare')
+    expect(stripComments(modal)).not.toContain('createDiscoveryShare')
+  })
+
+  it('no share implementation was deleted', () => {
+    /* The UI moved; the mechanism did not. */
+    const impl = read('lib/client/discoveryShare.js')
+    for (const fn of [
+      'createDiscoveryShare',
+      'revokeDiscoveryShare',
+      'fetchDiscoveryShare',
+      'discoveryShareUrl',
+    ]) {
+      expect(impl, `${fn} must still exist`).toContain(`export async function ${fn}`.replace('async function discoveryShareUrl', 'function discoveryShareUrl'))
+    }
+  })
+})

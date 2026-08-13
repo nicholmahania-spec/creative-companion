@@ -4344,11 +4344,6 @@ function App() {
         upload={activeProject?.discoveryUpload || null}
         onSetUpload={setDiscoveryUpload}
         flashToast={flashToast}
-        projectId={activeProject?.id || null}
-        shareId={activeProject?.discoveryShareId || null}
-        shareStatus={activeProject?.discoveryShareStatus || null}
-        onSetShare={setDiscoveryShare}
-        onMergeAnswers={mergeDiscoveryAnswers}
       />
       <ProjectOverviewSharePanel
         open={overviewSharePanelOpen}
