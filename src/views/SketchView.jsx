@@ -276,24 +276,20 @@ export default function SketchView(props) {
       }
       /* Touchpoints had NO next-action affordance at all — one of the two
          stops the census found without one. Same journey target the path edge
-         offers, in the place every other stop now puts it. */
+         offers, in the place every other stop now puts it.
+
+         THE BACK BUTTON BESIDE IT IS GONE, not moved. The stage edge already
+         renders "← Back to Identity" from the project's own path, so this was
+         the same word, the same destination and the same derivation, drawn
+         twice on one screen. */
       ledge={
-        <>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setActiveView?.('brand')}
-          >
-            Back to {labelForStepId('design')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary work-path-next"
-            onClick={() => setActiveView?.(journeyNext?.view || 'book')}
-          >
-            {`Next · ${journeyNext?.label || labelForStepId('book')}`}
-          </button>
-        </>
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.(journeyNext?.view || 'book')}
+        >
+          {`Next · ${journeyNext?.label || labelForStepId('book')}`}
+        </button>
       }
     >
       <div

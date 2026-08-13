@@ -217,13 +217,13 @@ export default function DefineView(props) {
           {neededLine ? (
             <p className="cc-stage-ledge-note">{neededLine}</p>
           ) : null}
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setActiveView?.('desk')}
-          >
-            Back to the desk
-          </button>
+          {/* NO BACK BUTTON HERE. The stage's own edge already carries one,
+              and on the first stop it reads "← Back to the desk" — the exact
+              words and the exact destination this button had. Two controls
+              with one label and one target, a screen apart, is the second
+              navigation system the ledge is written not to be: "it is a SLOT
+              … nothing about any stop's navigation moved into here"
+              (workroom.css). The ledge holds continue; leaving is chrome. */}
           <button
             type="button"
             className={`btn work-path-next${

@@ -259,6 +259,7 @@ export default function MainOutlet(p) {
         flashMicro={flashMicro}
         projectId={activeProjectId}
         goSystemSection={goSystemSection}
+        journeyNext={journeyNext}
       />
       </>
     )
@@ -428,6 +429,14 @@ export default function MainOutlet(p) {
     return wrap(
       activeView === 'flow' ? 'flow' : 'brand',
       <>
+        {/* NOT given `journeyNext`, deliberately. This mount is the suspended
+            Directions room sitting behind Identity, and `journeyNext` is
+            derived from the ACTIVE view — so here it names Identity's next
+            stop, not Directions'. The in-component fallback resolves to
+            Identity, which is Directions' real next. The room is
+            `visibility: hidden` and `pointer-events: none`, so no one reads
+            either answer; passing the wrong one would just be a lie waiting
+            for the day someone unsuspends it. */}
         <SparkView
           key="directions-workroom"
           suspended
