@@ -1,9 +1,28 @@
 /**
- * Discovery Brief — merged brand-identity project brief + client
- * questionnaire. Three ways to use it: fill it out yourself, run it
- * as a live one-question-at-a-time call script, or hand it off to the
- * client (email draft + downloadable fillable markdown, or accept a
- * completed file back).
+ * DISCOVERY NOTES — read-only. This is no longer an intake.
+ *
+ * It was: a second 30-question brief with its own `discoveryAnswers` store,
+ * fillable here, runnable as a call script, and hand-offable to the client.
+ * That made it a competing source of client/strategic truth — the designer
+ * filled one schema while the client filled another at /f/:shareId, and the
+ * Define sheet, which reads `detective`, never showed a word of the second.
+ *
+ * Both of its capture modes are gone and both have canonical replacements:
+ *
+ *   fill it out myself   → the Brief itself
+ *   run as a call script → the Brief's Call mode, on DETECTIVE_CHAPTERS
+ *
+ * WHAT SURVIVES, AND WHY THIS FILE STILL EXISTS. Projects already hold
+ * `discoveryAnswers` from before the retirement, and the markdown /
+ * plain-text hand-off is written against that schema. Deleting the surface
+ * would take real user answers off the screen and take the hand-off with it.
+ * So the questions and answers remain VISIBLE and remain EXPORTABLE, and are
+ * no longer editable. `DISCOVERY_FIELDS` stays for exactly that reason: it is
+ * what the historical values are keyed by and what the exporters read.
+ *
+ * Nothing here reinterprets a stored value. The four free-text spectrum
+ * answers in particular are displayed as they were typed and are never
+ * mapped onto `detective`'s five-token scale.
  */
 import { useState, useRef } from 'react'
 import { useModalFocus } from '../../lib/useModalFocus'
@@ -40,7 +59,6 @@ export function DiscoveryBriefPanel({
   open,
   onClose,
   answers = {},
-  onUpdateField,
   clientName = '',
   upload = null,
   onSetUpload,
@@ -52,7 +70,6 @@ export function DiscoveryBriefPanel({
   onMergeAnswers,
 }) {
   const [mode, setMode] = useState('menu')
-  const [callIndex, setCallIndex] = useState(0)
 
   /* Focus trap, focus restore, and Escape — this dialog had none of them.
      It set aria-modal="true", which tells assistive tech the rest of the page
@@ -81,13 +98,13 @@ export function DiscoveryBriefPanel({
       <div className="export-panel discovery-brief-panel">
         <div className="export-panel-header">
           <h3 id="discovery-brief-title" style={{ margin: 0 }}>
-            Discovery brief
+            Discovery notes
           </h3>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
             onClick={onClose}
-            aria-label="Close discovery brief"
+            aria-label="Close discovery notes"
           >
             ×
           </button>
@@ -111,18 +128,12 @@ export function DiscoveryBriefPanel({
 
         {mode === 'menu' && (
           <div className="discovery-brief-menu">
-            <button type="button" className="btn btn-secondary" onClick={() => setMode('fill')}>
-              Fill it out myself
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                setCallIndex(0)
-                setMode('call')
-              }}
-            >
-              Run as a call script
+            {/* "Fill it out myself" and "Run as a call script" were here.
+                Both are capture, and capture belongs to the Brief now — the
+                sheet itself, and its Call mode, which walks the SAME
+                canonical questions the client answers at /f/:shareId. */}
+            <button type="button" className="btn btn-secondary" onClick={() => setMode('notes')}>
+              Read the answers
             </button>
             <button type="button" className="btn btn-secondary" onClick={() => setMode('handoff')}>
               Email to client / upload a completed form
@@ -130,19 +141,7 @@ export function DiscoveryBriefPanel({
           </div>
         )}
 
-        {mode === 'fill' && (
-          <FillMode answers={answers} onUpdateField={onUpdateField} onBack={backToMenu} />
-        )}
-
-        {mode === 'call' && (
-          <CallMode
-            answers={answers}
-            onUpdateField={onUpdateField}
-            index={callIndex}
-            setIndex={setCallIndex}
-            onBack={backToMenu}
-          />
-        )}
+        {mode === 'notes' && <NotesMode answers={answers} onBack={backToMenu} />}
 
         {mode === 'handoff' && (
           <HandoffMode
@@ -164,94 +163,49 @@ export function DiscoveryBriefPanel({
   )
 }
 
-function FillMode({ answers, onUpdateField, onBack }) {
+/**
+ * The historical answers, as they were stored.
+ *
+ * Read-only by construction, not by a `readOnly` attribute: there is no input
+ * here to disable. A greyed-out field still reads as "you may edit this once
+ * something unlocks", which is the wrong promise — these answers belong to a
+ * retired schema and the place to change what the client said is the Brief.
+ *
+ * Values are printed verbatim. The four free-text spectrum answers are the
+ * reason that matters: `detective` stores a spectrum as one of five tokens,
+ * and anything typed into the old free-text version cannot become one of
+ * those without inventing a position the client never gave.
+ */
+function NotesMode({ answers, onBack }) {
+  const filled = DISCOVERY_SECTIONS.map((section) => ({
+    section,
+    rows: section.fields.filter((f) => String(answers?.[f.id] ?? '').trim()),
+  })).filter((g) => g.rows.length)
+
   return (
     <div className="discovery-brief-fill">
-      <button type="button" className="btn btn-ghost btn-sm discovery-brief-back" onClick={onBack}>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>
         ← Back
       </button>
-      {DISCOVERY_SECTIONS.map((section) => (
-        <details key={section.id} className="discovery-brief-section" open>
-          <summary>{section.label}</summary>
-          {section.fields.map((f) => (
-            <div className="field-block" key={f.id}>
-              <label className="field-label" htmlFor={`discovery-${f.id}`}>
-                {f.label}
-              </label>
-              {f.prompt && <p className="discovery-brief-hint">{f.prompt}</p>}
-              {f.type === 'textarea' ? (
-                <textarea
-                  id={`discovery-${f.id}`}
-                  className="field-input"
-                  rows={2}
-                  value={answers[f.id] || ''}
-                  onChange={(e) => onUpdateField(f.id, e.target.value)}
-                />
-              ) : (
-                <input
-                  id={`discovery-${f.id}`}
-                  className="field-input"
-                  value={answers[f.id] || ''}
-                  onChange={(e) => onUpdateField(f.id, e.target.value)}
-                />
-              )}
-            </div>
-          ))}
-        </details>
-      ))}
-    </div>
-  )
-}
-
-function CallMode({ answers, onUpdateField, index, setIndex, onBack }) {
-  const field = DISCOVERY_FIELDS[index]
-  const section = DISCOVERY_SECTIONS.find((s) => s.fields.some((f) => f.id === field.id))
-
-  return (
-    <div className="discovery-brief-call">
-      <button type="button" className="btn btn-ghost btn-sm discovery-brief-back" onClick={onBack}>
-        ← Back
-      </button>
-      <p className="discovery-brief-call-progress">
-        Question {index + 1} of {DISCOVERY_FIELDS.length} · {section?.label}
+      <p className="discovery-brief-hint">
+        Answers from the earlier discovery form, kept as they were written.
+        The brief is where client answers are edited now.
       </p>
-      <p className="discovery-brief-call-question">{field.label}</p>
-      {field.prompt && <p className="discovery-brief-hint">{field.prompt}</p>}
-      <textarea
-        autoFocus
-        className="field-input discovery-brief-call-input"
-        rows={4}
-        value={answers[field.id] || ''}
-        onChange={(e) => onUpdateField(field.id, e.target.value)}
-        placeholder="Type the client's answer as they talk…"
-      />
-      <div className="discovery-brief-call-nav">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          disabled={index === 0}
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-        >
-          Previous
-        </button>
-        {/* The script ends with a way out, not with the primary button going
-            grey. A finished run that offers no next action reads as an
-            unfinished one, and the only route back was the small ghost
-            "← Back" at the top of the panel. */}
-        {index >= DISCOVERY_FIELDS.length - 1 ? (
-          <button type="button" className="btn btn-primary" onClick={onBack}>
-            Done — back to brief
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setIndex((i) => Math.min(DISCOVERY_FIELDS.length - 1, i + 1))}
-          >
-            Next question
-          </button>
-        )}
-      </div>
+      {!filled.length ? (
+        <p className="discovery-brief-hint">Nothing was answered here.</p>
+      ) : (
+        filled.map(({ section, rows }) => (
+          <details key={section.id} className="discovery-brief-section" open>
+            <summary>{section.label}</summary>
+            {rows.map((f) => (
+              <div className="field-block" key={f.id}>
+                <p className="field-label">{f.label}</p>
+                <p className="discovery-brief-answer">{answers[f.id]}</p>
+              </div>
+            ))}
+          </details>
+        ))
+      )}
     </div>
   )
 }

@@ -2222,17 +2222,14 @@ const useAppStore = create(
         }),
 
       /** Client discovery brief — merged project-brief + questionnaire */
-      updateDiscoveryField: (fieldId, value) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
-            return {
-              ...p,
-              discoveryAnswers: { ...(p.discoveryAnswers || {}), [fieldId]: value },
-            }
-          }),
-        })),
-
+      /* `updateDiscoveryField` was here — the studio's write path into the
+         retired 30-question `discoveryAnswers` schema. Removed with the
+         intake it served: client answers arrive through
+         `mergeDiscoveryAnswers` from /f/:shareId, and the designer's own
+         capture is the Brief and its Call mode, both of which write
+         `detective`. `discoveryAnswers` itself stays — it holds real answers
+         from before the retirement and the hand-off exports read it — but
+         nothing in the studio writes to it any more. */
       setDiscoveryUpload: (upload) =>
         set((state) => ({
           projects: state.projects.map((p) =>

@@ -605,10 +605,6 @@ function App() {
     (...a) => useAppStore.getState().removeWorkEntry(...a),
     []
   )
-  const updateDiscoveryField = useCallback(
-    (...a) => useAppStore.getState().updateDiscoveryField(...a),
-    []
-  )
   const setDiscoveryUpload = useCallback(
     (...a) => useAppStore.getState().setDiscoveryUpload(...a),
     []
@@ -4344,7 +4340,6 @@ function App() {
         open={discoveryPanelOpen}
         onClose={() => setDiscoveryPanelOpen(false)}
         answers={activeProject?.discoveryAnswers || {}}
-        onUpdateField={updateDiscoveryField}
         clientName={activeProject?.name || ''}
         upload={activeProject?.discoveryUpload || null}
         onSetUpload={setDiscoveryUpload}
@@ -4529,7 +4524,7 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="question" /> Discovery brief
+                <HeaderIcon name="question" /> Discovery notes
               </button>
               </div>
             </div>
