@@ -144,8 +144,13 @@ export async function sidebarNav(page) {
 export function stepByIdIn(nav, id) {
   const step = JOURNEY_STEPS.find((s) => s.id === id)
   if (!step) throw new Error(`No journey step with id "${id}"`)
+  /* Two renderers, one rule. The shell rail names a stop "Step 2: Research.
+     Gather refs…"; the stage's path edge names it "Research", bare — and on
+     a path stop the rail is inside the inert `#root`, so the nav a spec gets
+     from `pathNav()` is the stage one. Match the head of either form, so the
+     same helper drives whichever renderer owns the viewport. */
   return nav.getByRole('button', {
-    name: new RegExp(`Step ${step.num}: ${step.label}\\b`, 'i'),
+    name: new RegExp(`^(Step ${step.num}: )?${step.label}\\b`, 'i'),
   })
 }
 

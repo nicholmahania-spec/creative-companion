@@ -58,7 +58,11 @@ test.describe('Creative Companion path smoke', () => {
        they are different controls doing different jobs, and pretending
        otherwise would make this test pass while checking nothing. */
     await stepByIdIn(path, onGap[0]).click()
-    await expect(page.locator('.journey-gap-strip.is-on-gap')).toBeVisible()
+    /* Present-and-on, not visible: the strip is shell chrome, and on a stage
+       stop the shell sleeps behind the stage — the desk is where it shows.
+       The property under test is that it flags exactly one stop, which the
+       class carries whether or not the sidebar is on screen. */
+    await expect(page.locator('.journey-gap-strip.is-on-gap')).toHaveCount(1)
     await expect(page.locator('.journey-gap-strip-btn.is-quiet')).toHaveCount(0)
 
     await stepByIdIn(path, 'research').click()
@@ -89,8 +93,11 @@ test.describe('Creative Companion path smoke', () => {
 
     const last = JOURNEY_STEPS[JOURNEY_STEPS.length - 1]
     await stepByIdIn(path, last.id).click()
+    /* Two h1s answer to the stop's name on a stage — the stage's own sr-only
+       heading and the masthead display title — so take the first rather than
+       tripping strict mode on a correct page. */
     await expect(
-      page.getByRole('heading', { level: 1, name: last.label })
+      page.getByRole('heading', { level: 1, name: last.label }).first()
     ).toBeVisible({ timeout: 10000 })
     // The Deliver chip names the state, not a fraction ("Ready · 4/8" was a
     // number on a job whose scope made half the checks irrelevant).
@@ -109,8 +116,12 @@ test.describe('Creative Companion path smoke', () => {
       page.getByRole('button', { name: 'Print', exact: true })
     ).toBeVisible()
 
-    // Keyboard 1-5 maps to the path in order, so key N is JOURNEY_STEPS[N-1].
+    // Keyboard 1-N maps to the path in order, so key N is JOURNEY_STEPS[N-1].
+    // Blur first: focus is inside the Delivery stage after the clicks above,
+    // and App only honours a bare digit from body/main — the same rule every
+    // other keyboard test already routes through goToStepByKey's blur.
     const fourth = JOURNEY_STEPS[3]
+    await page.evaluate(() => document.activeElement?.blur?.())
     await page.keyboard.press(fourth.num)
     await expect(headingForStep(page, fourth.id).first()).toBeVisible({
       timeout: 8000,
