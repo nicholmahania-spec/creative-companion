@@ -4452,18 +4452,13 @@ function App() {
                 <p className="more-menu-group-label" id="tools-group-project">
                   This project
                 </p>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setOverviewSharePanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="share" /> Share Strategy form
-              </button>
+              {/* "Share Strategy form" was here. Removed, not relabelled:
+                  the Brief's own masthead already carries Send the brief /
+                  Share, which is the stop that owns the thing being shared,
+                  and the client inbox opens the same panel from a row. A
+                  second door in a generic menu is the duplication this pass
+                  removes — and it was still calling the stop Strategy, a name
+                  DESIGN_GRAMMAR G1 retired. */}
               <button
                 type="button"
                 role="menuitem"

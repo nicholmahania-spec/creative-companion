@@ -66,8 +66,17 @@ describe('project actions are reachable on desktop', () => {
   it('both are real menu items, reachable by keyboard like their siblings', () => {
     const group = projectToolsGroup(app)
     const items = group.match(/role="menuitem"/g) || []
-    /* Share, Export, Hours, Discovery brief, Archive, Delete. */
-    expect(items.length).toBeGreaterThanOrEqual(6)
+    /* Export, Hours, Discovery brief, Archive, Delete.
+       Was six: "Share Strategy form" sat here too, a second door to the panel
+       the Brief's own masthead already opens, and it still used the retired
+       name Strategy (DESIGN_GRAMMAR G1). Removed in the wayfinding pass, so
+       the inventory below is five.
+
+       The count is incidental to what this test guards — that Archive and
+       Delete are real `role="menuitem"` siblings rather than something only a
+       mouse can reach. That guarantee, and the danger class beside it, are
+       unchanged. */
+    expect(items.length).toBeGreaterThanOrEqual(5)
     expect(group).toContain('more-menu-danger')
   })
 
