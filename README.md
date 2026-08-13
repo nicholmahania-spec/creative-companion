@@ -51,17 +51,20 @@ Without a key, Helper uses **built-in scripted coaching** (Recommend / Critique 
 
 ## What’s in the app
 
-**Path (5):** Strategy → Research → Identity → Touchpoints → Assets  
-(Brief first, then research; Wheeler process language; view ids unchanged)  
+**Path (7):** Brief → Research → Directions → Identity → Touchpoints → Brand book → Delivery  
+(Brief first, then research; Wheeler process language; view ids unchanged.
+Which stops a project actually walks is `projectTypes.js` — a logo job walks four.)  
 
-| Area | Purpose |
+| Stop / area | Purpose |
 |------|---------|
-| **Project** | Brief / detective form (form-only) |
-| **Work** | One current step → complete / capture |
-| **Board** | Mood pins; star up to 6 for the pack |
-| **System** | Live brand artboard + accordion editors |
-| **Pack** | Preview + brand book PDF download |
-| **Tools** | Ideate, Review, Timer, Calendar, Clients, Settings |
+| **Brief** | Client record + brief (form-only). The project's only strategic intake |
+| **Research** | Mood pins; star up to 6 for the pack |
+| **Directions** | Group refs into two or three routes; choose one |
+| **Identity** | Live brand artboard + editors: mark, words, color, type |
+| **Touchpoints** | Where the brand shows up — schematic mocks and evidence |
+| **Brand book** | Lay out the book from what the project already holds |
+| **Delivery** | Preview + brand book PDF download + handoff |
+| **Tools** | Review, Timer, Calendar, Clients, Library, Settings |
 | **Helper** | Coach · Critique · Break (scripted or live via proxy) |
 
 Product requirements: **[docs/PRD.md](docs/PRD.md)**
@@ -88,7 +91,8 @@ src/
   styles/shell.css        # always-on chrome
   styles/lazy-*.css       # loaded with route views
   store/useAppStore.js
-  lib/journey.js          # five-stop path
+  lib/journey/journey.js  # seven-stop path — the single source
+  components/Workroom.jsx # the stage every stop runs on
 ```
 
 ## Deploy — where this app actually lives

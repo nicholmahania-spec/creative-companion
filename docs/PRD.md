@@ -1,6 +1,8 @@
 # Creative Companion — Product Requirements (living)
 
 **Status:** Living · rewritten 2026-07-30 against the code at `v2.4.4` (`b0b1258`)
+· §3–§5 and §11.1 reconciled 2026-08-13 against `main@4bfb2b1` and PR #208
+(see the basis note at the top of §3 for what is shipped and what is not)
 **Supersedes:** the previous PRD, which described the `v1.51/1.52` app and predated
 the Brand Book Builder, invoicing, the client portal, the client directory, the
 case study export, and the client-survey work.
@@ -57,20 +59,75 @@ ranked below the ADHD lens. If they disagree, the layout gets reworked.
 
 ## 3. Information architecture
 
-### 3.1 The path — exactly five stops
+**Basis, and the branch state behind it.** This section was reconciled
+2026-08-13 against `main@4bfb2b1` and against the interaction architecture
+proven in **PR #208** (`claude/post-merge-stabilization-audit-gb29lr`), which
+this file previously contradicted — the PR flagged the contradiction and left
+it, because editing a product definition is an owner call.
+
+Split the two apart when reading, because they are not both shipped:
+
+- **On `main` today** — the seven stops, `projectTypes.js` deciding which of
+  them a project walks, the `Workroom` stage, the stage ledge, and the stage
+  exit.
+- **Lands with PR #208, not on `main` at the time of writing** — the Brief as
+  the sole strategic intake: Call mode, the Brief-owned client link, Discovery
+  as read-only notes, and the `detective` consolidation at persist v11. Every
+  statement below that depends on that work is marked **(#208)** and carries
+  its commit. On `main`, `updateDiscoveryField` is still live
+  (`src/App.jsx:646`, `src/store/useAppStore.js:2225`) and Discovery is still a
+  second editable intake.
+
+### 3.1 The path — seven stops
 
 Declared once in `src/lib/journey/journey.js` (`JOURNEY_STEPS`). Process language follows
 classic brand-identity practice (Wheeler / *Logo Design Love*), ordered
 **brief-first** for ADHD: know the project before gathering refs. Step **ids** are
 frozen for history/progress; **labels** are user-facing and may change.
 
-| # | Label | View id | Step id | Job |
+```
+Brief → Research → Directions → Identity → Touchpoints → Brand book → Delivery
+```
+
+Each stop has exactly **one** job. The "one job" column is the stop's own
+`plain` line, and what counts as done is its `enough` line — both live on the
+step, so no screen has to decide for itself what it is for.
+
+| # | Label | View id | Step id | The one job |
 |---|-------|---------|---------|-----|
-| 1 | **Strategy** | `project` | `define` | Client record + brief. Positioning, goal, feel. Form-only — no mood board here. |
-| 2 | **Research** | `studio` | `research` | One wall of mood pins; ★ up to 6 for the pack. |
-| 3 | **Identity** | `brand` | `design` | Live artboard + editors: words, color, type, logo, pack pins. |
-| 4 | **Touchpoints** | `flow` | `sketch` | Apply the system — current micro-step, drafts, real-world applications. |
-| 5 | **Assets** | `finish` | `deliver` | Brand book, PDF, tokens, handoff, leave-behind. |
+| 1 | **Brief** | `project` | `define` | Who is this for, and what should the brand do. Client record + brief. Form-only — no mood board here. |
+| 2 | **Research** | `studio` | `research` | Gather refs and notes. ★ up to 6 for the export shortlist — a shortlist is not a direction. |
+| 3 | **Directions** | `spark` | `ideate` | Name two or three routes. Rough list first, then the ones worth drawing. |
+| 4 | **Identity** | `brand` | `design` | Mark, words, color, type — then preview. One screen at a time. |
+| 5 | **Touchpoints** | `flow` | `sketch` | Where the brand shows up — schematic mocks and optional evidence, not finished artwork. |
+| 6 | **Brand book** | `book` | `book` | Lay out the book from what the project already holds. |
+| 7 | **Delivery** | `finish` | `deliver` | Preview the pack, write a handoff note, download. |
+
+**Ids are data; labels are UI.** Four ids no longer read like their label —
+`define`→Brief, `ideate`→Directions, `sketch`→Touchpoints, `deliver`→Delivery
+(owner, 2026-08-09). Renaming an id orphans `pathDone`/`pathReached` on every
+saved project, the `decisions.stage` values in `20260805140000`, and the SQL
+allowlist in `20260728021200`. Fix the label; leave the key.
+
+**Directions and Brand book are stops, not Tools** (owner, 2026-08-09). Neither
+is a new view: both screens already existed and were reachable only from the
+Tools overlay — the Brand Book Builder from exactly one call site in the app.
+Their declaration in `JOURNEY_STEPS` is the whole of the promotion. **Review
+stays a Tool**: it operates on the client relationship rather than producing a
+stage artifact, so it has no place in the production sequence.
+
+**Seven is the catalogue, not the itinerary.** Which stops a project walks is
+`projectTypes.js`, never this table — a `logo` job walks four
+(`define`, `research`, `design`, `deliver`), `expansion` walks three. Four types
+still resolve to the full list because the finer stages do not exist yet, and
+`startsFromExisting` on `refresh`/`rebrand` is set but consumed by nothing.
+
+**Not every stop is client-pushable.** `PORTAL_PUSHABLE_STEP_IDS` is derived as
+the complement of `APPROVAL_CAPABLE_STEP_IDS` (`lib/client/reviewArtifact.js`),
+so the two cannot drift. A stop may be pushed only when the portal can *show*
+its artifact — G10.5 forbids an approval attached to a bare stage name — and
+`book` is additionally absent from the RPC allowlist in `20260728021200`, so
+pushing it would tell the client their link is invalid.
 
 **Derive, never restate.** `JOURNEY_STEPS`, `PATH_VIEWS`, `PATH_STEP_COUNT`,
 `labelForView()`, `labelForStepId()` are the only legitimate sources for a stop's
@@ -78,22 +135,78 @@ label, id, view, order, or count — including in tests.
 `journeySingleSource.test.js` greps source for restated labels. Per-step *logic*
 keyed by id is fine; restating the *words* or the *count* is not. This is the
 dominant defect in the codebase: at the v1.53.6 rename nine modules held their own
-copy and exactly one was updated — three completion gates compared five rows
-against `7`, so "path full" and "pack ready" were literally unreachable and a
-finished project read 5/7.
+copy and exactly one was updated — three completion gates compared the rows they
+were given against a hard-coded `7` while `JOURNEY_STEPS` held five, so "path
+full" and "pack ready" were literally unreachable and a finished project read
+5/7. The count is now seven again, which is exactly why it must never be typed:
+the bug was never the number, it was the copy.
+
+### 3.1.1 The stage — one primitive, every stop
+
+`src/components/Workroom.jsx` + `src/styles/workroom.css`. Directions, Identity
+and Touchpoints each grew their own copy of the same ~110 lines (portal into
+body, `#root` inert + `aria-hidden` + hidden, hand-rolled focus trap,
+Escape-to-close, recovery header) and had already produced three different
+answers to the same question. The stage owns that behaviour so a stop does not:
+the portal and shell isolation, the focus trap, Escape, returning focus to the
+exact launcher, the path edge, and the ground/type/rhythm.
+
+Three fixed rows — **edge · plane · ledge** — and the split between them is the
+load-bearing part:
+
+- **The ledge is the next-action slot, not navigation.** `masthead` and `ledge`
+  are **slots, not behaviour**: the stage decides *where* a stop's next action
+  sits and what it looks like; the view still decides what the action *is* and
+  what pressing it does. Nothing about any stop's navigation moved into the
+  ledge. Before it, six stops had six answers to "where does the next action
+  go" — `path-continue-row` on three, `define-brief-footer` on Brief, nothing at
+  all on Directions and Touchpoints, and Brief stacking a sticky chapter head on
+  top of its footer so two layers competed for one edge. It is a grid row of the
+  fixed stage rather than a sticky element, so it cannot be scrolled past and
+  cannot stack with anything a view brings. A note the ledge should *say* rather
+  than *do* ("2 still blank") sits quiet on the left.
+- **The stage exit is the universal escape and the navigation mechanism.**
+  Escape and the `← Back to …` control both call `close()`, which targets the
+  stop *before* this one **on the project's own path** — read from
+  `stepsForProject`, so a logo job with no Research stop exits Directions to
+  Brief rather than to a stage it does not have. The first stop exits to the
+  desk, the only thing upstream of it. Leaving restores focus to the exact
+  element that opened the stage; the launcher stays mounted under the inert
+  shell, so it is still there to hand focus back to.
+- **The path edge is not optional.** The first three rebuilt rooms replaced the
+  shell's nav with a single "Back to <previous stop>" link, which took
+  navigation from dominant to *absent* — from Identity there was no route to
+  Brief at all. Subordinate means small, quiet, at the edge; it does not mean
+  gone. The stage carries every stop of the project's own path as one hairline
+  row, no boxes, with `aria-current="step"` on the one you are on and a done
+  mark from `pathStepHasContent`.
+
+Keyboard `1`–`N` addresses **the path this project walks**, not the catalogue:
+on a four-stage project key `5` does nothing, because a shortcut that reaches
+somewhere the rail does not show is how you end up somewhere you cannot navigate
+back from.
 
 ### 3.2 Tools — off-path, reached from the header `Tools` menu
 
+Labels come from `toolsLabelForView()`. `spark` and `book` are **not** here any
+more — they are path stops 3 and 6, and `labelForView` resolves them from
+`JOURNEY_STEPS` before it ever reaches the Tools switch.
+
 | Tool | View id | What it does |
 |------|---------|--------------|
-| **Ideate** | `spark` | Divergent phase: volume and range over quality. Prompts, opposites, rough-idea capture, shortlist A/B/C only after many ideas. |
 | **Review** | `review` | Capture surface for notes/gaps + revision rounds + sticky pack preview. |
 | **Timer** | `insights` | Pomodoro focus timer with scaled forced breaks. Countdown only — never the work clock's count-up. |
 | **Calendar** | `calendar` | Month grid of deadlines and project due dates, with urgency labels. |
 | **Clients** | `clients` | Client directory. Polaroid cards by default (visual recall beats reading names), with list toggle, search, sort. |
-| **Brand book** | `book` | Brand Book Builder — page-by-page book settings, named colour tokens, font pairing, page size/edge space, print-shop mode. |
+| **Library** | `assets` | Asset library. Deliberately not a stop: every stop carries a completion tick and a library is never finished. Cross-project, so it sits in the sidebar's Studio band beside Home and Clients rather than in the Tools menu — but it is still off-path, which is what `TOOLS_MENU_VIEWS` answers. |
 | **Settings** | `settings` | Theme, motion, sound, focus mask, toasts, helper prefs, invoice/studio identity, cloud + backup. |
 | **Sketches (frozen)** | `concept` | Frozen concept package. |
+
+**`Library`, not `Asset library`.** Stop 7 was labelled **Assets** until
+2026-08-09 — one word from this Tool, with the view ids (`finish` vs `assets`)
+running the opposite way to the labels, so the nav carried two entries a word
+apart and no way to tell which held the file you wanted. The stop's label is
+client-facing and settled, so the Tool moved. They now share no word at all.
 
 Panels that open over any screen (not views): Export, Hours & invoice, Discovery
 brief, Share project overview, Running to-do, Work log, Before/After, Keyboard
@@ -110,8 +223,13 @@ Both built with `publicUrl()` and matched with `routePath()` from
 
 | Route | Component | Who it is for |
 |-------|-----------|---------------|
-| `/f/:shareId` | `PublicDiscoveryFill` | A client filling in the discovery brief once. Single-use: `pending → submitted`. |
+| `/f/:shareId` | `PublicDiscoveryFill` | A client filling in **the Brief** once, in their own time. Single-use: `pending → submitted`. This is one of the Brief's two capture modes (§4.2), not a separate questionnaire — it renders `DETECTIVE_CHAPTERS` and its answers land in `detective{}`. |
 | `/c/:portalId` | `PublicClientPortal` | A client's ongoing dashboard: sees the steps the studio pushed, approves or requests changes per step with notes, messages the studio, fills the project-overview form, answers a survey. |
+| `/d/:portalId` | `PublicBrandReveal` | The delivery reveal. Gated on `delivery_status = 'delivered'`. |
+
+All three are matched in `src/main.jsx` outside `App`, each wrapped by the
+outermost error boundary: a render crash on a public route is a stranger
+looking at a blank page with no idea whether their answers went anywhere.
 
 Client-facing questionnaire rendering is shared by both surfaces via
 `ClientBriefFields.jsx` — one renderer, so the two routes cannot drift.
@@ -140,7 +258,76 @@ Client-facing questionnaire rendering is shared by both surfaces via
   no timestamps leave the module: unread is a boolean, recency is sort order plus a
   new/seen split.
 
-### 4.2 Strategy — the brief (`DefineView` / `DetectiveSheet`)
+### 4.2 Brief — the sole strategic intake (`DefineView` / `DetectiveSheet`)
+
+**One schema, one store, two ways in.** The Brief is where the project's
+strategic answers live and the only place they are captured. Its schema is
+`DETECTIVE_CHAPTERS` (`detectiveBrief.js`) and its store is `detective{}` on the
+project.
+
+```
+            BRIEF
+          /       \
+  Client mode   Call mode
+      ↓             ↓
+ /f/:shareId   DetectiveSheet
+      \             /
+        detective{}
+```
+
+Both are **capture modes of one brief**, not two briefs, and the difference is
+who is holding the keyboard:
+
+| Mode | Surface | When |
+|---|---|---|
+| **Client mode** | `/f/:shareId` → `PublicDiscoveryFill` | The client answers in their own time. Comes back through the explicit review step, never a silent overwrite. |
+| **Call mode** *(#208, `9bb2c87`)* | `DetectiveSheet` with `callMode`, on the Brief itself | The designer answers while the client talks. One question on screen at a time, in chapter order — the same order the client meets them in. |
+
+Call mode is a **filter over the ordinary render**, deliberately: every field
+type draws exactly as it does on the page — spectrum keeps its five-value
+control, checklists and attachment rows are unchanged — writes through the same
+`updateDetective`, and lands in `detective` with no second schema to keep in
+step. State is an index only, so leaving the call and re-entering loses nothing.
+Its ledge carries `Previous` / `Next question` and the question count; **path
+Continue is deliberately absent there**, because mid-call the next thing is the
+next question and a button that leaves the Brief while the client is still
+talking is the one mistake this mode can make. Leaving is the masthead toggle.
+
+**The Brief owns the client link** *(#208, `d6382cf`, `63e1c65`)*.
+`BriefClientLink` — create, copy, check, revoke — sits in the Brief's masthead
+beside the Call mode toggle, because the Brief owns the thing being shared.
+Revoke arms before it fires: it kills a link a client may be part-way through
+and the studio has no way to warn them, so the second click is the
+confirmation. **Nothing about the share system changes** — same
+`discoveryShare` functions, same ids, same persisted
+`discoveryShareId`/`discoveryShareStatus`, same `/f/:shareId` route, same
+`mergeDiscoveryAnswers` on submission. It is a new home for existing controls,
+not a new mechanism, and moving it was forced: `revokeDiscoveryShare` had
+exactly one call site — inside the modal being retired — so retiring that modal
+without this would have left live client links with no way to kill them. The
+new share seeds `answers: {}`, matching the other existing caller
+(`NewProjectIntake`), so no designer-authored words are put in front of a client
+as though they had answered them.
+
+**Discovery is now read-only historical data** *(#208, `6ad1f0d`, `d80cd2f`)*.
+`discoveryAnswers` was a second 30-question schema with its own store, fillable
+in a studio modal and runnable as a call script — a competing source of
+client/strategic truth that the Brief never read a word of. Both of its capture
+modes now have canonical replacements (fill it myself → the Brief; run it as a
+call script → Call mode), so the surface survives as **Discovery notes**:
+visible, exportable, **not editable**, and `updateDiscoveryField` is retired.
+It still exists because real projects hold real answers there and the
+markdown/plain-text hand-off is written against that schema — deleting the
+surface would take a client's own words off the screen and the hand-off with
+them. Eighteen of the thirty fields were consolidated into `detective` at
+persist v11 by **copying, never moving**: `discoveryAnswers` is returned
+untouched and in full, precedence is `mergeDiscoveryAnswers`'s existing three
+rules (refuse the wrong shape, ignore the empty, never overwrite what is set)
+rather than a new answer to "who wins", and it is idempotent by construction —
+it only ever fills a blank, so there is no `migrated` flag to fall out of step
+with the data. The twelve fields that stayed are recorded in §11.
+
+---
 
 Five chapters, progress-tracked, with required-field awareness
 (`detectiveBrief.js`):
@@ -165,7 +352,8 @@ The brief composes a readable text brief on every edit
 (`composeBriefFromDetective`) so exports and the portal never read a half-built
 object.
 
-**Sharing the brief:** Discovery brief panel mints a `/f/:shareId` link; the
+**Sharing the brief:** the Brief mints a `/f/:shareId` link (*(#208)*; on `main`
+this is still the Discovery brief panel); the
 client's answers come back through an explicit **review step**
 (`reviewClientAnswers` / `mergeDetectiveAnswers`) — never a silent overwrite.
 Client-attached inspiration images auto-pin onto the Research wall on merge (noted
@@ -190,6 +378,28 @@ everything at once. The lighter mechanism already exists: the ★ pack *is* a
 committed direction and the per-pin note is where reasoning lives. A genuinely
 wanted second direction belongs at project level (second project, or duplicated
 pack), never as a new axis inside the wall.
+
+### 4.3.1 Directions — the bridge (`SparkView`)
+
+Path stop 3, promoted from the Tools view formerly labelled *Ideate*
+(owner, 2026-08-09); the step id stays `ideate` because saved projects key
+`pathDone` off it.
+
+**Research discovers, Directions interprets, Identity develops.** The screen's
+whole job is grouping what the designer already responded to into two or three
+visual routes and picking one. It **authors no creative content of its own** —
+the test that removed a rough-idea dump nothing downstream could read, a prompt
+card rotating one string shared across every client in the studio, and two
+paragraphs auditing whether the designer had followed the method.
+
+Three states, all carried by the layout: **open** (`activeDirectionId`, the
+route being built — the evidence band acts on it), **chosen** (one at a time;
+choosing also opens, opening never chooses), **cited** (`evidence[]`, refKeys
+resolved when drawn, **never copied**). A·B·C are position, not identity: the
+letter comes from where a route sits among the routes that exist, so deleting
+one reflows the rest while every id, reference and decision-log entry stays put.
+The card is a specimen, not a form — preview first, with composition, name,
+why, remove and unchoose behind one Edit disclosure.
 
 ### 4.4 Identity — the brand system (`DesignView`, 2.3k lines)
 
@@ -224,9 +434,17 @@ tabbed editors:
   `brandBookPdf`.
 - Queue and done list collapsed by default; capture is secondary to the step.
 
-### 4.6 Assets — the leave-behind (`DeliverView`, `BrandBookBuilderView`)
+### 4.6 Brand book and Delivery — the leave-behind (`BrandBookBuilderView`, `DeliverView`)
 
-One primary **Download PDF**. Secondary and advanced:
+Two stops, not one, since 2026-08-09. **Brand book** (stop 6, `book`) is where
+the document is laid out from what the project already holds; **Delivery**
+(stop 7, `deliver`) is where the pack is previewed, noted and downloaded. Page
+setup is **edited in the Brand book and reported on Delivery** *(#208,
+`321f5ad`)* — one authoring home, one readout. The Brand Book Builder is
+wrapped onto the canonical Workroom stage rather than rewritten *(#208,
+`3b25e82`)*.
+
+Delivery has one primary **Download PDF**. Secondary and advanced:
 
 | Output | Module |
 |--------|--------|
@@ -328,7 +546,8 @@ overall?" points at no fix; "did the review process feel clear?" does.
   derived from existing fields. Adds zero data entry.
 - **Session resume** (`sessionResume.js`), **step dependency reminders**
   (`stepDependencies.js`), **journey gap strip**, **keyboard shortcuts** (path keys
-  1–5), **command palette**, **skeletons + path prefetch**, **pull to refresh**,
+  `1`–`N` over the project's own stops, never the seven-stop catalogue),
+  **command palette**, **skeletons + path prefetch**, **pull to refresh**,
   **error boundary**, **PWA/offline service worker**.
 - **Optional game chrome** (`GameHUD`, `buddyGame.js`) — XP/progress bar
   **off by default** (`showProgress: false`).
@@ -356,7 +575,8 @@ tasks[]  runningTodo  decisionLog[]  roughIdeas[]
 scopeRevisions* revisionRounds[] feedbackLog[]
 workLog[]   // private clock       timeLog[] hourlyRate  // billable, manual
 deadline  defineOpenChapter  lastView
-discoveryAnswers discoveryUpload discoveryShareId discoveryShareStatus
+discoveryAnswers discoveryUpload            // read-only history (#208), see §4.2
+discoveryShareId discoveryShareStatus       // the /f/ link, owned by the Brief
 clientPortalId
 handoffNote learnings deliverWordsChecked conceptPackage{}
 ```
@@ -529,6 +749,26 @@ Mode as a product or a mood board on Define · lanes/direction folders on the
 Research wall · a contract document generator · billing/payments processing
 (`PRICING_RECOMMENDATION.md` is research only) · Commons room types.
 
+### 11.1 Open, recorded, unresolved — the twelve Discovery fields
+
+The intake consolidation *(#208, `d80cd2f`)* moved eighteen of Discovery's
+thirty questions into `detective` and left twelve. **These are open questions,
+not decisions.** They are listed so the reasoning survives the conversation it
+came from; nothing here is settled, and none of it should be resolved by
+inference from this document. The authority is `DISCOVERY_DEFERRED` in
+`src/lib/brief/discoveryConsolidation.js`.
+
+| Field(s) | Why it stayed — the open question |
+|---|---|
+| **`usp` — differentiation** | Read this one twice. Discovery held **both** `offering` ("What you offer") and `usp` ("What makes you different?"), while canonical `usp` asks "What does your business do?" — which is `offering`'s question. So `offering` → `usp` is the mapping, and the same-named pair is the one pair that must **not** be joined: mapping by name would file a differentiator under "what you do" and read it back as though the client had said it. **Canonical has no home for differentiation at all.** Giving it one would also mean changing the live delivery whitelist, which is a Supabase migration — a separate decision, deliberately not taken here. |
+| **`startDeadline`** | Packs a start date **and** a deadline into one free-text box. Canonical has one date and no start-date concept, so either half of it would be lost in the move. |
+| **`launchDate`** | "Ideal launch" is not "date this needs to be done by", and it would collide with `startDeadline` for that one canonical slot. |
+| **`fiveYearVision`, `admiredBrands`, `problem`, `coreValues`, `visualStyleKeywords`** | Preserved historical Discovery support fields. No canonical equivalent — and `admiredBrands` is **not** the same question as `competitors`. |
+| **`spectrumModernTraditional`, `spectrumPlayfulProfessional`, `spectrumHighEndAffordable`, `spectrumBoldMinimalist`** | Free text. The canonical spectra accept five tokens and nothing else, so converting one means inventing a position on a scale the client never used. The four answers are **displayed exactly as they were typed and never coerced**. |
+
+All twelve stay visible and exportable on the read-only Discovery notes surface
+(§4.2), and the markdown hand-off still reads them.
+
 **Deferred until asked — do not build:** the time-tracking stats view. The user has
 said "I have no concept of time and numbers mean nothing," which rules out raw
 numbers and clock time as the primary readout (no "1h 47m", no "3:15 PM", no
@@ -542,14 +782,17 @@ candidate directions, not decisions. Consult
 
 **Spine (must hold every release):**
 
-- [ ] A new user completes the Strategy brief → stars one Research pin → sets a
-      tagline on Identity → completes one Touchpoints step → downloads the Assets
-      PDF, without ever opening the Tools menu.
+- [ ] A new user completes the Brief → stars one Research pin → names one
+      Direction → sets a tagline on Identity → completes one Touchpoints step →
+      opens the Brand book → downloads the Delivery PDF, without ever opening
+      the Tools menu.
 - [ ] Touchpoints: the current step owns the first fold (Complete primary, Split
       secondary).
 - [ ] Identity: the artboard is readable first — left on wide, first on mobile.
-- [ ] Assets: exactly one primary PDF download; a thin pack warns and links to the
-      gap on Research/Identity.
+- [ ] Delivery: exactly one primary PDF download; a thin pack warns and links to
+      the gap on Research/Identity.
+- [ ] Every stop is a `Workroom`: one ledge holding its next action, one exit
+      that Escape also fires, and the project's own path at the edge.
 - [ ] Path progress never counts an empty brief as done (`requiredReady`).
 - [ ] Helper defaults to Coach · Critique · Break; everything else under More.
 - [ ] A client on a phone can fill `/f/:shareId` and use `/c/:portalId` with no

@@ -1,6 +1,7 @@
 # Creative Companion — agent rules
 
-**Product requirements:** `docs/PRD.md` (five-stop path, Helper verbs, non-goals).
+**Product requirements:** `docs/PRD.md` (seven-stop path on the canonical
+Workroom stage, Helper verbs, non-goals).
 
 ## Two sessions are working this repo — stay in your lane
 
@@ -16,7 +17,7 @@ routinely needs the stylesheet next to it.
 
 | Area | Owner | Files |
 |---|---|---|
-| Global visual system, path stops (Research · Strategy/Define · Identity/Design · Touchpoints · Assets/Deliver), the direction sheet | **Visual-design audit** (`docs/VISUAL_AUDIT.md`, Phases 4–5) | `src/styles/shell.css`, `lazy-{define,design,deliver,ideate,mood,review}.css`, `BrandArtboard.jsx`, `DESIGN_GRAMMAR.md` |
+| Global visual system, path stops (Brief/`define` · Research · Directions/`ideate` · Identity/`design` · Touchpoints/`sketch` · Brand book/`book` · Delivery/`deliver`), the direction sheet | **Visual-design audit** (`docs/VISUAL_AUDIT.md`, Phases 4–5) | `src/styles/shell.css`, `lazy-{define,design,deliver,ideate,mood,review}.css`, `BrandArtboard.jsx`, `DESIGN_GRAMMAR.md` |
 | Desk, Home, the password gate, New project intake, Brand book builder, client-facing routes | **Cold-start audit** (`docs/COLD_START_AUDIT_2026-08-07.md`, `docs/VISUAL_AUDIT_2026-08-07.md`) | `DeskView.jsx`, `HomeView.jsx`, `LoginView.jsx`, `NewProjectIntake.jsx`, `BrandBookBuilderView.jsx`, `DeskLiveArtboard.jsx`, `BrandCheckPanel.jsx`, `src/lib/brain/**`, `src/lib/billing/**`, `lazy-create.css`, `lazy-desk.css` |
 
 `shell.css` and `useAppStore.js` are shared and cannot be assigned. Touch them
@@ -170,11 +171,12 @@ Run mentally or in the running app with theme toggled to **deep**:
 
 ---
 
-## Path page rebuild checklist (mandatory — Strategy lessons apply to every stop)
+## Path page rebuild checklist (mandatory — the Brief's lessons apply to every stop)
 
-Learned on **The brief** (Strategy) rebuild, 2026-08-03. Apply on **Research,
-Identity, Touchpoints, Assets**, and any new full-page path surface — not only
-Define. Do not re-learn these by shipping the same bugs again.
+Learned on **The brief** rebuild, 2026-08-03, when the stop was still labelled
+*Strategy*. Apply on **Research, Directions, Identity, Touchpoints, Brand book,
+Delivery**, and any new full-page path surface — not only `define`. Do not
+re-learn these by shipping the same bugs again.
 
 ### Width and layout — no floating islands
 
