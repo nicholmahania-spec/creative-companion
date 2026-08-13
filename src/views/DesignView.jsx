@@ -140,7 +140,7 @@ export default function DesignView({
   projectPalette = [],
   studioName = '',
   setActiveView,
-  identityWorkroomLauncherRef,
+  workroomLauncherRef,
   pathCtx = null,
   flashToast,
   offerUndo,
@@ -970,7 +970,7 @@ export default function DesignView({
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
-      launcherRef={identityWorkroomLauncherRef}
+      launcherRef={workroomLauncherRef}
       suspended={suspended}
       className="identity-workroom"
       status={`Working on ${IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}`}

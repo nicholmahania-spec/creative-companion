@@ -129,6 +129,7 @@ export default function DefineView(props) {
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
+      launcherRef={props.workroomLauncherRef}
       status={`${sendStatus.label}${
         deadlineRelative ? ` · ${deadlineRelative}` : ''
       }`}

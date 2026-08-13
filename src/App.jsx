@@ -350,8 +350,6 @@ function App() {
     return 'home'
   })
   const workroomLauncherRef = useRef(null)
-  const identityWorkroomLauncherRef = useRef(null)
-  const applicationWorkroomLauncherRef = useRef(null)
   const setActiveView = useCallback((view) => {
     // Focus Mode product removed — never land on *-focus views.
     let next = view
@@ -368,15 +366,19 @@ function App() {
       next = map[next] || 'home'
     }
     /* Capture the exact launcher node before the view transition parks
-       focus in main. Workrooms restore this same element on Escape. */
-    if (next === 'spark' && document.activeElement instanceof HTMLElement) {
+       focus in main. Workrooms restore this same element on Escape/exit.
+       THE WHOLE PATH, not just the original three rooms — every stop is a
+       stage now, and four of them are lazy chunks whose Workroom mounts only
+       after the import resolves. By then the shortcut-re-arm effect below has
+       already pulled focus into #main-content, so a mount-time capture reads
+       the parking spot instead of the launcher — measured on Brief: closing
+       back to the desk "restored" #main-content. Capturing here, in the same
+       tick as the navigation, is the ordering rule the three eager rooms
+       always relied on. ONE shared ref is enough: each Workroom copies the
+       value into its own restoreRef at mount, so a later navigation cannot
+       retarget an already-open stage. */
+    if (PATH_VIEWS.includes(next) && document.activeElement instanceof HTMLElement) {
       workroomLauncherRef.current = document.activeElement
-    }
-    if (next === 'brand' && document.activeElement instanceof HTMLElement) {
-      identityWorkroomLauncherRef.current = document.activeElement
-    }
-    if (next === 'flow' && document.activeElement instanceof HTMLElement) {
-      applicationWorkroomLauncherRef.current = document.activeElement
     }
     setActiveViewRaw(next)
     try {
@@ -4150,9 +4152,7 @@ function App() {
              second derivation of "has this stop got content" is exactly the
              restated-copy defect journey.js's header records. */
           pathCtx={pathProgressCtx}
-          identityWorkroomLauncherRef={identityWorkroomLauncherRef}
           workroomLauncherRef={workroomLauncherRef}
-          applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
           flashToast={flashToast}
           offerUndo={offerUndo}
           flashMicro={flashMicro}

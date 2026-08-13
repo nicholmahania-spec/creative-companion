@@ -99,7 +99,7 @@ export default function SketchView(props) {
     activeProject = null,
     projectPalette = [],
     setActiveView,
-    applicationWorkroomLauncherRef,
+    workroomLauncherRef,
     pathCtx = null,
     flashMicro,
     offerUndo,
@@ -253,7 +253,7 @@ export default function SketchView(props) {
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
-      launcherRef={applicationWorkroomLauncherRef}
+      launcherRef={workroomLauncherRef}
       className="application-workroom"
       testId="application-workroom"
       status={

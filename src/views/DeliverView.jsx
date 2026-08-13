@@ -39,6 +39,7 @@ const DeliverToClient = lazy(
  */
 export default function DeliverView({
   navDir = 'none',
+  workroomLauncherRef = null,
   activeProject = null,
   projectPalette = [],
   studioName = '',
@@ -135,6 +136,7 @@ export default function DeliverView({
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
+      launcherRef={workroomLauncherRef}
       /* `.assets-status` in the masthead already carries this line. Two copies
          of one status on one screen is two facts to reconcile. */
       masthead={

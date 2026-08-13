@@ -271,6 +271,7 @@ test.describe('workroom lifecycle', () => {
         })
         await expect(launcher).toHaveCount(1)
         await launcher.focus()
+        const launcherText = ((await launcher.textContent()) || '').trim()
         await page.keyboard.press('Enter')
         await focusIn(live)
 
@@ -279,41 +280,29 @@ test.describe('workroom lifecycle', () => {
           .locator(`.app.view-${wr.closesTo}`)
           .waitFor({ state: 'attached', timeout: 15_000 })
 
-        /* MEASURED, NOT ASPIRED. Workroom captures the launcher and tries to
-           restore it two rAFs after the close — but on the desk, App's own
-           post-navigation parking puts focus in #main-content, and parking
-           wins. So the launcher is NOT focused today; the
-           designer's focus lands in the live main region instead — connected,
-           operable, announced. That is the current behaviour, pinned so a
-           change in EITHER direction is a visible decision:
-           - if focus starts landing on the launcher again, this fails and the
-             stricter assertion (step-rail-step + launcherText) goes back in;
-           - if focus ever ends on body or a detached node, that is the real
-             a11y failure and it fails now.
-           Recorded as a candidate defect in the Step 5.5 report rather than
-           fixed here — a test-contract pass changes no production code. */
+        /* THE EXACT LAUNCHER, not merely somewhere safe. A pinned version of
+           this assertion once accepted #main-content here, because the stop
+           is a lazy chunk: its Workroom mounted only after the import
+           resolved, by which time App's shortcut re-arm had parked focus in
+           main — so the "launcher" the room captured WAS main. App now
+           captures the launcher synchronously in setActiveView for every
+           path view (the ordering rule the three eager rooms always had),
+           and this assertion is the one that keeps it true. */
         await page.waitForFunction(
-          () => {
+          (expected) => {
             const el = document.activeElement
             return (
               el instanceof HTMLElement &&
-              el !== document.body &&
-              el.isConnected &&
-              !document.getElementById('root')?.hasAttribute('inert')
+              el.classList.contains('step-rail-step') &&
+              (el.textContent || '').trim() === expected
             )
           },
-          undefined,
+          launcherText,
           { timeout: 15_000 }
         )
         const landed = await page.evaluate(() => ({
-          tag: document.activeElement?.tagName,
-          id: document.activeElement?.id || '',
           connected: document.activeElement?.isConnected ?? false,
         }))
-        expect(
-          landed.tag,
-          'focus fell to the document — lost, not parked'
-        ).not.toBe('BODY')
         expect(
           landed.connected,
           'focus landed on a detached node — a stale launcher reference'
@@ -354,6 +343,62 @@ test.describe('workroom lifecycle', () => {
       expect(landed.connected).toBe(true)
     })
   }
+
+  /**
+   * The same round trip, pointer-driven.
+   *
+   * Enter and Escape are covered above; a mouse user opens the first stop by
+   * clicking the rail and leaves by clicking the stage exit, and App can only
+   * restore what it captured at that click. Chromium focuses a clicked
+   * button, so the capture path is the same — asserted rather than assumed,
+   * because "works by keyboard" and "works by pointer" have already diverged
+   * once in this suite's history.
+   */
+  test('clicking open and clicking the exit returns focus to the launcher', async ({
+    page,
+  }) => {
+    test.setTimeout(150_000)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const first = WORKROOMS[0]
+    const seeded = await seedProject(page, 'desk')
+    skipIfNoSeed(test, seeded)
+
+    const rail = page.getByRole('navigation', { name: /Process position/i })
+    const launcher = rail.getByRole('button', {
+      name: new RegExp(`: ${labelForView(first.view)}\\b`, 'i'),
+    })
+    await expect(launcher).toHaveCount(1)
+    const launcherText = ((await launcher.textContent()) || '').trim()
+    await launcher.click()
+
+    const live = `${first.room}:not(.is-suspended)`
+    await page.waitForFunction(
+      (sel) => {
+        const room = document.querySelector(sel)
+        return !!room && room.contains(document.activeElement)
+      },
+      live,
+      { timeout: 15_000 }
+    )
+
+    await page.locator(`${live} .cc-stage-exit`).click()
+    await page
+      .locator(`.app.view-${first.closesTo}`)
+      .waitFor({ state: 'attached', timeout: 15_000 })
+
+    await page.waitForFunction(
+      (expected) => {
+        const el = document.activeElement
+        return (
+          el instanceof HTMLElement &&
+          el.classList.contains('step-rail-step') &&
+          (el.textContent || '').trim() === expected
+        )
+      },
+      launcherText,
+      { timeout: 15_000 }
+    )
+  })
 
   /**
    * A stale launcher must never be focused.

@@ -17,6 +17,7 @@ import '../styles/lazy-mood.css'
 
 export default function ResearchView({
   navDir = 'none',
+  workroomLauncherRef = null,
   journeyNext = null,
   deskMood = [],
   activeProjectId = null,
@@ -318,6 +319,7 @@ export default function ResearchView({
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
+      launcherRef={workroomLauncherRef}
       /* No edge status. The masthead's own meta line already says it, with
          the nuance the edge cannot fit ("★ 3 in pack · room for 3"), and the
          same count in two places at once reads as two different facts that

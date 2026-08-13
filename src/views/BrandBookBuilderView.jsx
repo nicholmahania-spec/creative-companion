@@ -810,6 +810,7 @@ const GAP_DESTINATION = {
 
 export default function BrandBookBuilderView({
   setActiveView,
+  workroomLauncherRef = null,
   goSystemSection,
   pathCtx = null,
   journeyNext = null,
@@ -1398,6 +1399,7 @@ export default function BrandBookBuilderView({
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
+      launcherRef={workroomLauncherRef}
       className="brand-book-workroom"
       status={labelForStepId('book')}
       ledge={

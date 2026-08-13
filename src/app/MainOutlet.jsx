@@ -70,9 +70,7 @@ export default function MainOutlet(p) {
     deskTasks,
     setActiveView,
     pathCtx,
-    identityWorkroomLauncherRef,
     workroomLauncherRef,
-    applicationWorkroomLauncherRef,
     flashToast,
     offerUndo,
     flashMicro,
@@ -215,6 +213,7 @@ export default function MainOutlet(p) {
       'studio',
       <ResearchView
         navDir={navDir}
+        workroomLauncherRef={workroomLauncherRef}
         journeyNext={journeyNext}
         deskMood={deskMood}
         activeProjectId={activeProjectId}
@@ -408,6 +407,7 @@ export default function MainOutlet(p) {
       'book',
       <BrandBookBuilderView
         setActiveView={setActiveView}
+        workroomLauncherRef={workroomLauncherRef}
         goSystemSection={goSystemSection}
         pathCtx={pathCtx}
         journeyNext={journeyNext}
@@ -459,7 +459,7 @@ export default function MainOutlet(p) {
           projectPalette={projectPalette}
           studioName={studioName}
           setActiveView={setActiveView}
-          identityWorkroomLauncherRef={identityWorkroomLauncherRef}
+          workroomLauncherRef={workroomLauncherRef}
           pathCtx={pathCtx}
           flashToast={flashToast}
           offerUndo={offerUndo}
@@ -475,7 +475,7 @@ export default function MainOutlet(p) {
             projectPalette={projectPalette}
             journeyNext={journeyNext}
             setActiveView={setActiveView}
-            applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
+            workroomLauncherRef={workroomLauncherRef}
             pathCtx={pathCtx}
             flashMicro={flashMicro}
             offerUndo={offerUndo}
@@ -515,6 +515,7 @@ export default function MainOutlet(p) {
       'finish',
       <DeliverView
         navDir={navDir}
+        workroomLauncherRef={workroomLauncherRef}
         activeProject={activeProject}
         projectPalette={projectPalette}
         deskTasks={deskTasks}
@@ -600,6 +601,7 @@ export default function MainOutlet(p) {
       'project',
       <DefineView
         navDir={navDir}
+        workroomLauncherRef={workroomLauncherRef}
         journeyNext={journeyNext}
         activeProject={activeProject}
         setActiveView={setActiveView}
