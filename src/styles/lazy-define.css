@@ -1796,3 +1796,25 @@
 .cc-stage--define .define-split-form {
   max-width: 54rem;
 }
+
+/* The client link's own controls sit on the masthead's line rather than
+   claiming one of their own — they are one control's worth of the cluster,
+   not a second group. Same gap as the cluster around them, so the row reads
+   as evenly spaced whether the link exists yet or not. */
+.brief-client-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The share's state is a caption, not a control. It had no rule at all, so it
+   inherited body size and full ink and came out LOUDER than the four buttons
+   it sits between — the one word in the cluster nobody clicks was the one the
+   eye landed on first. Same register as `.cc-stage-meta`, one step down
+   because it shares a line with `btn-sm`. */
+.brief-client-link-state {
+  color: var(--stage-mute);
+  font-size: var(--fs-1);
+  white-space: nowrap;
+}

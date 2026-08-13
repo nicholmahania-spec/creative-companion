@@ -159,7 +159,7 @@ export default function DefineView(props) {
             />
             <button
               type="button"
-              className="btn btn-secondary define-brief-call"
+              className="btn btn-ghost define-brief-call"
               aria-pressed={callMode}
               onClick={() => {
                 setCallMode((on) => !on)

@@ -266,6 +266,17 @@
   grid-column: 2;
   grid-row: 1;
   justify-self: end;
+  /* ONE CLUSTER, NOT A STACK. This slot was written when a stop put a single
+     control beside its title, so it had no display rule and its children fell
+     into block flow — three controls became three full-width rows of three
+     different widths, which reads as three unrelated buttons rather than one
+     group. A wrapping row keeps them a group at any width, and lets narrow
+     screens break the line deliberately instead of cramping. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 /* Supporting metadata — status, counts, "not sent yet". Never a sentence of

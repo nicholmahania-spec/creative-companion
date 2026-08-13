@@ -113,7 +113,7 @@ export default function BriefClientLink({
       {!live ? (
         <button
           type="button"
-          className="btn btn-secondary btn-sm"
+          className="btn btn-ghost btn-sm"
           disabled={busy === 'create'}
           onClick={create}
         >
