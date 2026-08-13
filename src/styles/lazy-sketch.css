@@ -461,20 +461,6 @@
   margin-bottom: var(--space-2);
 }
 
-/* Layout patterns reference (closed details) */
-.sketch-ideate-details {
-  margin: var(--space-4) 0 0;
-  font-size: var(--fs-2);
-  color: var(--text-secondary);
-}
-
-.sketch-ideate-details > summary {
-  cursor: pointer;
-  font-weight: 600;
-  margin-bottom: var(--space-2);
-}
-
-
 /* ── The finished piece, checked against the palette ──────────────────────
    Deliberately the quietest block on the card. There is no red, no badge and
    no icon anywhere in here: a finding is a sentence in the same colour as
