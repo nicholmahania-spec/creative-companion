@@ -530,3 +530,31 @@ body:has(.app.deep) .cc-stage {
     transition-duration: 0.01ms;
   }
 }
+
+/* ── The Brand book stop hands the plane back ──────────────────────────────
+   `.bbb-root` was built to fill `.main` — `height: 100%`, its own top bar,
+   its own sidebar, and its own scrolling canvas. Dropped into the plane as
+   an ordinary composition it would sit inside a SECOND scroller with a
+   second set of gutters: the page would scroll the stage while the canvas
+   scrolled itself, which is the stacked-scroll failure `.cc-stage-ledge`'s
+   note argues against.
+
+   So for this one stop the plane stops being a scroller and stops adding
+   room, and the builder keeps the frame it already manages. Scoped by the
+   stage's own class so no other stop can pick it up, and deliberately not a
+   change to `.cc-stage-plane` itself — the default stays the default.
+
+   DESKTOP ONLY. Below 720px the builder stops being a sidebar beside a
+   canvas and stacks, so `.bbb-root` grows past the plane instead of filling
+   it — measured at 903px inside a 637px plane on a 390px viewport. With the
+   plane's scroller removed that overflow is simply clipped and there is no
+   way to reach it, which is worse than the stacked scrollers this override
+   exists to avoid. So the override is a desktop rule and the phone keeps the
+   plane's ordinary scrolling. */
+@media (min-width: 721px) {
+  .cc-stage.brand-book-workroom .cc-stage-plane {
+    overflow: hidden;
+    padding: 0;
+    min-height: 0;
+  }
+}

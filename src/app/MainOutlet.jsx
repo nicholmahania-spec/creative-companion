@@ -396,6 +396,8 @@ export default function MainOutlet(p) {
       <BrandBookBuilderView
         setActiveView={setActiveView}
         goSystemSection={goSystemSection}
+        pathCtx={pathCtx}
+        journeyNext={journeyNext}
       />
     )
   }

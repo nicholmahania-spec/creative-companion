@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import useAppStore from '../store/useAppStore'
-import { labelForView } from '../lib/journey/journey'
+import { labelForView, labelForStepId } from '../lib/journey/journey'
+import Workroom from '../components/Workroom'
 import {
   bookBuilderFor,
   readPaletteTokens,
@@ -807,7 +808,12 @@ const GAP_DESTINATION = {
   handoff: 'finish',
 }
 
-export default function BrandBookBuilderView({ setActiveView, goSystemSection }) {
+export default function BrandBookBuilderView({
+  setActiveView,
+  goSystemSection,
+  pathCtx = null,
+  journeyNext = null,
+}) {
   const activeProject = useAppStore((s) =>
     s.projects.find((p) => p.id === s.currentProjectId)
   )
@@ -1371,6 +1377,39 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
     orderedPageElements.length > 0 ? orderedPageElements : pageElements
 
   return (
+    /* THE BUILDER MOVES ONTO THE STAGE, UNCHANGED.
+       `book` is stop 6 (DESIGN_GRAMMAR G1) and was the only one still
+       rendering into the page shell, so it kept the global header while the
+       other six hid it — two navigation models for one path.
+
+       Wrapped, not rewritten. Everything below this line is the same tree it
+       was; the stage supplies what it was missing (path edge, exit, ledge,
+       stage identity) and `brand-book-workroom` hands the plane's height and
+       scrolling back to `.bbb-root`, which has owned them since it was built
+       to fill `.main`. Nesting the plane's scroller inside the builder's own
+       is the stacked-scroller failure the stage exists to prevent.
+
+       No visible masthead on purpose: the builder's top bar is already this
+       stop's masthead, and a second heading over it would be the duplication
+       this pass removes. Workroom still renders the stop's `sr-only` h1, so
+       the accessible heading is present either way. */
+    <Workroom
+      stepId="book"
+      project={activeProject}
+      pathCtx={pathCtx}
+      setActiveView={setActiveView}
+      className="brand-book-workroom"
+      status={labelForStepId('book')}
+      ledge={
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.(journeyNext?.view || 'finish')}
+        >
+          {`Next · ${journeyNext?.label || labelForStepId('deliver')}`}
+        </button>
+      }
+    >
     <div className="bbb-root">
       <style>{printCss}</style>
 
@@ -1858,5 +1897,6 @@ export default function BrandBookBuilderView({ setActiveView, goSystemSection })
 
       <Flipbook open={flipOpen} onClose={() => setFlipOpen(false)} pages={canvasPages} index={flipIndex} setIndex={setFlipIndex} />
     </div>
+    </Workroom>
   );
 }
