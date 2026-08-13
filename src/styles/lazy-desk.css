@@ -1125,3 +1125,17 @@
   border-radius: var(--radius);
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
 }
+
+/* Project administration — the rail's quietest block, stacked so the three
+   read as a short list rather than a toolbar. No new scale values: the gap is
+   the ramp's smallest step and the danger colour is the existing token. */
+.desk-project-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.desk-action-danger {
+  color: var(--danger, #a8321f);
+}

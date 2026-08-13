@@ -3042,6 +3042,32 @@ function App() {
    * user back would leave them somewhere they never chose to be — the restore
    * has to return the whole situation, not just the state.
    */
+  /* PROJECT ADMINISTRATION, HOISTED FOR THE DESK.
+     These three ran inline in the Tools menu. They are named here, unchanged,
+     so the Desk can call the SAME handlers rather than growing its own copy —
+     `archiveProject` is still the store action and deletion still goes through
+     `handleDeleteProjectById`, which is what carries the undo toast and the
+     "Project not found" reporting. */
+  const openHoursPanel = () => setHoursPanelOpen(true)
+
+  const archiveCurrentProject = () => {
+    if (!activeProject) return
+    const r = archiveProject(activeProject.id)
+    if (!r.ok) {
+      flashToast(r.error || 'Could not archive that')
+    } else if (r.empty) {
+      flashToast('Archived — no open projects')
+      setActiveView('create')
+    } else {
+      flashToast('Project archived')
+    }
+  }
+
+  const deleteCurrentProject = () => {
+    if (!activeProject) return
+    handleDeleteProjectById(activeProject.id, activeProject.name)
+  }
+
   const handleDeleteProjectById = (id, name) => {
     /* `id == null`, not `!id`. A project whose id is 0, '' or NaN is falsy,
        and the old guard returned here — no deletion, no toast, no undo, no
@@ -4188,6 +4214,9 @@ function App() {
           bookSetup={bookSetup}
           runExport={runExport}
           openExportPanel={openExportPanel}
+          openHoursPanel={openHoursPanel}
+          archiveCurrentProject={archiveCurrentProject}
+          deleteCurrentProject={deleteCurrentProject}
           handleSignOut={handleSignOut}
           downloadDataBackup={downloadDataBackup}
           createNewProject={createNewProject}
@@ -4459,30 +4488,20 @@ function App() {
                   second door in a generic menu is the duplication this pass
                   removes — and it was still calling the stop Strategy, a name
                   DESIGN_GRAMMAR G1 retired. */}
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  openExportPanel()
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="download" /> Export
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setHoursPanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="invoice" /> Hours &amp; invoice
-              </button>
+              {/* EXPORT, HOURS, ARCHIVE AND DELETE WERE HERE.
+                  Moved, not removed. The three that administer a project now
+                  sit on the Desk, beside the project they act on, calling the
+                  same handlers — `archiveProject` and `handleDeleteProjectById`,
+                  so the undo toast and the "Project not found" reporting are
+                  unchanged.
+
+                  Export went to neither: it opens the pack panel that Delivery
+                  already opens, and Delivery is the stop whose job is the pack.
+                  It is deliberately NOT on the Desk — this file's counterpart
+                  rule there is "No PDF on the desk".
+
+                  What is left in this group is Discovery brief, which is still
+                  an open product question rather than a placement one. */}
               <button
                 type="button"
                 role="menuitem"
@@ -4495,57 +4514,6 @@ function App() {
               >
                 <HeaderIcon name="question" /> Discovery brief
               </button>
-              {/* ARCHIVE AND DELETE, WHERE THE CSS ALREADY SAID THEY WERE.
-                  The sidebar's per-row ⋯ is hidden in the app shell with the
-                  note "Archive and Delete now live in Tools → This project" —
-                  and they did not. The control was removed for a good reason
-                  (a hover-only affordance is invisible at a glance and absent
-                  on touch) but its destination was never built, so on desktop
-                  the two actions were reachable from nowhere at all.
-
-                  They act on the CURRENT project, like Export and Hours above
-                  them, and they call the same handlers the sidebar menu calls
-                  — no second delete path, and the undo toast still comes from
-                  `handleDeleteProjectById`. */}
-              {activeProject && (
-                <>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    tabIndex={-1}
-                    className="more-menu-item"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      const r = archiveProject(activeProject.id)
-                      if (!r.ok) {
-                        flashToast(r.error || 'Could not archive that')
-                      } else if (r.empty) {
-                        flashToast('Archived — no open projects')
-                        setActiveView('create')
-                      } else {
-                        flashToast('Project archived')
-                      }
-                    }}
-                  >
-                    <HeaderIcon name="archive" /> Archive project
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    tabIndex={-1}
-                    className="more-menu-item more-menu-danger"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      handleDeleteProjectById(
-                        activeProject.id,
-                        activeProject.name
-                      )
-                    }}
-                  >
-                    <HeaderIcon name="trash" /> Delete project
-                  </button>
-                </>
-              )}
               </div>
             </div>
           </div>

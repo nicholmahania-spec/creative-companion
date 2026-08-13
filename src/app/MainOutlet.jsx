@@ -146,6 +146,9 @@ export default function MainOutlet(p) {
     pathMissingLabelsList,
     goToProcessStep,
     goSystemSection,
+    openHoursPanel,
+    archiveCurrentProject,
+    deleteCurrentProject,
     buildCurrentBrandPack,
     leaveBehindThin,
     bookSetup,
@@ -353,6 +356,13 @@ export default function MainOutlet(p) {
         onEditBrief={() => setActiveView('project')}
         onOpenWall={() => setActiveView('studio')}
         onOpenAssets={() => setActiveView('finish')}
+        /* The same three handlers the Tools menu ran, moved rather than
+           reimplemented: `openHoursPanel` opens the panel App already owns,
+           and archive/delete are App's own handlers, so the undo toast and
+           the "Project not found" reporting are unchanged. */
+        onOpenHours={openHoursPanel}
+        onArchiveProject={archiveCurrentProject}
+        onDeleteProject={deleteCurrentProject}
       />
     )
   }
