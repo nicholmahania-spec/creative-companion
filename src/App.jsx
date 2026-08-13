@@ -10,6 +10,7 @@ import {
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { useWorkClock } from './lib/useWorkClock'
+import { StageSignalsContext } from './lib/stageSignals'
 import { projectsShellEqual } from './lib/storeSelectors'
 import {
   groupProjectsByClient,
@@ -3048,6 +3049,13 @@ function App() {
      `archiveProject` is still the store action and deletion still goes through
      `handleDeleteProjectById`, which is what carries the undo toast and the
      "Project not found" reporting. */
+  /* What a stop is allowed to show from the shell it hides. Memoised so the
+     provider does not hand every mounted stage a new object on each render. */
+  const stageSignals = useMemo(
+    () => ({ unreadClient: !!clientInbox.hasUnread, todoCount: openTodoCount }),
+    [clientInbox.hasUnread, openTodoCount]
+  )
+
   const openHoursPanel = () => setHoursPanelOpen(true)
 
   const archiveCurrentProject = () => {
@@ -4125,6 +4133,12 @@ function App() {
           />
         )}
         {/* Main page outlet — views registered in app/viewRegistry.js */}
+        {/* The stage hides the shell — `#root` goes inert while a stop owns
+            the viewport — so these two facts would vanish with it. Provided
+            rather than passed: a portal keeps React context, and threading
+            them by prop would mean one wire per stop through MainOutlet and
+            every view, which is the chain this pass just deleted. */}
+        <StageSignalsContext.Provider value={stageSignals}>
         <MainOutlet
           activeView={activeView}
           navDir={navDir}
@@ -4245,6 +4259,7 @@ function App() {
           updateDetective={updateDetective}
           setOverviewSharePanelOpen={setOverviewSharePanelOpen}
         />
+        </StageSignalsContext.Provider>
         </ErrorBoundary>
 
       </main>

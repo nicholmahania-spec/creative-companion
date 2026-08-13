@@ -43,6 +43,7 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useStageSignals, stageSignalLines } from '../lib/stageSignals'
 import { getPrevJourney, labelForStepId } from '../lib/journey/journey'
 import { stepsForProject } from '../lib/journey/projectTypes'
 import { pathStepHasContent } from '../lib/journey/journeyProgress'
@@ -66,6 +67,28 @@ const FOCUSABLE =
  * @param {string} [p.testId]
  * @param {React.ReactNode} p.children
  */
+/**
+ * The two signals the stage may show from outside itself.
+ *
+ * Says nothing at all when there is nothing to say: no provider, no unread
+ * and no open to-dos all render empty rather than "0". A zero here would be
+ * a scoreboard of nothing, which is the read `openTodoCount`'s own comment in
+ * App.jsx already refuses on the header pill.
+ */
+function StageSignals() {
+  const lines = stageSignalLines(useStageSignals())
+  if (!lines.length) return null
+  return (
+    <p className="cc-stage-signals">
+      {lines.map((line) => (
+        <span key={line} className="cc-stage-signal">
+          {line}
+        </span>
+      ))}
+    </p>
+  )
+}
+
 export default function Workroom({
   stepId,
   project = null,
@@ -241,9 +264,14 @@ export default function Workroom({
           </ol>
         </nav>
 
-        <p className="cc-stage-status" role="status">
-          {status}
-        </p>
+        <div className="cc-stage-aside">
+          {/* What the shell would have told you, if the shell were visible.
+              Read-only by design — see `lib/stageSignals.js`. */}
+          <StageSignals />
+          <p className="cc-stage-status" role="status">
+            {status}
+          </p>
+        </div>
       </header>
 
       <h1 id={headingId} className="sr-only">

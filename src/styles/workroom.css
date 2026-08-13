@@ -558,3 +558,30 @@ body:has(.app.deep) .cc-stage {
     min-height: 0;
   }
 }
+
+/* ── The edge's right-hand cell ────────────────────────────────────────────
+   Was a bare status line. It now stacks the status under whatever the shell
+   is holding that the stage hid — unread client activity, open to-dos — so
+   the two facts whose value is being NOTICED survive an immersive stop.
+   Quiet by construction: same muted ink as the status, no badge, no colour
+   alarm. `lib/stageSignals.js` argues why these two and no others. */
+.cc-stage-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.cc-stage-signals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.cc-stage-signal {
+  color: var(--stage-mute);
+  white-space: nowrap;
+}
