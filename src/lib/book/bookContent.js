@@ -145,6 +145,16 @@ export const FIELD_HOMES = {
   /* The last stop — written at the end, with the pack. */
   handoffNote: { view: 'finish', label: labelForStepId('deliver') },
   learnings: { view: 'finish', label: labelForStepId('deliver') },
+  /* PAGE SETUP BELONGS TO THE BOOK. The store gave these one home in the v10
+     migration (`project.bookBuilder.{pageSize,edgeSpace,printShop}`) after a
+     Builder choice and a studio pref had been disagreeing about the trim the
+     client actually received — but the UI kept two editors for that one
+     field, in the Builder and again on Delivery. The sheet is the book's own
+     decision and it is proofed against the book's pages, so the Builder
+     edits it and Delivery reports it. */
+  pageSize: { view: 'book', label: labelForStepId('book') },
+  edgeSpace: { view: 'book', label: labelForStepId('book') },
+  printShop: { view: 'book', label: labelForStepId('book') },
 }
 
 /**
