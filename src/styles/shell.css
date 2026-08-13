@@ -564,7 +564,7 @@ h3 {
   color: var(--text-secondary);
   font-size: 0.9rem;
   max-width: 40rem;
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-4);
   line-height: 1.45;
   font-weight: 500;
 }
@@ -657,7 +657,7 @@ h3 {
 .panel-head {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin-bottom: 0.9rem;
 }
 
@@ -704,7 +704,7 @@ h3 {
 }
 
 .empty-state {
-  padding: 1.5rem 0.25rem 0.75rem;
+  padding: var(--space-5) var(--space-1) var(--space-3);
   text-align: left;
 }
 
@@ -716,7 +716,7 @@ h3 {
 }
 
 .empty-state-subtitle {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.825rem;
   color: var(--text-secondary);
 }
@@ -837,7 +837,7 @@ h3 {
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-weight: 700;
   font-size: 1.05rem;
   letter-spacing: -0.03em;
@@ -947,7 +947,7 @@ h3 {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   border: 1px solid var(--border-subtle);
 }
 
@@ -956,7 +956,7 @@ h3 {
 }
 
 .forced-break-body {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   font-size: 0.92rem;
   font-weight: 500;
   line-height: 1.45;
@@ -1071,7 +1071,7 @@ h3 {
 .header-content-simple {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   max-width: 1120px;
   /* Without this the flex container inherits `min-width: auto` and reports the
      sum of its children's intrinsic widths as its own minimum — which is how
@@ -1820,7 +1820,7 @@ h3 {
 }
 
 .home-eyebrow {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -1947,7 +1947,7 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   padding: 1.1rem 1.15rem 0.7rem;
 }
 
@@ -2449,7 +2449,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   min-height: 2.5rem;
   padding: 0.55rem 1.2rem;
   /* Moved up from .btn-primary. Only primary carried nowrap, so a ghost
@@ -2942,7 +2942,7 @@ h3 {
 }
 
 .insights-focus {
-  margin: 0.25rem 0 2rem;
+  margin: var(--space-1) 0 var(--space-6);
   padding-bottom: 1.75rem;
   border-bottom: 1px solid var(--border-hairline);
 }
@@ -2960,7 +2960,7 @@ h3 {
 .insights-focus-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
@@ -3046,7 +3046,7 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
   margin-bottom: 0.65rem;
 }
 
@@ -3113,7 +3113,7 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%;
   margin: 0;
   padding: 0;
@@ -3487,7 +3487,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .path-view-skeleton {
-  margin: 1rem;
+  margin: var(--space-4);
   max-width: 40rem;
   display: flex;
   flex-direction: column;
@@ -3551,7 +3551,7 @@ html[data-reduce-motion='true'] *::after {
 .deadline-edit-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -3608,7 +3608,7 @@ html[data-reduce-motion='true'] *::after {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-bottom: 0.85rem;
 }
 
@@ -3624,7 +3624,7 @@ html[data-reduce-motion='true'] *::after {
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
+  gap: var(--space-1);
   margin-bottom: 0.35rem;
   font-size: 0.7rem;
   font-weight: 700;
@@ -4424,7 +4424,7 @@ body.cc-printing-page button {
 
 .info-reveal {
   display: inline-block;
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
 }
 
 .info-reveal-toggle {
@@ -4458,7 +4458,7 @@ body.cc-printing-page button {
 }
 
 .work-context-line {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -4633,7 +4633,7 @@ body.cc-printing-page button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
   margin: 0.85rem 0 1rem;
 }
 
@@ -4688,7 +4688,7 @@ body.cc-printing-page button {
 }
 
 .type-specimen-h {
-  margin: 0 0 0.25rem;
+  margin: 0 0 var(--space-1);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -4828,7 +4828,7 @@ body.cc-printing-page button {
   }
 
 .system-accordion-nav {
-    gap: 0.25rem;
+    gap: var(--space-1);
   }
 }
 
@@ -4862,7 +4862,7 @@ body.cc-printing-page button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: var(--space-5);
 }
 
 .export-panel {
@@ -4895,7 +4895,7 @@ body.cc-printing-page button {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: var(--space-4);
   margin-bottom: 1rem;
 }
 
@@ -4924,7 +4924,7 @@ body.cc-printing-page button {
   }
 
 .export-overlay {
-    padding: 0.75rem;
+    padding: var(--space-3);
     align-items: center;
   }
 
@@ -5599,7 +5599,7 @@ html[data-reduce-motion="true"] .btn-primary:hover:not(:disabled) {
 .empty-illu {
   display: flex;
   justify-content: center;
-  margin: 0 auto 0.75rem;
+  margin: 0 auto var(--space-3);
   color: var(--text-primary);
   opacity: 0.9;
 }
@@ -5726,7 +5726,7 @@ html[dir="rtl"] .settings-jump {
 html[dir="rtl"] .back-link {
   display: inline-flex;
   flex-direction: row-reverse;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 /* Swap slide direction in RTL */
@@ -5840,7 +5840,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   padding: 0.75rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -5968,7 +5968,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   padding: 0.5rem 0.65rem;
   border: none;
   border-radius: var(--radius);
@@ -6435,7 +6435,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .journey-sidebar .journey-step {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   padding: 0.55rem 0.65rem;
   border: none;
@@ -6530,7 +6530,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
     width: 100%;
     min-width: 0;
     padding: 0;
-    gap: 0.25rem;
+    gap: var(--space-1);
   }
 
   .journey-sidebar .journey-bar-item {
@@ -7188,7 +7188,7 @@ body:has(.app.deep)::after {
 .asset-audit-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem;
   border-radius: var(--radius);
   background: var(--bg-elevated);
@@ -7815,7 +7815,7 @@ body,
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-top: 1rem;
   padding: 0.75rem 0 calc(0.25rem + env(safe-area-inset-bottom, 0px));
   background: var(--ts-canvas, var(--bg-canvas));
@@ -7970,7 +7970,7 @@ select:focus {
 }
 
 .command-studio .command-empty {
-  margin: 0.5rem 0;
+  margin: var(--space-2) 0;
   font-size: 0.85rem;
   color: var(--text-muted);
 }
@@ -8279,7 +8279,7 @@ select:focus {
 
 .insights-studio .insights-continue {
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .settings-studio .panel.brand-section {
@@ -8591,7 +8591,7 @@ select:focus {
     display: flex !important;
     flex-wrap: nowrap !important;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     max-width: none !important;
   }
   .header-menu-toggle {
@@ -9114,9 +9114,9 @@ select:focus {
   z-index: 30;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   min-width: 180px;
-  padding: 0.5rem;
+  padding: var(--space-2);
   border-radius: var(--radius);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
@@ -9152,7 +9152,7 @@ select:focus {
   width: min(320px, 100vw);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 1rem 0.85rem;
   background: var(--ts-panel, var(--bg-elevated));
   border-left: 1px solid var(--ts-border, var(--border-subtle));
@@ -9204,7 +9204,7 @@ select:focus {
 .running-todo-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem 0.2rem;
   border-radius: var(--radius);
 }
@@ -9277,7 +9277,7 @@ select:focus {
 .running-todo-panel-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-top: auto;
   padding-top: 0.6rem;
   border-top: 1px solid var(--ts-border, var(--border-subtle));
@@ -9325,7 +9325,7 @@ select:focus {
 .running-todo-prompt-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-top: 0.85rem;
 }
 
@@ -9355,7 +9355,7 @@ select:focus {
 .case-study-answers li {
   display: grid;
   grid-template-columns: 9.5rem 1fr;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.79rem;
 }
 .case-study-q {
@@ -9446,7 +9446,7 @@ select:focus {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   background: none;
   border: none;
@@ -9463,7 +9463,7 @@ select:focus {
 .scope-panel-body {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem 0 0.2rem;
 }
 /* Top of the body, next to the gap count — not the bottom. The owner's rule
@@ -9475,7 +9475,7 @@ select:focus {
   display: grid;
   grid-template-columns: 1fr minmax(0, 12rem);
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .scope-row-stack {
   grid-template-columns: 1fr;
@@ -9503,7 +9503,7 @@ select:focus {
 /* Revision rounds + feedback log — Review */
 
 .revision-line {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -9511,13 +9511,13 @@ select:focus {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .revision-bill-block {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .revision-bill-check {
   display: inline-flex;
@@ -9609,7 +9609,7 @@ select:focus {
 /* Hours & invoice panel — reuses .running-todo-panel chrome */
 
 .hours-invoice-panel {
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .hours-log-list {
@@ -9713,7 +9713,7 @@ select:focus {
   align-items: center;
   justify-content: flex-start;
   min-height: var(--tap-min);
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   flex: 1 1 auto;
   min-width: 0;
@@ -9908,7 +9908,7 @@ select:focus {
 }
 
 .more-menu-group-label {
-  margin: 0.5rem 0.5rem 0.25rem;
+  margin: var(--space-2) var(--space-2) var(--space-1);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -10188,12 +10188,12 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
 .public-fill-error {
   color: var(--danger);
   font-size: 0.85rem;
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
 }
 
 .client-portal-step-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .client-portal-chat-form .field-input {
@@ -10948,7 +10948,7 @@ textarea.artboard-brief-input {
 
 .error-boundary button {
   margin-top: var(--space-4);
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   min-height: 44px;
   background: var(--text-primary);
   color: var(--bg-card);
@@ -10980,7 +10980,7 @@ textarea.artboard-brief-input {
   min-width: 3rem;
   padding: 0 0.875rem;
   border-radius: var(--radius-pill);
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .todo-fab__label {
@@ -11224,7 +11224,7 @@ textarea.artboard-brief-input {
    ordinary body text stating what will print. PRODUCT.md §21 rules out the
    red/badge version of this. */
 .deliver-credit {
-  margin: 0.5rem 0 0.75rem;
+  margin: var(--space-2) 0 var(--space-3);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;

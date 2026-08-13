@@ -822,7 +822,7 @@
 .bbb-pagelist__out {
   display: flex;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.78rem;
   line-height: 1.35;
 }
@@ -1074,7 +1074,7 @@
 .bbb-pagelist__in {
   display: flex;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.78rem;
   line-height: 1.35;
   align-items: center;

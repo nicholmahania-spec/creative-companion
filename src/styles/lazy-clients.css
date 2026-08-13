@@ -10,7 +10,7 @@
 }
 
 .discovery-brief-progress {
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-4);
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-secondary);
@@ -72,7 +72,7 @@
 }
 .discovery-brief-share-row {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-bottom: 0.65rem;
 }
 .discovery-brief-attach {
@@ -458,7 +458,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .client-portal-step-label {
@@ -491,7 +491,7 @@
   margin-top: 0.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 /* Project overview form / survey — a card, same shape as a step, so the
@@ -512,10 +512,10 @@
 .client-portal-chat-log {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   max-height: 260px;
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: var(--space-2);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   margin-bottom: 0.6rem;
@@ -571,7 +571,7 @@
 
 .client-portal-chat-form {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-bottom: 0.5rem;
 }
 
@@ -735,8 +735,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
 }
 
 .client-inbox-note {
@@ -747,7 +747,7 @@
 .client-inbox-detail {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .client-inbox-detail-where {
@@ -759,7 +759,7 @@
 .client-inbox-reply {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 /* The finished brand book, announced on the portal the client already has.
    First block on the page and visually the loudest thing on it — everything

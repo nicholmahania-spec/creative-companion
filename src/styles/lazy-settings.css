@@ -57,7 +57,7 @@
 }
 
 .settings-danger-title {
-  margin: 0 0 0.25rem;
+  margin: 0 0 var(--space-1);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -90,7 +90,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
   padding: 0.85rem 0;
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -141,7 +141,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1rem 2rem;
+  padding: var(--space-5) var(--space-4) var(--space-6);
 }
 
 /* Login pack specimen (sells the artifact) */
@@ -192,7 +192,7 @@
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin-bottom: 1rem;
 }
 
@@ -217,7 +217,7 @@
 }
 
 .login-error {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   padding: 0.55rem 0.7rem;
   border-radius: var(--radius-sm);
   background: rgba(185, 28, 28, 0.08);
@@ -231,7 +231,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
   margin-bottom: 0.85rem;
-  padding: 0.25rem;
+  padding: var(--space-1);
   border-radius: var(--radius-pill);
   background: var(--bg-muted);
 }
@@ -255,7 +255,7 @@
 }
 
 .login-info {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   padding: 0.55rem 0.7rem;
   border-radius: var(--radius-sm);
   background: rgba(106, 106, 106, 0.1);
@@ -271,7 +271,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin-top: 0.35rem;
 }
 
@@ -312,7 +312,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 0.5rem;
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-4);
   position: sticky;
   /* Sit just below the app's own sticky header instead of at top:0, where it
      used to overlap the header and then cover whatever section an anchor
@@ -395,7 +395,7 @@
   display: grid;
   place-items: center;
   background: var(--ts-canvas, #F5F5F5);
-  padding: 1.5rem;
+  padding: var(--space-5);
 }
 
 .login-card-solo {
@@ -410,7 +410,7 @@
 }
 
 .login-h1 {
-  margin: 0.5rem 0 0.25rem;
+  margin: var(--space-2) 0 var(--space-1);
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--ts-ink, #1A1A1A);
@@ -432,20 +432,20 @@
 
 .login-forgot {
   display: block;
-  margin: 0.75rem auto 0;
+  margin: var(--space-3) auto 0;
   text-align: center;
   font-size: 0.8125rem;
 }
 
 .login-reset {
   display: block;
-  margin: 0.75rem auto 0;
+  margin: var(--space-3) auto 0;
   text-align: center;
   font-size: 0.8125rem;
 }
 
 .login-version {
-  margin: 1rem 0 0;
+  margin: var(--space-4) 0 0;
   text-align: center;
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -765,7 +765,7 @@
 
 .settings-studio .settings-row {
   padding: 0.55rem 0;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .settings-studio .settings-row strong {
@@ -846,7 +846,7 @@
 }
 
 .settings-studio .settings-nested {
-  margin: 0.5rem 0;
+  margin: var(--space-2) 0;
   border-top: 1px solid var(--ts-border, #E7E7E7);
   padding-top: 0.45rem;
 }
