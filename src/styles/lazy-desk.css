@@ -13,9 +13,21 @@
 .desk-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  /* HAIRLINE GRID. The 1px gaps show this background through, so the
+     dividers between panels ARE this colour — the panels themselves paint
+     `--bg-card` over their own cells. */
   gap: 1px;
   background: var(--border-subtle);
-  border: 1px solid var(--border-subtle);
+  /* THE OUTER EDGE IS FIRMER THAN THE INNER DIVISIONS, and it has to be.
+     The desk used to separate from the page by fill alone — white cards on a
+     grey canvas — so a subtle edge was enough. On the shared warm ground the
+     card/canvas step is a fraction of that, and the block stopped reading as
+     an object sitting ON the page. The fix is structural rather than tonal:
+     the same `--border-strong` the rest of the system draws firm edges with,
+     on the outside only. Inner dividers stay subtle, which is the hierarchy
+     that was always intended — one object, divided — and is why this is not
+     a border on every panel. */
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   overflow: hidden;
 }
