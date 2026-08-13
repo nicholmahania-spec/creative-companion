@@ -4228,6 +4228,8 @@ function App() {
           bookSetup={bookSetup}
           runExport={runExport}
           openExportPanel={openExportPanel}
+          setDiscoveryShare={setDiscoveryShare}
+          mergeDiscoveryAnswers={mergeDiscoveryAnswers}
           openHoursPanel={openHoursPanel}
           archiveCurrentProject={archiveCurrentProject}
           deleteCurrentProject={deleteCurrentProject}

@@ -14,6 +14,7 @@ import useAppStore from '../store/useAppStore'
 import { getRequiredEmpty, DETECTIVE_CHAPTERS } from '../lib/brief/detectiveBrief'
 import { relativeDeadlineLabel } from '../lib/dates'
 import StrategyWords from '../components/StrategyWords'
+import BriefClientLink from '../features/brief/BriefClientLink'
 import '../styles/lazy-define.css'
 
 const DetectiveSheet = lazy(() => import('../features/brief/DetectiveSheet'))
@@ -45,6 +46,9 @@ export default function DefineView(props) {
     activeProject: activeProjectProp = null,
     updateDetective: updateDetectiveProp,
     onOpenShare,
+    onSetDiscoveryShare,
+    onMergeDiscoveryAnswers,
+    flashToast,
     setActiveView,
     pathCtx = null,
     setProjectDeadline: setProjectDeadlineProp,
@@ -144,6 +148,15 @@ export default function DefineView(props) {
             >
               {showSend ? 'Send the brief' : 'Share'}
             </button>
+            <BriefClientLink
+              projectId={activeProject?.id || null}
+              clientName={activeProject?.name || ''}
+              shareId={activeProject?.discoveryShareId || null}
+              shareStatus={activeProject?.discoveryShareStatus || null}
+              onSetShare={onSetDiscoveryShare}
+              onMergeAnswers={onMergeDiscoveryAnswers}
+              flashToast={flashToast}
+            />
             <button
               type="button"
               className="btn btn-secondary define-brief-call"

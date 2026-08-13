@@ -182,6 +182,8 @@ export default function MainOutlet(p) {
     setDeskConfirm,
     updateDetective,
     setOverviewSharePanelOpen,
+    setDiscoveryShare,
+    mergeDiscoveryAnswers,
   } = p
 
   // Path-title ambient chips removed (owner): identity stamp, client
@@ -595,6 +597,10 @@ export default function MainOutlet(p) {
         pathCtx={pathCtx}
         updateDetective={updateDetective}
         onOpenShare={() => setOverviewSharePanelOpen(true)}
+        /* The /f/ link's controls moved out of the retired Discovery modal
+           and onto the Brief — same functions, same share ids. */
+        onSetDiscoveryShare={setDiscoveryShare}
+        onMergeDiscoveryAnswers={mergeDiscoveryAnswers}
         setProjectDeadline={setProjectDeadline}
         projectDeadline={projectDeadline}
       />
