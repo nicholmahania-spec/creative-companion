@@ -1595,7 +1595,7 @@
   flex: none;
   min-width: 44px;
   min-height: 44px;
-  font-size: 1.25rem;
+  font-size: var(--fs-4);
   line-height: 1;
 }
 

@@ -582,7 +582,7 @@ h3 {
   border: none;
   background: none;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
@@ -2460,7 +2460,7 @@ h3 {
   border: 1px solid var(--border-subtle);
   cursor: pointer;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.01em;
@@ -3437,7 +3437,7 @@ html[data-reduce-motion='true'] *::after {
 .done-title {
   flex: 1;
   min-width: 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 500;
   color: var(--text-secondary);
   text-decoration: line-through;
@@ -3724,7 +3724,7 @@ html[data-reduce-motion='true'] *::after {
 
 .deadline-list-item strong {
   display: block;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 700;
   margin-bottom: 0.15rem;
 }
@@ -3848,7 +3848,7 @@ html[data-reduce-motion='true'] *::after {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   background: var(--bg-warm);
   color: var(--text-primary);
 }
@@ -3866,7 +3866,7 @@ html[data-reduce-motion='true'] *::after {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -3889,7 +3889,7 @@ html[data-reduce-motion='true'] *::after {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 500;
   background: var(--bg-warm);
   color: var(--text-primary);
@@ -4824,7 +4824,7 @@ body.cc-printing-page button {
   }
 
 .step-focus-title {
-    font-size: 1.25rem !important;
+    font-size: var(--fs-4) !important;
   }
 
 .system-accordion-nav {
@@ -7414,7 +7414,7 @@ body:has(.app.deep)::after {
 
 .journey-gap-strip-btn {
   border-radius: var(--radius-sm) !important;
-  font-size: 0.75rem !important;
+  font-size: var(--fs-1) !important;
 }
 
 .journey-sidebar .journey-progress-pill {
@@ -7965,7 +7965,7 @@ select:focus {
 
 .command-studio .command-item {
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
 }
 
@@ -8121,7 +8121,7 @@ select:focus {
 }
 
 .forced-break-studio .forced-break-body {
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   margin: 0 0 0.85rem;
@@ -8272,7 +8272,7 @@ select:focus {
 
 .insights-studio .session-done-line {
   margin: 0.65rem 0 0.35rem;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   text-align: center;
 }
@@ -9867,7 +9867,7 @@ select:focus {
   width: 100%;
   padding: 0.5rem 0.625rem;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   background: transparent;
   border: none;
   border-radius: var(--radius);
@@ -9891,7 +9891,7 @@ select:focus {
 .project-menu-restore {
   width: 100%;
   padding: 0.5rem 0.625rem;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   border-radius: var(--radius);
   border: 1px solid var(--border-subtle);
 }

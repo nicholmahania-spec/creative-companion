@@ -1046,7 +1046,7 @@
 }
 
 .forced-break-studio .forced-break-checklist li {
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   border-radius: var(--radius);
 }
@@ -1087,7 +1087,7 @@
 }
 
 .buddy-studio .bf-name {
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 700;
 }
 

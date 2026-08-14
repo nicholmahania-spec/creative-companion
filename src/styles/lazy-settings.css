@@ -282,7 +282,7 @@
 .onboard-demo {
   text-align: center;
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
 }
 
 .settings-advanced {
@@ -411,7 +411,7 @@
 
 .login-h1 {
   margin: var(--space-2) 0 var(--space-1);
-  font-size: 1.25rem;
+  font-size: var(--fs-4);
   font-weight: 700;
   color: var(--ts-ink, #1A1A1A);
   letter-spacing: -0.02em;
@@ -548,7 +548,7 @@
 }
 
 .settings-row strong {
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
 }
 
@@ -669,7 +669,7 @@
 
 .login-page-studio .login-lede {
   margin: 0 0 0.85rem;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   /* Meaningful subtitle text — use the AA-passing secondary ink rather
      than the muted #A1A1A1 (which fails contrast on the white card). */
@@ -769,7 +769,7 @@
 }
 
 .settings-studio .settings-row strong {
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
 }
 
