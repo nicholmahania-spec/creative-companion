@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { headingForStep, pathNav, skipIfCloud, stepByIdIn, unlockAndOnboard } from './helpers.js'
+import { headingForStep, openTouchpointEngine, pathNav, skipIfCloud, stepByIdIn, unlockAndOnboard } from './helpers.js'
 
 /**
  * The Touchpoints stop does its job, and can actually be completed.
@@ -49,6 +49,7 @@ test('Touchpoints can be filled in, and the note is kept', async ({ page }) => {
 
   /* The assertion that would have caught the ReferenceError. A crash here
      renders the error boundary, so the card never appears. */
+  await openTouchpointEngine(page)
   const card = page.locator('.touchpoints-card').first()
   await expect(card, 'adding a surface must not crash the view').toBeVisible({
     timeout: 8000,
@@ -62,7 +63,11 @@ test('Touchpoints can be filled in, and the note is kept', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: /Application mocks/i })
   ).toBeVisible()
-  await expect(page.locator('.touchpoints-desk-optional')).toBeVisible()
+  /* `.touchpoints-desk-optional` — the optional desk-task disclosure — was
+     removed by d56c203 "Rebuild Touchpoints as Application Stage", an owner
+     rebuild of this view. Its CSS is still in `lazy-sketch.css` with no call
+     site; flagged rather than deleted here, since removing style for a block
+     that may be coming back is not this file's call. */
   await expect(page.locator('.touchpoints-proof-line')).toHaveText(
     /Nothing recorded yet/
   )
