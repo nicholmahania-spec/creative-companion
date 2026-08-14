@@ -93,8 +93,15 @@
   position: fixed;
   inset: 0;
   /* Above every shell layer. The shell is inert and hidden underneath, but a
-     stage that lost a z-index race would be invisible with no error. */
-  z-index: 2147483647;
+     stage that lost a z-index race would be invisible with no error.
+
+     Below `--z-overlay`, and nowhere near the 32-bit ceiling. This was
+     2147483647; Chromium clamps there, so the stage and anything trying to sit
+     above it both computed to 2147480000 and "above the stage" was not a
+     position that existed. The pair is declared together in
+     `styles/overlay-host.css`; the literal fallback covers a load where that
+     sheet has not landed yet. */
+  z-index: var(--z-stage, 2000000);
   isolation: isolate;
   /* THREE FIXED ROWS: edge · plane · ledge. The stage itself does not
      scroll — the plane does. That is what lets the path edge and the action

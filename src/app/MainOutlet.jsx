@@ -145,6 +145,7 @@ export default function MainOutlet(p) {
     goToProcessStep,
     goSystemSection,
     openHoursPanel,
+    openBreakdown,
     archiveCurrentProject,
     deleteCurrentProject,
     buildCurrentBrandPack,
@@ -362,6 +363,7 @@ export default function MainOutlet(p) {
            reimplemented: `openHoursPanel` opens the panel App already owns,
            and archive/delete are App's own handlers, so the undo toast and
            the "Project not found" reporting are unchanged. */
+        onBreakDownProject={openBreakdown}
         onOpenHours={openHoursPanel}
         onArchiveProject={archiveCurrentProject}
         onDeleteProject={deleteCurrentProject}

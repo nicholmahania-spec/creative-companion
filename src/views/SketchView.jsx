@@ -480,7 +480,7 @@ export default function SketchView(props) {
                   const before = (touchpointProofs[activeSurfaceId] || {})
                     .check
                   setTouchpointApp(activeSurfaceId, { check: null })
-                  offerUndo?.('Colour sample cleared', () =>
+                  offerUndo?.('Color sample cleared', () =>
                     setTouchpointApp(activeSurfaceId, { check: before })
                   )
                 }}
@@ -495,7 +495,7 @@ export default function SketchView(props) {
           Keeps produce + sample + notes reachable without a card-grid stage. */}
       <details className="touchpoints-engine-hold">
         <summary className="touchpoints-engine-hold-summary">
-          Recorded evidence · produce · colour sample
+          Recorded evidence · produce · color sample
           {statusLine ? ` · ${statusLine}` : ''}
         </summary>
         <section className="touchpoints-block" aria-label="Application mocks">
@@ -523,7 +523,7 @@ export default function SketchView(props) {
                 const appProduced = cardProduced || emailProduced
                 const proofBits = []
                 if (done) proofBits.push('Mock accepted')
-                if (hasCheck) proofBits.push('Colour sample')
+                if (hasCheck) proofBits.push('Color sample')
                 if (String(note).trim()) proofBits.push('Note')
                 if (appProduced) proofBits.push('Application produced')
                 return (
@@ -609,13 +609,13 @@ export default function SketchView(props) {
                           onChecked={(check) => {
                             setTouchpointApp(id, { check })
                             flashMicro?.(
-                              `${touchpointLabel(id)} · colour sample`
+                              `${touchpointLabel(id)} · color sample`
                             )
                           }}
                           onClear={() => {
                             const before = row.check
                             setTouchpointApp(id, { check: null })
-                            offerUndo?.('Colour sample cleared', () =>
+                            offerUndo?.('Color sample cleared', () =>
                               setTouchpointApp(id, { check: before })
                             )
                           }}

@@ -209,6 +209,7 @@ export default function DeskView({
   onOpenWall,
   onOpenAssets,
   onOpenHours,
+  onBreakDownProject,
   onArchiveProject,
   onDeleteProject,
 }) {
@@ -667,6 +668,22 @@ export default function DeskView({
               Deliberately NOT export: this file's own rule is "No PDF on the
               desk", and the pack belongs to Delivery, which already opens the
               same panel. */}
+          {/* ONE OF THESE IS NOT ADMINISTRATION, AND IT GOES FIRST.
+              The criterion this panel was built on is scope, not category —
+              actions that only ever act on the project you are looking at.
+              Break down project is that shape and had been filed nowhere at
+              all: the Touchpoints rebuild deleted both of its triggers as
+              collateral, five days after they were added specifically so the
+              wizard was reachable on a project with no steps yet — which is
+              the exact moment "big job, no idea where to start" is asked. It
+              belongs on the Desk rather than on a stop because it is about the
+              whole project, and because the Desk is where you are when you do
+              not yet know which stop you are going to. First in the list, so
+              the order runs begin → money → archive → delete.
+
+              Kept ABOVE the section, not inside it: projectActionsReachable
+              reads a 2000-character slice starting at the class name, and a
+              comment in there pushes Delete out of what it can see. */}
           {project ? (
             <section
               className="desk-panel desk-project-actions"
@@ -675,6 +692,13 @@ export default function DeskView({
               <div className="desk-panel-head">
                 <span className="desk-eyebrow">Project</span>
               </div>
+              <button
+                type="button"
+                className="desk-panel-link"
+                onClick={() => onBreakDownProject?.()}
+              >
+                Break down project
+              </button>
               <button
                 type="button"
                 className="desk-panel-link"

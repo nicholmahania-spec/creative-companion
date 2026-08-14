@@ -26,6 +26,7 @@ import { downscaleDataUrl } from './lib/moodPins'
 import { resolveStudioName } from './lib/studio/studioIdentity'
 /* The reconnect's server half — see the onAttachPortal handler below. */
 import { rebindPortalToProject } from './lib/client/clientPortal'
+import OverlayLayer from './components/OverlayLayer.jsx'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   toISODate,
@@ -4227,6 +4228,7 @@ function App() {
           setDiscoveryShare={setDiscoveryShare}
           mergeDiscoveryAnswers={mergeDiscoveryAnswers}
           openHoursPanel={openHoursPanel}
+          openBreakdown={openBreakdown}
           archiveCurrentProject={archiveCurrentProject}
           deleteCurrentProject={deleteCurrentProject}
           handleSignOut={handleSignOut}
@@ -4345,18 +4347,22 @@ function App() {
         onSetUpload={setDiscoveryUpload}
         flashToast={flashToast}
       />
-      <ProjectOverviewSharePanel
-        open={overviewSharePanelOpen}
-        onClose={() => setOverviewSharePanelOpen(false)}
-        project={activeProject}
-        portalId={activeProject?.clientPortalId || null}
-        onSetPortalId={setClientPortalId}
-        onApplyAnswers={mergeDetectiveAnswers}
-        autoOpenReview={autoOpenPortalReview}
-        onAutoOpenReviewHandled={() => setAutoOpenPortalReview(false)}
-        flashToast={flashToast}
-        flashMicro={flashMicro}
-      />
+      {/* In the transient layer: the Brief opens this from inside its stage,
+          which hides #root. */}
+      <OverlayLayer theme={theme}>
+        <ProjectOverviewSharePanel
+          open={overviewSharePanelOpen}
+          onClose={() => setOverviewSharePanelOpen(false)}
+          project={activeProject}
+          portalId={activeProject?.clientPortalId || null}
+          onSetPortalId={setClientPortalId}
+          onApplyAnswers={mergeDetectiveAnswers}
+          autoOpenReview={autoOpenPortalReview}
+          onAutoOpenReviewHandled={() => setAutoOpenPortalReview(false)}
+          flashToast={flashToast}
+          flashMicro={flashMicro}
+        />
+      </OverlayLayer>
 
       <ClientInboxPanel
         open={clientInboxOpen}
@@ -4646,11 +4652,15 @@ function App() {
         </div>
       )}
 
-      {actionToast && (
-        <div className="action-toast" role="status" aria-live="polite">
-          {actionToast}
-        </div>
-      )}
+      {/* Every stage raises these, and they are the only confirmation that a
+          thing happened at all. */}
+      <OverlayLayer theme={theme}>
+        {actionToast && (
+          <div className="action-toast" role="status" aria-live="polite">
+            {actionToast}
+          </div>
+        )}
+      </OverlayLayer>
 
       {/* Quick capture, over whatever you were doing.
           One field and one button, no category picker and no project picker:
@@ -4708,130 +4718,144 @@ function App() {
         </div>
       )}
 
-      {recentUndo && (
-        <button
-          type="button"
-          className="undo-chip"
-          onClick={undoLastComplete}
-        >
-          Undo · {String(recentUndo.title || '').slice(0, 24)}
-          {String(recentUndo.title || '').length > 24 ? '…' : ''}
-        </button>
-      )}
+      {/* THE UNDO HAS TO BE REACHABLE FROM WHERE THE ACTION WAS TAKEN.
+          8 of the 10 offerUndo() call sites fire from inside a stage, and
+          until this moved it rendered inside the sleeping shell: measured
+          241x39, visibility hidden, with .cc-stage-ledge on top of it. That
+          left a destructive action with neither a confirmation dialog nor a
+          reachable undo, which is the exact trade CLAUDE.md §2 makes in the
+          other direction. */}
+      <OverlayLayer theme={theme}>
+        {recentUndo && (
+          <button
+            type="button"
+            className="undo-chip"
+            onClick={undoLastComplete}
+          >
+            Undo · {String(recentUndo.title || '').slice(0, 24)}
+            {String(recentUndo.title || '').length > 24 ? '…' : ''}
+          </button>
+        )}
+      </OverlayLayer>
 
-      {exportPanel && (
-        <div
-          className="export-overlay no-print-hide"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="export-panel-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setExportPanel(null)
-          }}
-        >
-          <div className="export-panel portfolio-export export-studio">
-            <div className="export-panel-header no-print">
-              <div>
-                <h3 id="export-panel-title" style={{ margin: 0 }}>
-                  Export
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                aria-label="Close export"
-                onClick={() => setExportPanel(null)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div
-              className={`export-artboard-wrap${coverDropActive ? ' is-cover-drop-active' : ''}`}
-              onDragOver={(e) => {
-                if (!e.dataTransfer?.types?.includes('Files')) return
-                e.preventDefault()
-                setCoverDropActive(true)
-              }}
-              onDragLeave={(e) => {
-                if (e.currentTarget.contains(e.relatedTarget)) return
-                setCoverDropActive(false)
-              }}
-              onDrop={(e) => {
-                if (!e.dataTransfer?.files?.length) return
-                e.preventDefault()
-                setCoverDropActive(false)
-                handleCoverImageDrop(e.dataTransfer.files[0])
-              }}
-            >
-              <Suspense fallback={<div className="panel-hint">…</div>}>
-                <BrandArtboard
-                  id="direction-sheet"
-                  project={{
-                    name: exportPanel.projectName,
-                    tagline: exportPanel.tagline,
-                    brief: exportPanel.brief,
-                    voice: exportPanel.voice,
-                    typeHeading: exportPanel.typeHeading,
-                    typeBody: exportPanel.typeBody,
-                    logoDirection: exportPanel.logoDirection,
-                    doUse: exportPanel.doUse,
-                    dontUse: exportPanel.dontUse,
-                    colorRoles: activeProject?.colorRoles,
-                    logoImage: activeProject?.logoImage,
-                  }}
-                  palette={exportPanel.palette || projectPalette}
-                  pins={exportPanel.pins || []}
-                  editable={false}
-                />
-              </Suspense>
-              <p className="export-cover-drop-hint">
-                {activeProject?.logoImage
-                  ? 'Drop a new image here to replace the cover'
-                  : 'Drop an image here to use it on the cover'}
-              </p>
-              {exportPanel.openTasks.length > 0 && (
-                <div className="export-open-work">
-                  <div className="kicker">Open</div>
-                  <ul className="direction-tasks">
-                    {exportPanel.openTasks.map((t) => (
-                      <li key={t.id}>{t.title}</li>
-                    ))}
-                  </ul>
+      {/* Delivery opens this from inside its stage. It measured 1280x720 with
+          visibility hidden inside the sleeping shell — a full-viewport dialog
+          that made pressing Preview look like pressing nothing. */}
+      <OverlayLayer theme={theme}>
+        {exportPanel && (
+          <div
+            className="export-overlay no-print-hide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="export-panel-title"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setExportPanel(null)
+            }}
+          >
+            <div className="export-panel portfolio-export export-studio">
+              <div className="export-panel-header no-print">
+                <div>
+                  <h3 id="export-panel-title" style={{ margin: 0 }}>
+                    Export
+                  </h3>
                 </div>
-              )}
-            </div>
-
-            <div className="export-panel-actions no-print">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => runExport('pdf')}
-                disabled={exportBusy}
-              >
-                Brand book PDF
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                aria-label="Close export"
-                onClick={() => setExportPanel(null)}
-              >
-                ×
-              </button>
-            </div>
-            <details className="export-more-formats no-print">
-              <summary>More</summary>
-              <div className="finish-more-formats-list">
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('html')}>HTML</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('md')}>MD</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('json')}>JSON</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('print')}>Print</button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-label="Close export"
+                  onClick={() => setExportPanel(null)}
+                >
+                  ×
+                </button>
               </div>
-            </details>
+
+              <div
+                className={`export-artboard-wrap${coverDropActive ? ' is-cover-drop-active' : ''}`}
+                onDragOver={(e) => {
+                  if (!e.dataTransfer?.types?.includes('Files')) return
+                  e.preventDefault()
+                  setCoverDropActive(true)
+                }}
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget)) return
+                  setCoverDropActive(false)
+                }}
+                onDrop={(e) => {
+                  if (!e.dataTransfer?.files?.length) return
+                  e.preventDefault()
+                  setCoverDropActive(false)
+                  handleCoverImageDrop(e.dataTransfer.files[0])
+                }}
+              >
+                <Suspense fallback={<div className="panel-hint">…</div>}>
+                  <BrandArtboard
+                    id="direction-sheet"
+                    project={{
+                      name: exportPanel.projectName,
+                      tagline: exportPanel.tagline,
+                      brief: exportPanel.brief,
+                      voice: exportPanel.voice,
+                      typeHeading: exportPanel.typeHeading,
+                      typeBody: exportPanel.typeBody,
+                      logoDirection: exportPanel.logoDirection,
+                      doUse: exportPanel.doUse,
+                      dontUse: exportPanel.dontUse,
+                      colorRoles: activeProject?.colorRoles,
+                      logoImage: activeProject?.logoImage,
+                    }}
+                    palette={exportPanel.palette || projectPalette}
+                    pins={exportPanel.pins || []}
+                    editable={false}
+                  />
+                </Suspense>
+                <p className="export-cover-drop-hint">
+                  {activeProject?.logoImage
+                    ? 'Drop a new image here to replace the cover'
+                    : 'Drop an image here to use it on the cover'}
+                </p>
+                {exportPanel.openTasks.length > 0 && (
+                  <div className="export-open-work">
+                    <div className="kicker">Open</div>
+                    <ul className="direction-tasks">
+                      {exportPanel.openTasks.map((t) => (
+                        <li key={t.id}>{t.title}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="export-panel-actions no-print">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => runExport('pdf')}
+                  disabled={exportBusy}
+                >
+                  Brand book PDF
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-label="Close export"
+                  onClick={() => setExportPanel(null)}
+                >
+                  ×
+                </button>
+              </div>
+              <details className="export-more-formats no-print">
+                <summary>More</summary>
+                <div className="finish-more-formats-list">
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('html')}>HTML</button>
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('md')}>MD</button>
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('json')}>JSON</button>
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('print')}>Print</button>
+                </div>
+              </details>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </OverlayLayer>
 
       <button
         ref={todoFabRef}
@@ -4915,19 +4939,24 @@ function App() {
         </Suspense>
       )}
 
-      {showBreakdown && (
-        <Suspense fallback={null}>
-        <TaskBreakdown
-          key={breakdownRunId}
-          projectName={activeProject?.name}
-          projectBrief={activeProject?.brief}
-          onClose={() => setShowBreakdown(false)}
-          onCommit={commitBreakdown}
-          onFinish={finishBreakdownToStep}
-          onRestart={openBreakdown}
-        />
-        </Suspense>
-      )}
+      {/* The wizard commits its steps and then navigates, so it has to be able
+          to outlive the arrival of a stage — and it is opened from the Desk,
+          which is shell. Both are only true from up here. */}
+      <OverlayLayer theme={theme}>
+        {showBreakdown && (
+          <Suspense fallback={null}>
+          <TaskBreakdown
+            key={breakdownRunId}
+            projectName={activeProject?.name}
+            projectBrief={activeProject?.brief}
+            onClose={() => setShowBreakdown(false)}
+            onCommit={commitBreakdown}
+            onFinish={finishBreakdownToStep}
+            onRestart={openBreakdown}
+          />
+          </Suspense>
+        )}
+      </OverlayLayer>
     </div>
   )
 }

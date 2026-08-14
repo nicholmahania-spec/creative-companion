@@ -36,6 +36,17 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- The transient layer's home: a SIBLING of #root, never a descendant.
+         An open Workroom stage sets #root to inert + aria-hidden +
+         visibility:hidden, which is deliberate — but it also reached every
+         toast, undo chip and dialog the app renders, so an undo offered from
+         inside a stage was invisible and a full-viewport Export dialog opened
+         at 1280x720 that nobody could see. Anything that must outrank the
+         stage lives here instead.
+         Never give this node transform / filter / perspective / contain /
+         will-change: any of them makes it the containing block for its
+         position:fixed children and collapses them into its own box. -->
+    <div id="cc-overlay-root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
