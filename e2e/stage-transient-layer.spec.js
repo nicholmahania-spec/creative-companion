@@ -243,11 +243,21 @@ test('Delivery Preview opens a dialog you can see, use and close', async ({
     reachable: true,
   })
 
-  /* Focus goes in, so a keyboard user is inside the thing that just opened. */
-  const focusInside = await page.evaluate(
-    () => !!document.activeElement?.closest('.export-overlay')
-  )
-  expect(focusInside).toBe(true)
+  /* Focus goes in, so a keyboard user is inside the thing that just opened.
+     Polled, not sampled: `useModalFocus` moves focus on a requestAnimationFrame
+     and the panel's own content mounts first, so "focus is inside" is an
+     eventual property. A single read raced it on CI and passed locally, which
+     is the least useful kind of test. The claim is unchanged — focus must end
+     up inside the dialog, not merely be able to get there. */
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () => !!document.activeElement?.closest('.export-overlay')
+        ),
+      { timeout: 5000 }
+    )
+    .toBe(true)
 
   /* And Escape closes the dialog WITHOUT taking the stage with it. */
   await page.keyboard.press('Escape')
