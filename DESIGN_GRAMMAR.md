@@ -129,7 +129,10 @@ Icon-only is a **closed list** (close, nav, arrows when paged thing is named, se
 - **Exit = the universal escape.** Escape and `← Back to …` are one control.
   Target is the previous stop **on the project's own path** (`stepsForProject`),
   so a four-stage job never exits to a stage it does not have; the first stop
-  exits to the desk. Focus returns to the exact launcher.
+  exits to the desk. Focus returns to the exact launcher. It **yields to any
+  layer open above it** (`modalLayers.js`) — Escape and Tab both, never one
+  trap fighting another — and the trap exempts `#cc-overlay-root`, since the
+  transient layer sits above the stage and must stay usable from inside it.
 - **The path edge is not optional.** Every stop of the project's path, one
   hairline row, no boxes. Subordinate means small and quiet; it does not mean
   gone — the first rebuilt rooms replaced it with one back-link and left

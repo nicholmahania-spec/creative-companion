@@ -1,8 +1,8 @@
 # Creative Companion — Product Requirements (living)
 
 **Status:** Living · rewritten 2026-07-30 against the code at `v2.4.4` (`b0b1258`)
-· §3–§5 and §11.1 reconciled 2026-08-13 against `main@4bfb2b1` and PR #208
-(see the basis note at the top of §3 for what is shipped and what is not)
+· §3–§5 and §11.1 reconciled 2026-08-14 against `main@3122fac`, which is
+`4bfb2b1` plus PR #208 (see the basis note at the top of §3)
 **Supersedes:** the previous PRD, which described the `v1.51/1.52` app and predated
 the Brand Book Builder, invoicing, the client portal, the client directory, the
 case study export, and the client-survey work.
@@ -59,24 +59,21 @@ ranked below the ADHD lens. If they disagree, the layout gets reworked.
 
 ## 3. Information architecture
 
-**Basis, and the branch state behind it.** This section was reconciled
-2026-08-13 against `main@4bfb2b1` and against the interaction architecture
-proven in **PR #208** (`claude/post-merge-stabilization-audit-gb29lr`), which
-this file previously contradicted — the PR flagged the contradiction and left
-it, because editing a product definition is an owner call.
+**Basis.** This section was reconciled against `main@3122fac` — `4bfb2b1` plus
+**PR #208**, which landed the interaction architecture this file previously
+contradicted. The PR flagged the contradiction and left it, because editing a
+product definition is an owner call; that call was made, and #208 has since
+merged, so everything described here is shipped rather than pending.
 
-Split the two apart when reading, because they are not both shipped:
+Two halves, both now on `main`:
 
-- **On `main` today** — the seven stops, `projectTypes.js` deciding which of
-  them a project walks, the `Workroom` stage, the stage ledge, and the stage
-  exit.
-- **Lands with PR #208, not on `main` at the time of writing** — the Brief as
-  the sole strategic intake: Call mode, the Brief-owned client link, Discovery
-  as read-only notes, and the `detective` consolidation at persist v11. Every
-  statement below that depends on that work is marked **(#208)** and carries
-  its commit. On `main`, `updateDiscoveryField` is still live
-  (`src/App.jsx:646`, `src/store/useAppStore.js:2225`) and Discovery is still a
-  second editable intake.
+- The seven stops, `projectTypes.js` deciding which of them a project walks,
+  the `Workroom` stage, the stage ledge, and the stage exit.
+- The Brief as the sole strategic intake — Call mode, the Brief-owned client
+  link, Discovery as read-only notes, and the `detective` consolidation at
+  persist v11. `updateDiscoveryField` is **retired**: `useAppStore.js:2226`
+  carries only its tombstone comment, and `discoveryIntakeRetired.test.js`
+  fails if anything calls it again.
 
 ### 3.1 The path — seven stops
 
@@ -173,6 +170,16 @@ load-bearing part:
   desk, the only thing upstream of it. Leaving restores focus to the exact
   element that opened the stage; the launcher stays mounted under the inert
   shell, so it is still there to hand focus back to.
+  **It yields to anything open above it.** `hasOpenModalLayer()`
+  (`lib/modalLayers.js`) short-circuits the whole key handler — Escape *and*
+  Tab, not just Escape, because a nested dialog runs its own focus trap and two
+  traps wrapping in opposite directions on one Tab is the same class of bug as
+  two handlers acting on one Escape. The focus trap carries a matching, narrow
+  exemption for `#cc-overlay-root` (`lib/overlayHost.js`): the transient layer
+  sits deliberately *above* the stage, and an undo chip or Export dialog raised
+  from inside a stop has to be usable from inside it. That node is empty unless
+  something transient is mounted, so with nothing open the trap is exactly as
+  tight as it was, and the shell stays `inert` either way.
 - **The path edge is not optional.** The first three rebuilt rooms replaced the
   shell's nav with a single "Back to <previous stop>" link, which took
   navigation from dominant to *absent* — from Identity there was no route to
@@ -180,6 +187,12 @@ load-bearing part:
   gone. The stage carries every stop of the project's own path as one hairline
   row, no boxes, with `aria-current="step"` on the one you are on and a done
   mark from `pathStepHasContent`.
+- **Stage signals** (`lib/stageSignals.js`) — the edge also carries what the
+  shell would have told you, if the shell were visible: unread client activity
+  and open to-dos. **Read-only by design**, because `#root` is inert while a
+  stage is up. It says nothing at all when there is nothing to say — no
+  provider, no unread and no open to-dos all render empty rather than `0`,
+  since a zero here would be a scoreboard of nothing.
 
 Keyboard `1`–`N` addresses **the path this project walks**, not the catalogue:
 on a four-stage project key `5` does nothing, because a shortcut that reaches
@@ -281,7 +294,7 @@ who is holding the keyboard:
 | Mode | Surface | When |
 |---|---|---|
 | **Client mode** | `/f/:shareId` → `PublicDiscoveryFill` | The client answers in their own time. Comes back through the explicit review step, never a silent overwrite. |
-| **Call mode** *(#208, `9bb2c87`)* | `DetectiveSheet` with `callMode`, on the Brief itself | The designer answers while the client talks. One question on screen at a time, in chapter order — the same order the client meets them in. |
+| **Call mode** (`9bb2c87`) | `DetectiveSheet` with `callMode`, on the Brief itself | The designer answers while the client talks. One question on screen at a time, in chapter order — the same order the client meets them in. |
 
 Call mode is a **filter over the ordinary render**, deliberately: every field
 type draws exactly as it does on the page — spectrum keeps its five-value
@@ -293,7 +306,7 @@ Continue is deliberately absent there**, because mid-call the next thing is the
 next question and a button that leaves the Brief while the client is still
 talking is the one mistake this mode can make. Leaving is the masthead toggle.
 
-**The Brief owns the client link** *(#208, `d6382cf`, `63e1c65`)*.
+**The Brief owns the client link** (`d6382cf`, `63e1c65`).
 `BriefClientLink` — create, copy, check, revoke — sits in the Brief's masthead
 beside the Call mode toggle, because the Brief owns the thing being shared.
 Revoke arms before it fires: it kills a link a client may be part-way through
@@ -309,7 +322,7 @@ new share seeds `answers: {}`, matching the other existing caller
 (`NewProjectIntake`), so no designer-authored words are put in front of a client
 as though they had answered them.
 
-**Discovery is now read-only historical data** *(#208, `6ad1f0d`, `d80cd2f`)*.
+**Discovery is now read-only historical data** (`6ad1f0d`, `d80cd2f`).
 `discoveryAnswers` was a second 30-question schema with its own store, fillable
 in a studio modal and runnable as a call script — a competing source of
 client/strategic truth that the Brief never read a word of. Both of its capture
@@ -352,8 +365,7 @@ The brief composes a readable text brief on every edit
 (`composeBriefFromDetective`) so exports and the portal never read a half-built
 object.
 
-**Sharing the brief:** the Brief mints a `/f/:shareId` link (*(#208)*; on `main`
-this is still the Discovery brief panel); the
+**Sharing the brief:** the Brief mints a `/f/:shareId` link; the
 client's answers come back through an explicit **review step**
 (`reviewClientAnswers` / `mergeDetectiveAnswers`) — never a silent overwrite.
 Client-attached inspiration images auto-pin onto the Research wall on merge (noted
@@ -439,10 +451,9 @@ tabbed editors:
 Two stops, not one, since 2026-08-09. **Brand book** (stop 6, `book`) is where
 the document is laid out from what the project already holds; **Delivery**
 (stop 7, `deliver`) is where the pack is previewed, noted and downloaded. Page
-setup is **edited in the Brand book and reported on Delivery** *(#208,
-`321f5ad`)* — one authoring home, one readout. The Brand Book Builder is
-wrapped onto the canonical Workroom stage rather than rewritten *(#208,
-`3b25e82`)*.
+setup is **edited in the Brand book and reported on Delivery** (`321f5ad`) —
+one authoring home, one readout. The Brand Book Builder is wrapped onto the
+canonical Workroom stage rather than rewritten (`3b25e82`).
 
 Delivery has one primary **Download PDF**. Secondary and advanced:
 
@@ -575,7 +586,7 @@ tasks[]  runningTodo  decisionLog[]  roughIdeas[]
 scopeRevisions* revisionRounds[] feedbackLog[]
 workLog[]   // private clock       timeLog[] hourlyRate  // billable, manual
 deadline  defineOpenChapter  lastView
-discoveryAnswers discoveryUpload            // read-only history (#208), see §4.2
+discoveryAnswers discoveryUpload            // read-only history, see §4.2
 discoveryShareId discoveryShareStatus       // the /f/ link, owned by the Brief
 clientPortalId
 handoffNote learnings deliverWordsChecked conceptPackage{}
@@ -751,7 +762,7 @@ Research wall · a contract document generator · billing/payments processing
 
 ### 11.1 Open, recorded, unresolved — the twelve Discovery fields
 
-The intake consolidation *(#208, `d80cd2f`)* moved eighteen of Discovery's
+The intake consolidation (`d80cd2f`) moved eighteen of Discovery's
 thirty questions into `detective` and left twelve. **These are open questions,
 not decisions.** They are listed so the reasoning survives the conversation it
 came from; nothing here is settled, and none of it should be resolved by
