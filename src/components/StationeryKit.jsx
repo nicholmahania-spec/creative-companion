@@ -9,7 +9,7 @@ import { elementToPdf, elementToPng, PAGE_SIZES } from '../lib/book/stationery'
 /* Stationery rules live in lazy-design.css; import here so Assets can load
    the kit without visiting Identity first. */
 import '../styles/lazy-design.css'
-import { effectiveWord } from '../lib/brand/briefWords'
+import { BRIEF_PROVENANCE, effectiveWord } from '../lib/brand/briefWords'
 
 export default function StationeryKit({
   activeProject = {},
@@ -55,6 +55,22 @@ export default function StationeryKit({
     ? [activeContact.name, activeContact.title].filter(Boolean).join(' · ')
     : orgName
 
+  /* THE BOX HOLDS THE DESIGNER'S OWN WORDS; THE CLIENT'S ANSWER SITS UNDER IT.
+     These two inputs used to be `value={effectiveWord(...).value}` — so with
+     no override the box DISPLAYED the client's brief answer and the first
+     keystroke sent `e.target.value`, client string and all, into
+     `project.orgPhone`. One fact forked into two columns, and the box could
+     not be cleared back to inheriting. That is the same defect already fixed
+     for Positioning on the direction sheet, and the same shape it was fixed
+     in: bind the control to the project's OWN field, and show what the brief
+     holds beneath it as material.
+
+     The designer override stays real — unlike the five `BRIEF_OWNED_WORDS`,
+     a studio may legitimately print a different number on the letterhead than
+     the one in the client record. What it stops being is invisible. */
+  const briefPhone = effectiveWord(activeProject, 'orgPhone')
+  const briefEmail = effectiveWord(activeProject, 'orgEmail')
+
   return (
     <div className="stationery-kit">
       <div className="stationery-form">
@@ -74,20 +90,34 @@ export default function StationeryKit({
             <input
               id="org-phone"
               className="field-input"
-              value={effectiveWord(activeProject, 'orgPhone').value}
+              value={activeProject.orgPhone || ''}
               onChange={(e) => updateBrandField('orgPhone', e.target.value)}
               placeholder="(555) 555-0100"
             />
+            {briefPhone.fromBrief && (
+              <p className="artboard-word-source">
+                {`${BRIEF_PROVENANCE}: ${briefPhone.value}`}
+              </p>
+            )}
           </div>
           <div className="field-block">
             <label className="field-label" htmlFor="org-email">Email</label>
             <input
               id="org-email"
               className="field-input"
-              value={effectiveWord(activeProject, 'orgEmail').value}
+              value={activeProject.orgEmail || ''}
               onChange={(e) => updateBrandField('orgEmail', e.target.value)}
-              placeholder="you@yourstudio.com"
+              /* The address that prints on the CLIENT's letterhead. The old
+                 placeholder read "you@yourstudio.com" over a value resolved
+                 from the client's own brief answer — an invitation to put the
+                 wrong party's address on their stationery. */
+              placeholder="name@business.com"
             />
+            {briefEmail.fromBrief && (
+              <p className="artboard-word-source">
+                {`${BRIEF_PROVENANCE}: ${briefEmail.value}`}
+              </p>
+            )}
           </div>
           <div className="field-block">
             <label className="field-label" htmlFor="org-website">Website</label>

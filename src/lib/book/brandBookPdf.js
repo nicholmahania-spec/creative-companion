@@ -775,6 +775,11 @@ export async function downloadBrandPackVectorPdf(
     const promise = clean(pack?.messagingPromise)
     const proof = clean(pack?.messagingProof)
     const personality = clean(pack?.messagingPersonality)
+    /* COMPATIBILITY READ, same reason as `bookDocument.js`: `pack.voice` is
+       resolved at the pack boundary now, so the second term only fires for a
+       pack that was STORED before it was — and the client's reveal route
+       downloads their PDF straight from `client_portals.delivery_pack`. This
+       renderer is the one an already-delivered book comes back through. */
     const voice = clean(pack?.voice) || clean(pack?.toneOfVoice)
 
     /* The plan is read from bookDocument.js, not written out here. It used to

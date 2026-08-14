@@ -69,10 +69,15 @@ describe('brand book keeps long answers instead of dropping them', () => {
   }, 30000)
 
   it('keeps the end of long Usage DO and DONT rules', async () => {
+    /* `dontUse` is brief-owned: no designer control writes `project.dontUse`,
+       so a fixture that set it exercised a state no real project reaches — and
+       passed while the real path shipped `''`. Answered where the client
+       answers it, so this now proves long BRIEF text paginates. `doUse` has no
+       brief source and stays project-owned. */
     const { text } = await textFor({
       name: 'Overflow Co.',
       doUse: longText('ENDOFDO'),
-      dontUse: longText('ENDOFDONT'),
+      detective: { avoid: longText('ENDOFDONT') },
     })
     expect(text).toContain('ENDOFDO')
     expect(text).toContain('ENDOFDONT')

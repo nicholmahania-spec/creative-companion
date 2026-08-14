@@ -72,10 +72,21 @@ export function bookInputs(packIn) {
        the client's book. A project with no story now gets no Story page, which
        is the rule everywhere else in this file. */
     story: clean(pack.story) || clean(d.story),
-    /* The hoisted copy wins, but a project answered before
-       buildBrandPackSnapshot hoisted toneOfVoice still has it only on the
-       detective — and the page's own text reads both, so the condition must
-       too, or the page is judged absent and then rendered with content. */
+    /* COMPATIBILITY READ — RETAINED DELIBERATELY, NOT A SECOND RESOLVER.
+       `pack.voice` is now resolved at the pack boundary through
+       `effectiveWord`, so for any pack built by this build the first term is
+       the answer and the other two never fire.
+
+       They are kept because a pack is not always freshly built. `publishDelivery`
+       writes the snapshot into `client_portals.delivery_pack`, and the client's
+       reveal route renders THAT STORED OBJECT — `fetchBrandDelivery` →
+       `PublicBrandReveal` → this renderer — without passing through
+       `buildBrandPackSnapshot` again. Every book already delivered was packed
+       before the boundary resolved anything, so it carries `voice: ''` with the
+       client's answer only under `toneOfVoice` or on `detective`. Deleting these
+       two terms would blank the Voice page of every brand book already sent.
+       The page's own text reads all three, so the condition must too, or the
+       page is judged absent and then rendered with content. */
     voice: clean(pack.voice) || clean(pack.toneOfVoice) || clean(d.toneOfVoice),
     decision: clean(decisionLineFromPack(pack)),
   }

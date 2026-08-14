@@ -143,9 +143,15 @@ describe('each control changes the generated PDF', () => {
         name: 'Setup Co.',
         tagline: 'A tagline.',
         doUse: 'Keep it calm.',
-        dontUse: 'No stretching.',
         imageryStyle: 'Warm, unposed.',
-        detective: { story: 'It started in a kitchen.', goal: 'Grow' },
+        /* The don't-list is the client's answer, not a project field — see
+           `briefWords.js`. Moved here so this fixture is a project that can
+           actually exist. */
+        detective: {
+          story: 'It started in a kitchen.',
+          goal: 'Grow',
+          avoid: 'No stretching.',
+        },
       },
       tasks: [],
       moodItems: [],

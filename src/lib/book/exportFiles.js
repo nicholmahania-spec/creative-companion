@@ -8,6 +8,7 @@
  */
 
 import { pinFaceCssText, pinVisualKind } from '../moodPins'
+import { BRIEF_RESOLVED_WORDS, effectiveWord } from '../brand/briefWords'
 import {
   resolvedGrid,
   resolvedPageBackgrounds,
@@ -365,8 +366,38 @@ export function buildBrandPackSnapshot({
        fixing it here fixes all of them at once. See `clientFacingName`. */
     projectName: clientFacingName(p),
     brief: p.brief || '',
+    /* ── THE BRIEF OWNS THESE FACTS, AND THIS IS WHERE THEY RESOLVE ────────
+       Voice, the two messaging lines, personality, the client's don't-list and
+       their phone and email are answered in the brief and may be overridden by
+       the designer. `briefWords.js` is the one statement of that rule and
+       `effectiveWord` is the one implementation: own words win, the client's
+       answer fills the gap, neither column is ever copied into the other.
+
+       This boundary used to read the project field directly — `p.voice || ''`,
+       `p.dontUse || ''` — and NONE of those project fields has a writer,
+       because Identity reports these lines rather than authoring them. So a
+       project whose client had answered showed the answers on every screen and
+       shipped `''`: the book's Usage appendix is gated on `doUse || dontUse`,
+       so the client's own don't-list suppressed the entire page it belonged
+       on, and the business card printed no contact block. Two consumers had
+       each grown their own rescue chain for `voice` alone — one rule, three
+       spellings, four fields uncovered.
+
+       Resolved as a SET rather than line by line, so a field added to the
+       vocabulary reaches the pack the day it is added.
+       `packResolvesBrief.test.js` pins the whole set against the resolver.
+
+       `BRIEF_RESOLVED_WORDS` is the set, and which fields are in it is
+       `briefWords.js`'s decision, not this file's. It is every mapping where
+       the brief answer and the designer's field are one fact with two possible
+       authors — which is all of them except `positioning`, whose brief answer
+       is source material to write FROM rather than the same fact. That
+       distinction is named there as `BRIEF_SOURCE_MATERIAL`; positioning's own
+       line is a few rows above, reading the designer's field alone. */
+    ...Object.fromEntries(
+      BRIEF_RESOLVED_WORDS.map((field) => [field, effectiveWord(p, field).value])
+    ),
     tagline: p.tagline || '',
-    voice: p.voice || '',
     logoDirection: p.logoDirection || '',
     logoWordmark: p.logoWordmark || '',
     logoClearspace: p.logoClearspace || '',
@@ -442,7 +473,6 @@ export function buildBrandPackSnapshot({
     fontFilesLicensed: p.fontFilesLicensed === true,
     packageAssets: Array.isArray(p.packageAssets) ? p.packageAssets : [],
     doUse: p.doUse || '',
-    dontUse: p.dontUse || '',
     deadline: p.deadline || '',
     palette: colors,
     openTasks: openTasks.map((t) => ({
@@ -469,20 +499,10 @@ export function buildBrandPackSnapshot({
     pinsStarredCount: starredCount,
     colorRoles: p.colorRoles || null,
     logoImage: p.logoImage || '',
-    orgEmail: p.orgEmail || '',
     orgWebsite: p.orgWebsite || '',
-    orgPhone: p.orgPhone || '',
     contacts: Array.isArray(p.contacts) ? p.contacts : [],
     logoMinSize: p.logoMinSize || '',
     logoDonts: p.logoDonts || '',
-    /* Falls back to the client's own answer. `project.messagingPromise` is
-       read in three places (BrandArtboard, brandSystem, the brand book) and
-       written in none — so Promise fell through to `voice` and Proof printed
-       "\u2014". The brief now asks both; a designer-side value still wins if one
-       ever exists. */
-    messagingPromise: p.messagingPromise || d.messagingPromise || '',
-    messagingProof: p.messagingProof || d.messagingProof || '',
-    messagingPersonality: p.messagingPersonality || '',
     /* StoryBrand's plan and single CTA — client-answered only; there is no
        designer-side field for these, unlike Promise and Proof. */
     messagingPlan: d.messagingPlan || '',

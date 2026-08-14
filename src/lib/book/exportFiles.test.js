@@ -145,7 +145,8 @@ describe('brandPackToMarkdown / brandPackToHtml', () => {
       tagline: 'Maps for calm',
       brief: 'Design system for a focus app.',
       doUse: 'Soft contrast',
-      dontUse: 'Neon chaos',
+      /* Brief-owned: answered by the client, resolved at the pack boundary. */
+      detective: { avoid: 'Neon chaos' },
       typeHeading: 'Display Bold',
       typeBody: 'Body Regular',
       palette: ['#112233'],
@@ -181,6 +182,10 @@ describe('buildDirectionSheetMarkup (preview-faithful PDF source)', () => {
         tagline: 'Quiet focus',
         brief: 'ADHD-friendly desk',
         doUse: 'Soft contrast',
+        /* DESIGNER OVERRIDE, kept on purpose. `orgPhone`/`orgEmail`/`dontUse`
+           resolve brief-first, but a designer-side value still wins — this is
+           the fixture that exercises that branch through the real boundary
+           rather than only through the resolver's own unit test. */
         dontUse: 'Neon',
         typeHeading: 'Display Bold',
         typeBody: 'Body Regular',

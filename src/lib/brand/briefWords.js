@@ -104,6 +104,49 @@ export function isBriefOwned(field) {
   return BRIEF_OWNED_WORDS.includes(field)
 }
 
+/**
+ * SOURCE MATERIAL IS NOT THE SAME FACT.
+ *
+ * Every mapping in `BRIEF_WORD_SOURCES` above pairs a designer-side field with
+ * the brief question that answers it — except one. `positioning` is paired with
+ * `usp`, "what does your business do?", because that is the nearest thing the
+ * brief holds. It is not the same fact:
+ *
+ *   `usp` is the CLIENT's description of their business.
+ *   `positioning` is the DESIGNER's synthesis, written from it.
+ *
+ * The direction sheet already draws that line on screen — a brief-owned line
+ * renders read-only with a route to the brief, while positioning renders an
+ * editable box with the client's answer BENEATH it, deliberately outside the
+ * control, so the first keystroke cannot send the client's sentence into the
+ * designer's column. `BrandArtboard.jsx` records why: putting the fallback
+ * inside the box "looked helpful and was a copy waiting to happen".
+ *
+ * This list is the same rule stated where consumers can read it, so a consumer
+ * resolving the map does not have to re-derive the distinction — or miss it.
+ * Resolving `positioning` from the brief would silently republish the client's
+ * own sentence as the designer's positioning statement.
+ */
+export const BRIEF_SOURCE_MATERIAL = Object.freeze(['positioning'])
+
+/** True when the brief answer is material to write FROM, not the same fact. */
+export function isSourceMaterialOnly(field) {
+  return BRIEF_SOURCE_MATERIAL.includes(field)
+}
+
+/**
+ * The fields where the brief answer and the designer's field are ONE fact with
+ * two possible authors — so a consumer may resolve them with `effectiveWord`
+ * and ship the result.
+ *
+ * Derived rather than listed, so a field added to `BRIEF_WORD_SOURCES` is
+ * resolvable the day it is added; opting one out is a deliberate line in
+ * `BRIEF_SOURCE_MATERIAL`, not an omission here.
+ */
+export const BRIEF_RESOLVED_WORDS = Object.freeze(
+  Object.keys(BRIEF_WORD_SOURCES).filter((field) => !isSourceMaterialOnly(field))
+)
+
 /* The NAME of that place is deliberately not here. Path labels have one
    source — `labelForStepId` — and `journeySingleSource.test.js` fails any
    module that restates one, which is how this literal was caught. The caller
