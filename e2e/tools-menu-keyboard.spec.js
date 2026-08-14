@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, skipIfCloud } from './helpers.js'
+import { skipIfCloud, toShell, unlockAndOnboard } from './helpers.js'
 
 /**
  * Tools menu keyboard behaviour — WAI-ARIA APG menu button pattern.
@@ -20,6 +20,7 @@ test.describe('Tools menu keyboard', () => {
   })
 
   const openMenu = async (page) => {
+    await toShell(page)
     await page.locator('#tools-menu-button').click()
     await expect(page.locator('#tools-menu')).toBeVisible()
   }

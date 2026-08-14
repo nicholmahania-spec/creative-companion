@@ -11,7 +11,6 @@ import {
   JOURNEY_STEPS,
   getNextJourney,
   getPrevJourney,
-  labelForView,
 } from '../src/lib/journey/journey.js'
 
 /**
@@ -36,33 +35,49 @@ test.describe('path destinations', () => {
     const seeded = await seedProject(page, 'project')
     skipIfNoSeed(test, seeded)
 
-    const rail = page.getByRole('navigation', { name: /Process position/i })
-    await expect(rail).toBeVisible()
-    await expect(rail.locator('.step-rail-step')).toHaveCount(
+    /* The stage path, not the shell rail. Both carry the accessible name
+       "Process position", but on a path stop the rail sits inside the inert,
+       aria-hidden `#root` — so the role query resolves to the one a user can
+       see, which is the stage's own path edge. Asserting `.step-rail-step`
+       here was asserting hidden chrome. */
+    const path = page.getByRole('navigation', { name: /Process position/i })
+    await expect(path).toBeVisible()
+    await expect(path.locator('.cc-stage-stop')).toHaveCount(
       JOURNEY_STEPS.length
     )
-    /* No stage switched off — the tail of the rail names them when there are,
-       and an off stage would make "reachable" mean something weaker. */
-    await expect(page.locator('.step-rail-off')).toHaveCount(0)
+    /* No stage switched off: the stage path draws `stepsForProject`, so a
+       stop the fixture lost would make this count fall short. That is the
+       whole of the old `.step-rail-off` assertion, restated on the surface
+       that is actually on screen. */
 
     for (const step of PRIMARY_STOPS) {
       await expect(
-        rail.getByRole('button', {
-          name: new RegExp(`: ${step.label}\\b`, 'i'),
+        path.getByRole('button', {
+          name: new RegExp(`^${step.label}$`, 'i'),
         }),
-        `${step.label} is missing from the rail`
+        `${step.label} is missing from the path`
       ).toHaveCount(1)
     }
   })
 
   /**
-   * The label on the forward control names the stop the path declares next.
+   * The label on the forward control names the stop the path declares next —
+   * and pressing it lands there.
    *
-   * Identity is the one deliberate exception and it is not a bug: its rail CTA
-   * advances through the Identity sub-screens first (Mark → Color → Type →
-   * Handover) and only names Touchpoints once they are done. That is
-   * `advancePathOrIdentity` (App.jsx:1069), and it is asserted as such rather
-   * than excused.
+   * The forward control is the ledge's `.work-path-next`, in the live stage.
+   * It used to be the shell rail's `.step-rail-cta`; on a stage stop the rail
+   * is inert chrome now, so asserting it would be asserting a control no
+   * pointer can reach. The landing half of this test absorbed the separate
+   * "Continue lands on X" tests, which drove that rail CTA on the four stops
+   * that used to render in the shell — same purpose, same destinations, one
+   * navigation system.
+   *
+   * Identity is the one deliberate exception and it is not a bug: its ledge
+   * Next walks the Identity sub-screens first (Mark → Color → Type →
+   * Handover) and only names Touchpoints once they are done — DesignView's
+   * ledge owns that walk. So its label is asserted as "a real destination"
+   * and the landing click is not driven there: it lands on a sub-screen of
+   * the same stop, which `.app.view-flow` could never observe.
    */
   for (const step of JOURNEY_STEPS) {
     const next = getNextJourney(step.view)
@@ -76,12 +91,19 @@ test.describe('path destinations', () => {
       skipIfNoSeed(test, seeded)
       await page.waitForTimeout(500)
 
-      const cta = page.locator('.step-rail-cta')
+      const live = `${roomFor(step.view)}:not(.is-suspended)`
+      /* Scoped to the LEDGE, not the whole stage. `work-path-next` also does
+         styling duty on in-plane primaries — Delivery's "Download brand book
+         PDF" ship CTA wears it — and those are content, not path controls.
+         The contract's words are exact: the ledge owns the stop's next
+         action, so the ledge is where its absence on the last stop means
+         something. */
+      const cta = page.locator(`${live} .cc-stage-ledge .work-path-next`)
 
       if (!next) {
         /* Delivery is the last stop. No forward control is correct — and this
            is the assertion that would catch a stop being appended after it
-           without the rail learning about it. */
+           without the ledge learning about it. */
         await expect(cta).toHaveCount(0)
         return
       }
@@ -95,82 +117,36 @@ test.describe('path destinations', () => {
         expect(
           label,
           'Identity must advance through its own screens before leaving'
-        ).toMatch(/^Continue → .+/)
-      } else {
-        expect(label).toBe(`Continue → ${next.label}`)
+        ).toMatch(/^Next · .+/)
+        return
       }
-    })
-  }
 
-  /**
-   * Back names, and reaches, the previous stop.
-   *
-   * The header's back affordance is derived from `getPrevJourney`, so this is
-   * checking the derivation actually reaches the DOM. Note that on the three
-   * workroom stops the header sits inside the inert `#root` and is NOT
-   * operable — the room's own recovery link is the usable route, and it is
-   * asserted separately below. The header label is still checked there,
-   * because a wrong label is a wrong answer to "where does back go" even when
-   * the control behind it is asleep.
-   */
-  for (const step of JOURNEY_STEPS) {
-    const prev = getPrevJourney(step.view)
-    const expected = prev ? prev.view : 'home'
+      expect(label).toBe(`Next · ${next.label}`)
 
-    test(`${step.label}: back points at ${labelForView(expected)}`, async ({
-      page,
-    }) => {
-      test.setTimeout(120_000)
-      await page.setViewportSize({ width: 1440, height: 900 })
-      const seeded = await seedProject(page, step.view)
-      skipIfNoSeed(test, seeded)
-      await page.waitForTimeout(500)
-
-      const back = page.locator('.header-back')
-      await expect(
-        back,
-        'every stop must answer "where does back go" — a stop with no back ' +
-          'is a dead end'
-      ).toHaveCount(1)
-      expect(((await back.textContent()) || '').trim()).toBe(
-        labelForView(expected)
-      )
-
-      if (!landsInRoom(step.view)) {
-        await back.click()
-        await page
-          .locator(`.app.view-${expected}`)
-          .waitFor({ state: 'attached', timeout: 15_000 })
-      }
-    })
-  }
-
-  /**
-   * Forward actually navigates, from the stops where a pointer can reach it.
-   *
-   * Only the shell stops are driven here. On a workroom stop the rail lives
-   * inside the inert `#root`, so `click()` would hang against a control no
-   * user can press either — see the pointer-reachability test below, which is
-   * where that gap is recorded rather than papered over.
-   */
-  for (const step of JOURNEY_STEPS) {
-    const next = getNextJourney(step.view)
-    if (!next || landsInRoom(step.view)) continue
-
-    test(`${step.label}: Continue lands on ${next.label}`, async ({ page }) => {
-      test.setTimeout(120_000)
-      await page.setViewportSize({ width: 1440, height: 900 })
-      const seeded = await seedProject(page, step.view)
-      skipIfNoSeed(test, seeded)
-
-      await page.locator('.step-rail-cta').click()
+      /* And it navigates. The old suite proved this only on shell stops,
+         because the rail CTA was unreachable inside a room; the ledge is in
+         the room, so every stop's forward control is drivable now. */
+      await cta.click()
       await page
         .locator(`.app.view-${next.view}`)
         .waitFor({ state: 'attached', timeout: 20_000 })
     })
   }
 
-  /** Each room's own recovery link goes where the path says previous is. */
+  /**
+   * Back names, and reaches, the previous stop — on the stage exit.
+   *
+   * Two older tests merged here, because the architecture merged the two
+   * things they checked. One asserted the shell header's `.header-back`
+   * label on every stop and clicked it on the four that rendered in the
+   * shell; the other clicked the three hand-rolled rooms' recovery links.
+   * Every stop is a stage now, so that header is invisible chrome on the
+   * whole path — its click hung this suite against a control no user can
+   * press — and `.cc-stage-exit` is the one escape everywhere, going to the
+   * path-previous stop and to THE DESK on the first one, exactly as Workroom
+   * derives it. Asserting the visible control's words AND that pressing it
+   * lands where the words say covers everything both tests stood for.
+   */
   for (const wr of WORKROOMS) {
     test(`${wr.view}: the room's back link reaches ${wr.closesTo}`, async ({
       page,
@@ -184,24 +160,32 @@ test.describe('path destinations', () => {
       await page.locator(live).waitFor({ state: 'visible', timeout: 15_000 })
 
       /* Scoped to the LIVE room. The suspended rooms behind it carry their own
-         "Back to …" links, and an unscoped locator resolves to the oldest. */
-      const back = page
-        .locator(live)
-        .getByRole('button', { name: /^Back to / })
-        .first()
+         exits, and an unscoped locator resolves to the oldest. */
+      const back = page.locator(`${live} .cc-stage-exit`)
+      await expect(
+        back,
+        'every stop must answer "where does back go" — a stop with no exit ' +
+          'is a dead end'
+      ).toHaveCount(1)
       await expect(back).toBeVisible()
       expect(
-        ((await back.textContent()) || '').trim(),
+        /* The visible arrow is aria-hidden decoration; strip it rather than
+           bake it into the expectation. */
+        ((await back.textContent()) || '').replace('←', '').trim(),
         'the room names a destination the path does not consider previous'
-      ).toBe(`Back to ${labelForView(wr.closesTo)}`)
+      ).toBe(`Back to ${wr.closesToLabel}`)
 
       await back.click()
       await page
         .locator(`.app.view-${wr.closesTo}`)
         .waitFor({ state: 'attached', timeout: 15_000 })
-      expect(getPrevJourney(wr.view)?.view).toBe(wr.closesTo)
+      /* The contract's derivation must agree with the path's own: previous
+         stop, desk at the head. */
+      const prev = getPrevJourney(wr.view)
+      expect(prev ? prev.view : 'desk').toBe(wr.closesTo)
     })
   }
+
 
   /**
    * Direct entry leaves a working previous target.
@@ -220,27 +204,30 @@ test.describe('path destinations', () => {
     const seeded = await seedProject(page, 'project')
     skipIfNoSeed(test, seeded)
 
-    for (const step of JOURNEY_STEPS) {
-      await seedProject(page, step.view)
+    for (const wr of WORKROOMS) {
+      await seedProject(page, wr.view)
       await page.waitForTimeout(400)
 
-      const prev = getPrevJourney(step.view)
-      const target = prev ? prev.view : 'home'
+      expect(wr.closesTo, `${wr.view} points back at itself`).not.toBe(wr.view)
 
-      expect(target, `${step.label} points back at itself`).not.toBe(step.view)
-
+      /* Arrived by reload, so App captured no launcher — the exit must still
+         say where it goes, and Escape (its keyboard twin) must still get
+         there. This used to read the shell header's label; that header is
+         invisible chrome on a stage stop, and its `home` fallback was never
+         the live control's answer. */
+      const live = `${wr.room}:not(.is-suspended)`
       const label = (
-        (await page.locator('.header-back').textContent()) || ''
-      ).trim()
-      expect(label, `${step.label} has an empty back label`).not.toBe('')
-      expect(label).toBe(labelForView(target))
+        (await page.locator(`${live} .cc-stage-exit`).textContent()) || ''
+      )
+        .replace('←', '')
+        .trim()
+      expect(label, `${wr.view} has an empty back label`).not.toBe('')
+      expect(label).toBe(`Back to ${wr.closesToLabel}`)
 
-      /* The destination must be a place the app can actually land on. */
-      const reachable = await page.evaluate(async (view) => {
-        localStorage.setItem('cc-active-view', view)
-        return true
-      }, target)
-      expect(reachable).toBe(true)
+      await page.keyboard.press('Escape')
+      await page
+        .locator(`.app.view-${wr.closesTo}`)
+        .waitFor({ state: 'attached', timeout: 15_000 })
     }
   })
 
@@ -267,8 +254,18 @@ test.describe('path destinations', () => {
     const seeded = await seedProject(page, 'project')
     skipIfNoSeed(test, seeded)
 
-    /* Stops with a visible, non-inert control that moves the path forward. */
-    const EXPECTED_POINTER_FORWARD = ['project', 'studio', 'spark', 'brand', 'book']
+    /* THE RULE, NOT A ROSTER. Since the ledge pass, every stop with a
+       declared next carries `.work-path-next` at the stage edge — so the
+       expectation is the path itself, derived, rather than a recorded list.
+       A stop that loses its pointer route now fails against the
+       architecture's own rule, and a new stop extends the expectation
+       without an edit here. The roster this replaces predates the
+       Touchpoints and Directions ledges: it was missing `flow`, correctly at
+       the time it was written, and its own comment asked for exactly this
+       update when the gap closed. */
+    const EXPECTED_POINTER_FORWARD = JOURNEY_STEPS.filter((s) =>
+      getNextJourney(s.view)
+    ).map((s) => s.view)
 
     const found = []
     for (const step of JOURNEY_STEPS) {

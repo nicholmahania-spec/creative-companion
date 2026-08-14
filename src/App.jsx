@@ -10,6 +10,7 @@ import {
 } from 'react'
 import useAppStore from './store/useAppStore'
 import { useWorkClock } from './lib/useWorkClock'
+import { StageSignalsContext } from './lib/stageSignals'
 import { projectsShellEqual } from './lib/storeSelectors'
 import {
   groupProjectsByClient,
@@ -25,6 +26,7 @@ import { downscaleDataUrl } from './lib/moodPins'
 import { resolveStudioName } from './lib/studio/studioIdentity'
 /* The reconnect's server half — see the onAttachPortal handler below. */
 import { rebindPortalToProject } from './lib/client/clientPortal'
+import OverlayLayer from './components/OverlayLayer.jsx'
 import ErrorBoundary from './components/error/ErrorBoundary'
 import {
   toISODate,
@@ -227,36 +229,8 @@ function App() {
     (...a) => useAppStore.getState().toggleTask(...a),
     []
   )
-  const updateTaskTitle = useCallback(
-    (...a) => useAppStore.getState().updateTaskTitle(...a),
-    []
-  )
   const updateTaskMeta = useCallback(
     (...a) => useAppStore.getState().updateTaskMeta(...a),
-    []
-  )
-  const updateTaskWhy = useCallback(
-    (...a) => useAppStore.getState().updateTaskWhy(...a),
-    []
-  )
-  const removeTask = useCallback(
-    (...a) => useAppStore.getState().removeTask(...a),
-    []
-  )
-  const breakIntoSteps = useCallback(
-    (...a) => useAppStore.getState().breakIntoSteps(...a),
-    []
-  )
-  const addMoodPin = useCallback(
-    (...a) => useAppStore.getState().addMoodPin(...a),
-    []
-  )
-  const nextSpark = useCallback(
-    (...a) => useAppStore.getState().nextSpark(...a),
-    []
-  )
-  const oppositeSpark = useCallback(
-    (...a) => useAppStore.getState().oppositeSpark(...a),
     []
   )
   const createNewProject = useCallback(
@@ -269,10 +243,6 @@ function App() {
   )
   const setProjectDeadline = useCallback(
     (...a) => useAppStore.getState().setProjectDeadline(...a),
-    []
-  )
-  const setTaskDueDate = useCallback(
-    (...a) => useAppStore.getState().setTaskDueDate(...a),
     []
   )
   const prefs = useAppStore((s) => s.prefs) || {}
@@ -381,8 +351,6 @@ function App() {
     return 'home'
   })
   const workroomLauncherRef = useRef(null)
-  const identityWorkroomLauncherRef = useRef(null)
-  const applicationWorkroomLauncherRef = useRef(null)
   const setActiveView = useCallback((view) => {
     // Focus Mode product removed — never land on *-focus views.
     let next = view
@@ -399,15 +367,19 @@ function App() {
       next = map[next] || 'home'
     }
     /* Capture the exact launcher node before the view transition parks
-       focus in main. Workrooms restore this same element on Escape. */
-    if (next === 'spark' && document.activeElement instanceof HTMLElement) {
+       focus in main. Workrooms restore this same element on Escape/exit.
+       THE WHOLE PATH, not just the original three rooms — every stop is a
+       stage now, and four of them are lazy chunks whose Workroom mounts only
+       after the import resolves. By then the shortcut-re-arm effect below has
+       already pulled focus into #main-content, so a mount-time capture reads
+       the parking spot instead of the launcher — measured on Brief: closing
+       back to the desk "restored" #main-content. Capturing here, in the same
+       tick as the navigation, is the ordering rule the three eager rooms
+       always relied on. ONE shared ref is enough: each Workroom copies the
+       value into its own restoreRef at mount, so a later navigation cannot
+       retarget an already-open stage. */
+    if (PATH_VIEWS.includes(next) && document.activeElement instanceof HTMLElement) {
       workroomLauncherRef.current = document.activeElement
-    }
-    if (next === 'brand' && document.activeElement instanceof HTMLElement) {
-      identityWorkroomLauncherRef.current = document.activeElement
-    }
-    if (next === 'flow' && document.activeElement instanceof HTMLElement) {
-      applicationWorkroomLauncherRef.current = document.activeElement
     }
     setActiveViewRaw(next)
     try {
@@ -432,7 +404,7 @@ function App() {
      beside the workspace payload rather than inside it. */
   const [quickInput, setQuickInput] = useState(() => loadCapturePad())
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false)
-  const [captureEnergy, setCaptureEnergy] = useState('med')
+  const [captureEnergy] = useState('med')
   const [focusLeft, setFocusLeft] = useState(POMODORO_WORK_MIN * 60)
   const [isFocusRunning, setIsFocusRunning] = useState(false)
   const [sessionComplete, setSessionComplete] = useState(false)
@@ -506,7 +478,6 @@ function App() {
   const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
   const [restoreSelect, setRestoreSelect] = useState('')
   const [navOpen, setNavOpen] = useState(false)
-  const [captureOptionsOpen, setCaptureOptionsOpen] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
   /* The wizard's own seven fields live in TaskBreakdown. This counter is the
      whole of what App still needs: bumping it remounts the wizard, which is
@@ -517,14 +488,10 @@ function App() {
     const n = new Date()
     return { year: n.getFullYear(), month: n.getMonth() }
   })
-  const [queueOpen, setQueueOpen] = useState(false)
-  const [doneOpen, setDoneOpen] = useState(false)
   const [actionToast, setActionToast] = useState('')
   const toastBatchRef = useRef([])
   const toastBatchTimerRef = useRef(null)
   const toastTimeoutId = useRef(null)
-  const [stepFocusKey, setStepFocusKey] = useState(0)
-  const [stepDueOpen, setStepDueOpen] = useState(false)
   /** Which client the record view ('clientRecord') is showing. */
   const [clientRecordName, setClientRecordName] = useState('')
   /** Client name the intake pre-fills when opened from a client record. */
@@ -562,8 +529,6 @@ function App() {
   const skipNextCloudPush = useRef(false)
   const lastSyncErrorToast = useRef('')
 
-  const showHowItWorks = !!prefs.showHowItWorks
-  const queueCollapsed = prefs.queueCollapsed !== false
   const soundEnabled = prefs.soundEnabled !== false
   const [osReduceMotion, setOsReduceMotion] = useState(() => {
     try {
@@ -641,10 +606,6 @@ function App() {
   )
   const removeWorkEntry = useCallback(
     (...a) => useAppStore.getState().removeWorkEntry(...a),
-    []
-  )
-  const updateDiscoveryField = useCallback(
-    (...a) => useAppStore.getState().updateDiscoveryField(...a),
     []
   )
   const setDiscoveryUpload = useCallback(
@@ -975,7 +936,6 @@ function App() {
     }
   }, [activeProject?.id, activeProject?.palette, setProjectPalette])
 
-  const hideHowItWorks = () => setPref('showHowItWorks', false)
 
   const toastMode = prefs.toastMode === 'all' ? 'all' : 'quiet'
   /** Seconds non-error toasts queue before flushing together; 0 = show instantly (default) */
@@ -1039,14 +999,11 @@ function App() {
     const doneId = nextTask.id
     const doneTitle = nextTask.title
     toggleTask(doneId)
-    setStepDueOpen(false)
     setBuddyWinPulse((n) => n + 1)
     offerUndo(doneTitle, () => {
       toggleTask(doneId)
-      setStepFocusKey((k) => k + 1)
     })
     flashToast('Step done', { important: true })
-    setStepFocusKey((k) => k + 1)
   }
 
   /**
@@ -2942,18 +2899,6 @@ function App() {
   }
   runExportRef.current = runExport
 
-  const startVoice = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      flashToast?.('Voice is not supported in this browser.')
-      return
-    }
-    const recognition = new SpeechRecognition()
-    recognition.onresult = (e) => setQuickInput(e.results[0][0].transcript)
-    recognition.onerror = () => {}
-    recognition.start()
-  }
 
   /* Bumping the run id remounts the wizard, so "open" and "More" are the same
      action — a fresh run either way. */
@@ -2969,10 +2914,7 @@ function App() {
   const commitBreakdown = ({ steps, energy, goalLabel }) => {
     const n = addMicroStepsBatch({ steps, energy, goalLabel })
     setPref('queueCollapsed', true)
-    setQueueOpen(false)
-    setDoneOpen(false)
     setActiveView('flow')
-    setStepFocusKey((k) => k + 1)
     flashToast(
       n === 1
         ? 'One tiny step is ready — do only that one'
@@ -3100,6 +3042,39 @@ function App() {
    * user back would leave them somewhere they never chose to be — the restore
    * has to return the whole situation, not just the state.
    */
+  /* PROJECT ADMINISTRATION, HOISTED FOR THE DESK.
+     These three ran inline in the Tools menu. They are named here, unchanged,
+     so the Desk can call the SAME handlers rather than growing its own copy —
+     `archiveProject` is still the store action and deletion still goes through
+     `handleDeleteProjectById`, which is what carries the undo toast and the
+     "Project not found" reporting. */
+  /* What a stop is allowed to show from the shell it hides. Memoised so the
+     provider does not hand every mounted stage a new object on each render. */
+  const stageSignals = useMemo(
+    () => ({ unreadClient: !!clientInbox.hasUnread, todoCount: openTodoCount }),
+    [clientInbox.hasUnread, openTodoCount]
+  )
+
+  const openHoursPanel = () => setHoursPanelOpen(true)
+
+  const archiveCurrentProject = () => {
+    if (!activeProject) return
+    const r = archiveProject(activeProject.id)
+    if (!r.ok) {
+      flashToast(r.error || 'Could not archive that')
+    } else if (r.empty) {
+      flashToast('Archived — no open projects')
+      setActiveView('create')
+    } else {
+      flashToast('Project archived')
+    }
+  }
+
+  const deleteCurrentProject = () => {
+    if (!activeProject) return
+    handleDeleteProjectById(activeProject.id, activeProject.name)
+  }
+
   const handleDeleteProjectById = (id, name) => {
     /* `id == null`, not `!id`. A project whose id is 0, '' or NaN is falsy,
        and the old guard returned here — no deletion, no toast, no undo, no
@@ -4157,6 +4132,12 @@ function App() {
           />
         )}
         {/* Main page outlet — views registered in app/viewRegistry.js */}
+        {/* The stage hides the shell — `#root` goes inert while a stop owns
+            the viewport — so these two facts would vanish with it. Provided
+            rather than passed: a portal keeps React context, and threading
+            them by prop would mean one wire per stop through MainOutlet and
+            every view, which is the chain this pass just deleted. */}
+        <StageSignalsContext.Provider value={stageSignals}>
         <MainOutlet
           activeView={activeView}
           navDir={navDir}
@@ -4166,43 +4147,13 @@ function App() {
           projectPalette={projectPalette}
           deskMood={deskMood}
           deskTasks={deskTasks}
-          doneTasks={doneTasks}
-          queueTasks={queueTasks}
-          stepFocusKey={stepFocusKey}
-          setStepFocusKey={setStepFocusKey}
-          hideHowItWorks={hideHowItWorks}
-          openBreakdown={openBreakdown}
-          quickInput={quickInput}
-          setQuickInput={setQuickInput}
-          captureEnergy={captureEnergy}
-          setCaptureEnergy={setCaptureEnergy}
-          captureDue={captureDue}
-          setCaptureDue={setCaptureDue}
-          captureOptionsOpen={captureOptionsOpen}
-          setCaptureOptionsOpen={setCaptureOptionsOpen}
-          addQuickTask={addQuickTask}
-          queueOpen={queueOpen}
-          setQueueOpen={setQueueOpen}
-          doneOpen={doneOpen}
-          setDoneOpen={setDoneOpen}
-          updateTaskTitle={updateTaskTitle}
-          updateTaskWhy={updateTaskWhy}
-          removeTask={removeTask}
-          breakIntoSteps={breakIntoSteps}
-          setTaskDueDate={setTaskDueDate}
-          stepDueOpen={stepDueOpen}
-          setStepDueOpen={setStepDueOpen}
-          completeCurrentStep={completeCurrentStep}
-          startVoice={startVoice}
           setActiveView={setActiveView}
           /* The stage's path edge ticks its stops from this. Passed as ONE
              already-derived value rather than its five ingredients, because a
              second derivation of "has this stop got content" is exactly the
              restated-copy defect journey.js's header records. */
           pathCtx={pathProgressCtx}
-          identityWorkroomLauncherRef={identityWorkroomLauncherRef}
           workroomLauncherRef={workroomLauncherRef}
-          applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
           flashToast={flashToast}
           offerUndo={offerUndo}
           flashMicro={flashMicro}
@@ -4227,13 +4178,7 @@ function App() {
           setTimerFocusSource={setTimerFocusSource}
           setResearchAddOpen={setResearchAddOpen}
           nextTask={nextTask}
-          currentSpark={currentSpark}
-          nextSpark={nextSpark}
-          oppositeSpark={oppositeSpark}
-          addMoodPin={addMoodPin}
           updateDirection={updateDirection}
-          sparksTried={sparksTried}
-          addTask={addTask}
           focusMinutes={focusMinutes}
           focusSeconds={focusSeconds}
           sessionLabel={sessionLabel}
@@ -4280,6 +4225,12 @@ function App() {
           bookSetup={bookSetup}
           runExport={runExport}
           openExportPanel={openExportPanel}
+          setDiscoveryShare={setDiscoveryShare}
+          mergeDiscoveryAnswers={mergeDiscoveryAnswers}
+          openHoursPanel={openHoursPanel}
+          openBreakdown={openBreakdown}
+          archiveCurrentProject={archiveCurrentProject}
+          deleteCurrentProject={deleteCurrentProject}
           handleSignOut={handleSignOut}
           downloadDataBackup={downloadDataBackup}
           createNewProject={createNewProject}
@@ -4289,16 +4240,10 @@ function App() {
           syncState={syncState}
           syncError={syncError}
           runCloudPush={runCloudPush}
-          exportAllData={exportAllData}
-          setSyncState={setSyncState}
-          setSyncError={setSyncError}
           theme={theme}
           toggleTheme={toggleTheme}
           setShortcutsOpen={setShortcutsOpen}
           reduceMotion={reduceMotion}
-          soundEnabled={soundEnabled}
-          showHowItWorks={showHowItWorks}
-          queueCollapsed={queueCollapsed}
           pwCurrent={pwCurrent}
           setPwCurrent={setPwCurrent}
           pwNext={pwNext}
@@ -4314,6 +4259,7 @@ function App() {
           updateDetective={updateDetective}
           setOverviewSharePanelOpen={setOverviewSharePanelOpen}
         />
+        </StageSignalsContext.Provider>
         </ErrorBoundary>
 
       </main>
@@ -4396,29 +4342,27 @@ function App() {
         open={discoveryPanelOpen}
         onClose={() => setDiscoveryPanelOpen(false)}
         answers={activeProject?.discoveryAnswers || {}}
-        onUpdateField={updateDiscoveryField}
         clientName={activeProject?.name || ''}
         upload={activeProject?.discoveryUpload || null}
         onSetUpload={setDiscoveryUpload}
         flashToast={flashToast}
-        projectId={activeProject?.id || null}
-        shareId={activeProject?.discoveryShareId || null}
-        shareStatus={activeProject?.discoveryShareStatus || null}
-        onSetShare={setDiscoveryShare}
-        onMergeAnswers={mergeDiscoveryAnswers}
       />
-      <ProjectOverviewSharePanel
-        open={overviewSharePanelOpen}
-        onClose={() => setOverviewSharePanelOpen(false)}
-        project={activeProject}
-        portalId={activeProject?.clientPortalId || null}
-        onSetPortalId={setClientPortalId}
-        onApplyAnswers={mergeDetectiveAnswers}
-        autoOpenReview={autoOpenPortalReview}
-        onAutoOpenReviewHandled={() => setAutoOpenPortalReview(false)}
-        flashToast={flashToast}
-        flashMicro={flashMicro}
-      />
+      {/* In the transient layer: the Brief opens this from inside its stage,
+          which hides #root. */}
+      <OverlayLayer theme={theme}>
+        <ProjectOverviewSharePanel
+          open={overviewSharePanelOpen}
+          onClose={() => setOverviewSharePanelOpen(false)}
+          project={activeProject}
+          portalId={activeProject?.clientPortalId || null}
+          onSetPortalId={setClientPortalId}
+          onApplyAnswers={mergeDetectiveAnswers}
+          autoOpenReview={autoOpenPortalReview}
+          onAutoOpenReviewHandled={() => setAutoOpenPortalReview(false)}
+          flashToast={flashToast}
+          flashMicro={flashMicro}
+        />
+      </OverlayLayer>
 
       <ClientInboxPanel
         open={clientInboxOpen}
@@ -4550,42 +4494,27 @@ function App() {
                 <p className="more-menu-group-label" id="tools-group-project">
                   This project
                 </p>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setOverviewSharePanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="share" /> Share Strategy form
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  openExportPanel()
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="download" /> Export
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setHoursPanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="invoice" /> Hours &amp; invoice
-              </button>
+              {/* "Share Strategy form" was here. Removed, not relabelled:
+                  the Brief's own masthead already carries Send the brief /
+                  Share, which is the stop that owns the thing being shared,
+                  and the client inbox opens the same panel from a row. A
+                  second door in a generic menu is the duplication this pass
+                  removes — and it was still calling the stop Strategy, a name
+                  DESIGN_GRAMMAR G1 retired. */}
+              {/* EXPORT, HOURS, ARCHIVE AND DELETE WERE HERE.
+                  Moved, not removed. The three that administer a project now
+                  sit on the Desk, beside the project they act on, calling the
+                  same handlers — `archiveProject` and `handleDeleteProjectById`,
+                  so the undo toast and the "Project not found" reporting are
+                  unchanged.
+
+                  Export went to neither: it opens the pack panel that Delivery
+                  already opens, and Delivery is the stop whose job is the pack.
+                  It is deliberately NOT on the Desk — this file's counterpart
+                  rule there is "No PDF on the desk".
+
+                  What is left in this group is Discovery brief, which is still
+                  an open product question rather than a placement one. */}
               <button
                 type="button"
                 role="menuitem"
@@ -4596,59 +4525,8 @@ function App() {
                   setMoreOpen(false)
                 }}
               >
-                <HeaderIcon name="question" /> Discovery brief
+                <HeaderIcon name="question" /> Discovery notes
               </button>
-              {/* ARCHIVE AND DELETE, WHERE THE CSS ALREADY SAID THEY WERE.
-                  The sidebar's per-row ⋯ is hidden in the app shell with the
-                  note "Archive and Delete now live in Tools → This project" —
-                  and they did not. The control was removed for a good reason
-                  (a hover-only affordance is invisible at a glance and absent
-                  on touch) but its destination was never built, so on desktop
-                  the two actions were reachable from nowhere at all.
-
-                  They act on the CURRENT project, like Export and Hours above
-                  them, and they call the same handlers the sidebar menu calls
-                  — no second delete path, and the undo toast still comes from
-                  `handleDeleteProjectById`. */}
-              {activeProject && (
-                <>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    tabIndex={-1}
-                    className="more-menu-item"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      const r = archiveProject(activeProject.id)
-                      if (!r.ok) {
-                        flashToast(r.error || 'Could not archive that')
-                      } else if (r.empty) {
-                        flashToast('Archived — no open projects')
-                        setActiveView('create')
-                      } else {
-                        flashToast('Project archived')
-                      }
-                    }}
-                  >
-                    <HeaderIcon name="archive" /> Archive project
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    tabIndex={-1}
-                    className="more-menu-item more-menu-danger"
-                    onClick={() => {
-                      setMoreOpen(false)
-                      handleDeleteProjectById(
-                        activeProject.id,
-                        activeProject.name
-                      )
-                    }}
-                  >
-                    <HeaderIcon name="trash" /> Delete project
-                  </button>
-                </>
-              )}
               </div>
             </div>
           </div>
@@ -4774,11 +4652,15 @@ function App() {
         </div>
       )}
 
-      {actionToast && (
-        <div className="action-toast" role="status" aria-live="polite">
-          {actionToast}
-        </div>
-      )}
+      {/* Every stage raises these, and they are the only confirmation that a
+          thing happened at all. */}
+      <OverlayLayer theme={theme}>
+        {actionToast && (
+          <div className="action-toast" role="status" aria-live="polite">
+            {actionToast}
+          </div>
+        )}
+      </OverlayLayer>
 
       {/* Quick capture, over whatever you were doing.
           One field and one button, no category picker and no project picker:
@@ -4836,130 +4718,144 @@ function App() {
         </div>
       )}
 
-      {recentUndo && (
-        <button
-          type="button"
-          className="undo-chip"
-          onClick={undoLastComplete}
-        >
-          Undo · {String(recentUndo.title || '').slice(0, 24)}
-          {String(recentUndo.title || '').length > 24 ? '…' : ''}
-        </button>
-      )}
+      {/* THE UNDO HAS TO BE REACHABLE FROM WHERE THE ACTION WAS TAKEN.
+          8 of the 10 offerUndo() call sites fire from inside a stage, and
+          until this moved it rendered inside the sleeping shell: measured
+          241x39, visibility hidden, with .cc-stage-ledge on top of it. That
+          left a destructive action with neither a confirmation dialog nor a
+          reachable undo, which is the exact trade CLAUDE.md §2 makes in the
+          other direction. */}
+      <OverlayLayer theme={theme}>
+        {recentUndo && (
+          <button
+            type="button"
+            className="undo-chip"
+            onClick={undoLastComplete}
+          >
+            Undo · {String(recentUndo.title || '').slice(0, 24)}
+            {String(recentUndo.title || '').length > 24 ? '…' : ''}
+          </button>
+        )}
+      </OverlayLayer>
 
-      {exportPanel && (
-        <div
-          className="export-overlay no-print-hide"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="export-panel-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setExportPanel(null)
-          }}
-        >
-          <div className="export-panel portfolio-export export-studio">
-            <div className="export-panel-header no-print">
-              <div>
-                <h3 id="export-panel-title" style={{ margin: 0 }}>
-                  Export
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                aria-label="Close export"
-                onClick={() => setExportPanel(null)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div
-              className={`export-artboard-wrap${coverDropActive ? ' is-cover-drop-active' : ''}`}
-              onDragOver={(e) => {
-                if (!e.dataTransfer?.types?.includes('Files')) return
-                e.preventDefault()
-                setCoverDropActive(true)
-              }}
-              onDragLeave={(e) => {
-                if (e.currentTarget.contains(e.relatedTarget)) return
-                setCoverDropActive(false)
-              }}
-              onDrop={(e) => {
-                if (!e.dataTransfer?.files?.length) return
-                e.preventDefault()
-                setCoverDropActive(false)
-                handleCoverImageDrop(e.dataTransfer.files[0])
-              }}
-            >
-              <Suspense fallback={<div className="panel-hint">…</div>}>
-                <BrandArtboard
-                  id="direction-sheet"
-                  project={{
-                    name: exportPanel.projectName,
-                    tagline: exportPanel.tagline,
-                    brief: exportPanel.brief,
-                    voice: exportPanel.voice,
-                    typeHeading: exportPanel.typeHeading,
-                    typeBody: exportPanel.typeBody,
-                    logoDirection: exportPanel.logoDirection,
-                    doUse: exportPanel.doUse,
-                    dontUse: exportPanel.dontUse,
-                    colorRoles: activeProject?.colorRoles,
-                    logoImage: activeProject?.logoImage,
-                  }}
-                  palette={exportPanel.palette || projectPalette}
-                  pins={exportPanel.pins || []}
-                  editable={false}
-                />
-              </Suspense>
-              <p className="export-cover-drop-hint">
-                {activeProject?.logoImage
-                  ? 'Drop a new image here to replace the cover'
-                  : 'Drop an image here to use it on the cover'}
-              </p>
-              {exportPanel.openTasks.length > 0 && (
-                <div className="export-open-work">
-                  <div className="kicker">Open</div>
-                  <ul className="direction-tasks">
-                    {exportPanel.openTasks.map((t) => (
-                      <li key={t.id}>{t.title}</li>
-                    ))}
-                  </ul>
+      {/* Delivery opens this from inside its stage. It measured 1280x720 with
+          visibility hidden inside the sleeping shell — a full-viewport dialog
+          that made pressing Preview look like pressing nothing. */}
+      <OverlayLayer theme={theme}>
+        {exportPanel && (
+          <div
+            className="export-overlay no-print-hide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="export-panel-title"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setExportPanel(null)
+            }}
+          >
+            <div className="export-panel portfolio-export export-studio">
+              <div className="export-panel-header no-print">
+                <div>
+                  <h3 id="export-panel-title" style={{ margin: 0 }}>
+                    Export
+                  </h3>
                 </div>
-              )}
-            </div>
-
-            <div className="export-panel-actions no-print">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => runExport('pdf')}
-                disabled={exportBusy}
-              >
-                Brand book PDF
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                aria-label="Close export"
-                onClick={() => setExportPanel(null)}
-              >
-                ×
-              </button>
-            </div>
-            <details className="export-more-formats no-print">
-              <summary>More</summary>
-              <div className="finish-more-formats-list">
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('html')}>HTML</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('md')}>MD</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('json')}>JSON</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('print')}>Print</button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-label="Close export"
+                  onClick={() => setExportPanel(null)}
+                >
+                  ×
+                </button>
               </div>
-            </details>
+
+              <div
+                className={`export-artboard-wrap${coverDropActive ? ' is-cover-drop-active' : ''}`}
+                onDragOver={(e) => {
+                  if (!e.dataTransfer?.types?.includes('Files')) return
+                  e.preventDefault()
+                  setCoverDropActive(true)
+                }}
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget)) return
+                  setCoverDropActive(false)
+                }}
+                onDrop={(e) => {
+                  if (!e.dataTransfer?.files?.length) return
+                  e.preventDefault()
+                  setCoverDropActive(false)
+                  handleCoverImageDrop(e.dataTransfer.files[0])
+                }}
+              >
+                <Suspense fallback={<div className="panel-hint">…</div>}>
+                  <BrandArtboard
+                    id="direction-sheet"
+                    project={{
+                      name: exportPanel.projectName,
+                      tagline: exportPanel.tagline,
+                      brief: exportPanel.brief,
+                      voice: exportPanel.voice,
+                      typeHeading: exportPanel.typeHeading,
+                      typeBody: exportPanel.typeBody,
+                      logoDirection: exportPanel.logoDirection,
+                      doUse: exportPanel.doUse,
+                      dontUse: exportPanel.dontUse,
+                      colorRoles: activeProject?.colorRoles,
+                      logoImage: activeProject?.logoImage,
+                    }}
+                    palette={exportPanel.palette || projectPalette}
+                    pins={exportPanel.pins || []}
+                    editable={false}
+                  />
+                </Suspense>
+                <p className="export-cover-drop-hint">
+                  {activeProject?.logoImage
+                    ? 'Drop a new image here to replace the cover'
+                    : 'Drop an image here to use it on the cover'}
+                </p>
+                {exportPanel.openTasks.length > 0 && (
+                  <div className="export-open-work">
+                    <div className="kicker">Open</div>
+                    <ul className="direction-tasks">
+                      {exportPanel.openTasks.map((t) => (
+                        <li key={t.id}>{t.title}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="export-panel-actions no-print">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => runExport('pdf')}
+                  disabled={exportBusy}
+                >
+                  Brand book PDF
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-label="Close export"
+                  onClick={() => setExportPanel(null)}
+                >
+                  ×
+                </button>
+              </div>
+              <details className="export-more-formats no-print">
+                <summary>More</summary>
+                <div className="finish-more-formats-list">
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('html')}>HTML</button>
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('md')}>MD</button>
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('json')}>JSON</button>
+                  <button type="button" className="btn btn-secondary btn-sm" disabled={exportBusy} onClick={() => runExport('print')}>Print</button>
+                </div>
+              </details>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </OverlayLayer>
 
       <button
         ref={todoFabRef}
@@ -5043,19 +4939,24 @@ function App() {
         </Suspense>
       )}
 
-      {showBreakdown && (
-        <Suspense fallback={null}>
-        <TaskBreakdown
-          key={breakdownRunId}
-          projectName={activeProject?.name}
-          projectBrief={activeProject?.brief}
-          onClose={() => setShowBreakdown(false)}
-          onCommit={commitBreakdown}
-          onFinish={finishBreakdownToStep}
-          onRestart={openBreakdown}
-        />
-        </Suspense>
-      )}
+      {/* The wizard commits its steps and then navigates, so it has to be able
+          to outlive the arrival of a stage — and it is opened from the Desk,
+          which is shell. Both are only true from up here. */}
+      <OverlayLayer theme={theme}>
+        {showBreakdown && (
+          <Suspense fallback={null}>
+          <TaskBreakdown
+            key={breakdownRunId}
+            projectName={activeProject?.name}
+            projectBrief={activeProject?.brief}
+            onClose={() => setShowBreakdown(false)}
+            onCommit={commitBreakdown}
+            onFinish={finishBreakdownToStep}
+            onRestart={openBreakdown}
+          />
+          </Suspense>
+        )}
+      </OverlayLayer>
     </div>
   )
 }

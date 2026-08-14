@@ -93,8 +93,15 @@
   position: fixed;
   inset: 0;
   /* Above every shell layer. The shell is inert and hidden underneath, but a
-     stage that lost a z-index race would be invisible with no error. */
-  z-index: 2147483647;
+     stage that lost a z-index race would be invisible with no error.
+
+     Below `--z-overlay`, and nowhere near the 32-bit ceiling. This was
+     2147483647; Chromium clamps there, so the stage and anything trying to sit
+     above it both computed to 2147480000 and "above the stage" was not a
+     position that existed. The pair is declared together in
+     `styles/overlay-host.css`; the literal fallback covers a load where that
+     sheet has not landed yet. */
+  z-index: var(--z-stage, 2000000);
   isolation: isolate;
   /* THREE FIXED ROWS: edge · plane · ledge. The stage itself does not
      scroll — the plane does. That is what lets the path edge and the action
@@ -266,6 +273,17 @@
   grid-column: 2;
   grid-row: 1;
   justify-self: end;
+  /* ONE CLUSTER, NOT A STACK. This slot was written when a stop put a single
+     control beside its title, so it had no display rule and its children fell
+     into block flow — three controls became three full-width rows of three
+     different widths, which reads as three unrelated buttons rather than one
+     group. A wrapping row keeps them a group at any width, and lets narrow
+     screens break the line deliberately instead of cramping. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 /* Supporting metadata — status, counts, "not sent yet". Never a sentence of
@@ -300,7 +318,7 @@
   grid-column: 1;
   margin: 0 0 var(--space-2);
   color: var(--stage-ink);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: clamp(var(--fs-6), 7vw, 6rem);
   font-weight: 500;
   line-height: 0.9;
@@ -322,7 +340,7 @@
      whichever sheet the visitor happened to load first. Directions rendered
      its masthead a weight heavier than the other five for exactly that
      reason. */
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-weight: 500;
   color: var(--stage-ink);
 }
@@ -427,7 +445,7 @@
 }
 
 .cc-stage .page-title {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: -0.03em;
 }
@@ -529,4 +547,59 @@ body:has(.app.deep) .cc-stage {
     animation-duration: 0.01ms;
     transition-duration: 0.01ms;
   }
+}
+
+/* ── The Brand book stop hands the plane back ──────────────────────────────
+   `.bbb-root` was built to fill `.main` — `height: 100%`, its own top bar,
+   its own sidebar, and its own scrolling canvas. Dropped into the plane as
+   an ordinary composition it would sit inside a SECOND scroller with a
+   second set of gutters: the page would scroll the stage while the canvas
+   scrolled itself, which is the stacked-scroll failure `.cc-stage-ledge`'s
+   note argues against.
+
+   So for this one stop the plane stops being a scroller and stops adding
+   room, and the builder keeps the frame it already manages. Scoped by the
+   stage's own class so no other stop can pick it up, and deliberately not a
+   change to `.cc-stage-plane` itself — the default stays the default.
+
+   DESKTOP ONLY. Below 720px the builder stops being a sidebar beside a
+   canvas and stacks, so `.bbb-root` grows past the plane instead of filling
+   it — measured at 903px inside a 637px plane on a 390px viewport. With the
+   plane's scroller removed that overflow is simply clipped and there is no
+   way to reach it, which is worse than the stacked scrollers this override
+   exists to avoid. So the override is a desktop rule and the phone keeps the
+   plane's ordinary scrolling. */
+@media (min-width: 721px) {
+  .cc-stage.brand-book-workroom .cc-stage-plane {
+    overflow: hidden;
+    padding: 0;
+    min-height: 0;
+  }
+}
+
+/* ── The edge's right-hand cell ────────────────────────────────────────────
+   Was a bare status line. It now stacks the status under whatever the shell
+   is holding that the stage hid — unread client activity, open to-dos — so
+   the two facts whose value is being NOTICED survive an immersive stop.
+   Quiet by construction: same muted ink as the status, no badge, no colour
+   alarm. `lib/stageSignals.js` argues why these two and no others. */
+.cc-stage-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.cc-stage-signals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.cc-stage-signal {
+  color: var(--stage-mute);
+  white-space: nowrap;
 }

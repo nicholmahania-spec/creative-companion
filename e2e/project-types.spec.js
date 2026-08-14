@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { pathNav, skipIfCloud, unlockAndOnboard } from './helpers.js'
+import {
+  pathNav,
+  pathStopsIn,
+  skipIfCloud,
+  toShell,
+  unlockAndOnboard,
+} from './helpers.js'
 import { PROJECT_TYPES, activeStepIds } from '../src/lib/journey/projectTypes.js'
 import { JOURNEY_STEPS } from '../src/lib/journey/journey.js'
 
@@ -51,7 +57,7 @@ test('a logo job walks a shorter path than a full identity', async ({ page }) =>
   // so the rail shows every stop. If this ever fails, the derivation has
   // leaked into projects that never went through intake.
   const path = await pathNav(page)
-  await expect(path.locator('.step-rail-step')).toHaveCount(FULL_STOP_COUNT)
+  await expect(pathStopsIn(path)).toHaveCount(FULL_STOP_COUNT)
 
   const chip = await createProject(page, {
     name: 'Logo Only Co',
@@ -69,7 +75,7 @@ test('a logo job walks a shorter path than a full identity', async ({ page }) =>
   await page.waitForTimeout(800)
 
   const railAfter = await pathNav(page)
-  await expect(railAfter.locator('.step-rail-step')).toHaveCount(LOGO_STOP_COUNT)
+  await expect(pathStopsIn(railAfter)).toHaveCount(LOGO_STOP_COUNT)
 })
 
 test('a stage that is off stays visible and one click brings it back', async ({
@@ -89,6 +95,10 @@ test('a stage that is off stays visible and one click brings it back', async ({
   /* Object permanence: a stop that is simply absent is invisible, and
      invisible is how a designer concludes the app lost something. The off
      stage must be NAMED, and reachable without hunting through Settings. */
+  /* The off-stage line is shell chrome — the stage edge names only the stops
+     that are ON, by design. So this claim is about the shell, and reaching it
+     is part of the claim. */
+  await toShell(page)
   const off = page.locator('.step-rail-off')
   await expect(off).toBeVisible()
   const offStages = JOURNEY_STEPS.filter(

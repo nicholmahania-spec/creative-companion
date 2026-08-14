@@ -68,39 +68,9 @@ export default function MainOutlet(p) {
     projectPalette,
     deskMood,
     deskTasks,
-    doneTasks,
-    queueTasks,
-    stepFocusKey,
-    setStepFocusKey,
-    hideHowItWorks,
-    openBreakdown,
-    quickInput,
-    setQuickInput,
-    captureEnergy,
-    setCaptureEnergy,
-    captureDue,
-    setCaptureDue,
-    captureOptionsOpen,
-    setCaptureOptionsOpen,
-    addQuickTask,
-    queueOpen,
-    setQueueOpen,
-    doneOpen,
-    setDoneOpen,
-    updateTaskTitle,
-    updateTaskWhy,
-    removeTask,
-    breakIntoSteps,
-    setTaskDueDate,
-    stepDueOpen,
-    setStepDueOpen,
-    completeCurrentStep,
-    startVoice,
     setActiveView,
     pathCtx,
-    identityWorkroomLauncherRef,
     workroomLauncherRef,
-    applicationWorkroomLauncherRef,
     flashToast,
     offerUndo,
     flashMicro,
@@ -174,6 +144,10 @@ export default function MainOutlet(p) {
     pathMissingLabelsList,
     goToProcessStep,
     goSystemSection,
+    openHoursPanel,
+    openBreakdown,
+    archiveCurrentProject,
+    deleteCurrentProject,
     buildCurrentBrandPack,
     leaveBehindThin,
     bookSetup,
@@ -189,16 +163,10 @@ export default function MainOutlet(p) {
     syncState,
     syncError,
     runCloudPush,
-    exportAllData,
-    setSyncState,
-    setSyncError,
     theme,
     toggleTheme,
     setShortcutsOpen,
     reduceMotion,
-    soundEnabled,
-    showHowItWorks,
-    queueCollapsed,
     pwCurrent,
     setPwCurrent,
     pwNext,
@@ -213,6 +181,8 @@ export default function MainOutlet(p) {
     setDeskConfirm,
     updateDetective,
     setOverviewSharePanelOpen,
+    setDiscoveryShare,
+    mergeDiscoveryAnswers,
   } = p
 
   // Path-title ambient chips removed (owner): identity stamp, client
@@ -244,6 +214,7 @@ export default function MainOutlet(p) {
       'studio',
       <ResearchView
         navDir={navDir}
+        workroomLauncherRef={workroomLauncherRef}
         journeyNext={journeyNext}
         deskMood={deskMood}
         activeProjectId={activeProjectId}
@@ -288,6 +259,7 @@ export default function MainOutlet(p) {
         flashMicro={flashMicro}
         projectId={activeProjectId}
         goSystemSection={goSystemSection}
+        journeyNext={journeyNext}
       />
       </>
     )
@@ -387,6 +359,14 @@ export default function MainOutlet(p) {
         onEditBrief={() => setActiveView('project')}
         onOpenWall={() => setActiveView('studio')}
         onOpenAssets={() => setActiveView('finish')}
+        /* The same three handlers the Tools menu ran, moved rather than
+           reimplemented: `openHoursPanel` opens the panel App already owns,
+           and archive/delete are App's own handlers, so the undo toast and
+           the "Project not found" reporting are unchanged. */
+        onBreakDownProject={openBreakdown}
+        onOpenHours={openHoursPanel}
+        onArchiveProject={archiveCurrentProject}
+        onDeleteProject={deleteCurrentProject}
       />
     )
   }
@@ -429,7 +409,10 @@ export default function MainOutlet(p) {
       'book',
       <BrandBookBuilderView
         setActiveView={setActiveView}
+        workroomLauncherRef={workroomLauncherRef}
         goSystemSection={goSystemSection}
+        pathCtx={pathCtx}
+        journeyNext={journeyNext}
       />
     )
   }
@@ -448,6 +431,14 @@ export default function MainOutlet(p) {
     return wrap(
       activeView === 'flow' ? 'flow' : 'brand',
       <>
+        {/* NOT given `journeyNext`, deliberately. This mount is the suspended
+            Directions room sitting behind Identity, and `journeyNext` is
+            derived from the ACTIVE view — so here it names Identity's next
+            stop, not Directions'. The in-component fallback resolves to
+            Identity, which is Directions' real next. The room is
+            `visibility: hidden` and `pointer-events: none`, so no one reads
+            either answer; passing the wrong one would just be a lie waiting
+            for the day someone unsuspends it. */}
         <SparkView
           key="directions-workroom"
           suspended
@@ -470,7 +461,7 @@ export default function MainOutlet(p) {
           projectPalette={projectPalette}
           studioName={studioName}
           setActiveView={setActiveView}
-          identityWorkroomLauncherRef={identityWorkroomLauncherRef}
+          workroomLauncherRef={workroomLauncherRef}
           pathCtx={pathCtx}
           flashToast={flashToast}
           offerUndo={offerUndo}
@@ -484,62 +475,12 @@ export default function MainOutlet(p) {
             navDir={navDir}
             activeProject={activeProject}
             projectPalette={projectPalette}
-            projectDeadline={projectDeadline}
-            completedCount={completedCount}
-            deskTasks={deskTasks}
-            doneTasks={doneTasks}
-            queueTasks={queueTasks}
-            nextTask={nextTask}
-            stepFocusKey={stepFocusKey}
-            setStepFocusKey={setStepFocusKey}
-            showHowItWorks={showHowItWorks}
-            hideHowItWorks={hideHowItWorks}
-            openBreakdown={openBreakdown}
             journeyNext={journeyNext}
             setActiveView={setActiveView}
-            applicationWorkroomLauncherRef={applicationWorkroomLauncherRef}
+            workroomLauncherRef={workroomLauncherRef}
             pathCtx={pathCtx}
-            flashToast={flashToast}
             flashMicro={flashMicro}
             offerUndo={offerUndo}
-            notifyAction={notifyAction}
-            quickInput={quickInput}
-            setQuickInput={setQuickInput}
-            captureEnergy={captureEnergy}
-            setCaptureEnergy={setCaptureEnergy}
-            captureDue={captureDue}
-            setCaptureDue={setCaptureDue}
-            captureOptionsOpen={captureOptionsOpen}
-            setCaptureOptionsOpen={setCaptureOptionsOpen}
-            addQuickTask={addQuickTask}
-            queueCollapsed={queueCollapsed}
-            queueOpen={queueOpen}
-            setQueueOpen={setQueueOpen}
-            doneOpen={doneOpen}
-            setDoneOpen={setDoneOpen}
-            toggleTask={toggleTask}
-            updateTaskTitle={updateTaskTitle}
-            updateTaskWhy={updateTaskWhy}
-            removeTask={removeTask}
-            breakIntoSteps={breakIntoSteps}
-            setTaskDueDate={setTaskDueDate}
-            stepDueOpen={stepDueOpen}
-            setStepDueOpen={setStepDueOpen}
-            completeCurrentStep={completeCurrentStep}
-            startVoice={startVoice}
-            setDeskConfirm={setDeskConfirm}
-            forcedBreak={forcedBreak}
-            setSessionComplete={setSessionComplete}
-            startOrPauseFocus={startOrPauseFocus}
-            resetFocus={resetFocus}
-            isFocusRunning={isFocusRunning}
-            focusLeft={focusLeft}
-            setFocusLeft={setFocusLeft}
-            setPomodoroWorkStartedAt={setPomodoroWorkStartedAt}
-            setIsFocusRunning={setIsFocusRunning}
-            setTimerFocusSource={setTimerFocusSource}
-            sessionLabel={sessionLabel}
-            sessionComplete={sessionComplete}
           />
         ) : null}
       </>
@@ -576,6 +517,7 @@ export default function MainOutlet(p) {
       'finish',
       <DeliverView
         navDir={navDir}
+        workroomLauncherRef={workroomLauncherRef}
         activeProject={activeProject}
         projectPalette={projectPalette}
         deskTasks={deskTasks}
@@ -661,12 +603,17 @@ export default function MainOutlet(p) {
       'project',
       <DefineView
         navDir={navDir}
+        workroomLauncherRef={workroomLauncherRef}
         journeyNext={journeyNext}
         activeProject={activeProject}
         setActiveView={setActiveView}
         pathCtx={pathCtx}
         updateDetective={updateDetective}
         onOpenShare={() => setOverviewSharePanelOpen(true)}
+        /* The /f/ link's controls moved out of the retired Discovery modal
+           and onto the Brief — same functions, same share ids. */
+        onSetDiscoveryShare={setDiscoveryShare}
+        onMergeDiscoveryAnswers={mergeDiscoveryAnswers}
         setProjectDeadline={setProjectDeadline}
         projectDeadline={projectDeadline}
       />

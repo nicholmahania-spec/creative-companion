@@ -144,8 +144,13 @@ export async function sidebarNav(page) {
 export function stepByIdIn(nav, id) {
   const step = JOURNEY_STEPS.find((s) => s.id === id)
   if (!step) throw new Error(`No journey step with id "${id}"`)
+  /* Two renderers, one rule. The shell rail names a stop "Step 2: Research.
+     Gather refs…"; the stage's path edge names it "Research", bare — and on
+     a path stop the rail is inside the inert `#root`, so the nav a spec gets
+     from `pathNav()` is the stage one. Match the head of either form, so the
+     same helper drives whichever renderer owns the viewport. */
   return nav.getByRole('button', {
-    name: new RegExp(`Step ${step.num}: ${step.label}\\b`, 'i'),
+    name: new RegExp(`^(Step ${step.num}: )?${step.label}\\b`, 'i'),
   })
 }
 
@@ -181,6 +186,10 @@ export function labelForStep(id) {
  * still how a spec gets to it.
  */
 export async function openTool(page, name) {
+  /* Tools is shell chrome, and a stage makes the shell inert — so this has to
+     stand in the shell first or the menu opens behind a `visibility: hidden`
+     ancestor and every click on it waits out the timeout. */
+  await toShell(page)
   await page.getByRole('button', { name: 'Tools' }).first().click()
   await page
     .locator('#tools-menu, .more-menu')
@@ -236,13 +245,102 @@ export async function openBriefFieldChapter(page, fieldId) {
 export async function openIdentitySubstep(page, id) {
   const label = IDENTITY_SUBSTEPS.find((s) => s.id === id)?.label
   if (!label) throw new Error(`No Identity substep with id "${id}"`)
+  /* The dock is labelled "Identity tools". It was matched as "Identity
+     screens" here, which stopped matching when the dock was rebuilt — and
+     because the click was guarded by `if (count)`, this helper then did
+     NOTHING and returned success. Six specs went on to look for fields that
+     live on an unopened screen and failed one assertion later, naming the
+     field rather than the navigation that never happened. A helper whose job
+     is to arrive somewhere must fail when it does not. */
   const tab = page
-    .getByRole('navigation', { name: /Identity screens/i })
+    .getByRole('navigation', { name: /Identity tools/i })
     .getByRole('button', { name: label, exact: true })
-  if (await tab.count()) {
-    await tab.first().click()
-    await page.waitForTimeout(400)
+  if (!(await tab.count())) {
+    throw new Error(
+      `Identity tools dock has no "${label}" screen — the dock or its label moved`
+    )
   }
+  await tab.first().click()
+  await page.waitForTimeout(400)
+}
+
+/**
+ * Leave the stage and stand in the shell.
+ *
+ * Shell chrome — the Tools menu, the account menu, the step rail, the work
+ * clock — lives inside `#root`, and an open Workroom sets `#root` inert,
+ * `aria-hidden` and `visibility: hidden` (see `src/components/Workroom.jsx`).
+ * So every one of those controls is still in the DOM and still queryable
+ * while being unreachable and invisible, which is exactly the failure a
+ * dozen specs were reporting: "resolved to <div id=tools-menu> … unexpected
+ * value hidden".
+ *
+ * `unlockAndOnboard` now lands INSIDE the Brief stage, because Home's "carry
+ * on with this project" opens the next stop — that is the product's answer to
+ * "what happens next", not a test artifact. A spec that wants the shell has
+ * to walk back out to it, which is what a designer does: the stage exit at
+ * the head of the path is the desk.
+ *
+ * Exits repeatedly because stops co-mount (Directions under Identity under
+ * Touchpoints), so one exit can reveal another stage rather than the shell.
+ */
+export async function toShell(page) {
+  const open = page.locator('.cc-stage:not(.is-suspended)')
+  /* Two clean reads in a row, not one. A stage mounts a beat after the
+     navigation that opens it, so a single "is anything open?" check taken too
+     early answers no about a stage that is on its way — and then the spec
+     opens the Tools menu into a shell that goes inert underneath it. Requiring
+     the shell to still be the shell after a pause is what makes this a wait
+     rather than a guess. */
+  let clean = 0
+  for (let i = 0; i < 16 && clean < 2; i += 1) {
+    if (await open.count()) {
+      clean = 0
+      await open.locator('.cc-stage-exit').first().click()
+      await page.waitForTimeout(350)
+    } else {
+      clean += 1
+      await page.waitForTimeout(300)
+    }
+  }
+  if (await open.count()) {
+    throw new Error('still on a stage after 16 tries — the shell is unreachable')
+  }
+}
+
+/**
+ * The stops the path shows, whichever renderer owns the viewport.
+ *
+ * Two navs answer to "Process position": the shell's `.step-rail`, whose
+ * stops are `.step-rail-step`, and the stage's own path edge (Workroom.jsx),
+ * whose stops are `.cc-stage-stop`. A spec standing inside a stage sees only
+ * the second one, so counting `.step-rail-step` there returns 0 on a path
+ * that is perfectly correct.
+ */
+export function pathStopsIn(nav) {
+  return nav.locator('.step-rail-step, .cc-stage-stop')
+}
+
+/**
+ * Open the Touchpoints card grid.
+ *
+ * The surfaces list is behind a `<details class="touchpoints-engine-hold">`
+ * — SketchView calls it "Existing engine — collapsed until Steps 4–6 restage
+ * accept/make/check", so this is a deliberate holding pattern, not a bug. A
+ * CLOSED `<details>` gives its contents `content-visibility: hidden`, which
+ * keeps them in the DOM with a real box while Playwright (correctly) reports
+ * them as not visible. That is why nine specs failed on "resolved to
+ * <li class=touchpoints-card> … unexpected value hidden" while the card was
+ * sitting there at 560x304.
+ *
+ * Idempotent: `<details>` stays open, so calling this twice does not close it.
+ */
+export async function openTouchpointEngine(page) {
+  const hold = page.locator('.touchpoints-engine-hold')
+  if (!(await hold.count())) return
+  if (await hold.first().evaluate((el) => el.open)) return
+  await hold.first().locator('summary').first().click()
+  await page.waitForTimeout(250)
 }
 
 /**

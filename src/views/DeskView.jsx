@@ -208,6 +208,10 @@ export default function DeskView({
   onEditBrief,
   onOpenWall,
   onOpenAssets,
+  onOpenHours,
+  onBreakDownProject,
+  onArchiveProject,
+  onDeleteProject,
 }) {
   const gapRow = nextGap || null
 
@@ -647,6 +651,77 @@ export default function DeskView({
           {/* Somewhere for what is not work. In the rail, under what's next,
               because it must be reachable without being in the way. */}
           <YoursOnlyPanel project={project} />
+
+          {/* PROJECT ADMINISTRATION HAS ONE HOME, AND IT IS THE PROJECT.
+              Hours, Archive and Delete lived in the Tools menu — a drawer of
+              cross-project tools holding three actions that only ever act on
+              the project you are looking at. The sidebar's per-row `⋯` held
+              two of them as well and is `display: none` in the app shell, so
+              the only reachable copy was the one filed furthest from its
+              subject.
+
+              Same handlers, same undo, same confirmation: nothing here
+              reimplements an action, it only puts them where the project is.
+              Delete keeps its own weight rather than a dialog — the toast it
+              raises is undoable, which is the pattern the desk already uses.
+
+              Deliberately NOT export: this file's own rule is "No PDF on the
+              desk", and the pack belongs to Delivery, which already opens the
+              same panel. */}
+          {/* ONE OF THESE IS NOT ADMINISTRATION, AND IT GOES FIRST.
+              The criterion this panel was built on is scope, not category —
+              actions that only ever act on the project you are looking at.
+              Break down project is that shape and had been filed nowhere at
+              all: the Touchpoints rebuild deleted both of its triggers as
+              collateral, five days after they were added specifically so the
+              wizard was reachable on a project with no steps yet — which is
+              the exact moment "big job, no idea where to start" is asked. It
+              belongs on the Desk rather than on a stop because it is about the
+              whole project, and because the Desk is where you are when you do
+              not yet know which stop you are going to. First in the list, so
+              the order runs begin → money → archive → delete.
+
+              Kept ABOVE the section, not inside it: projectActionsReachable
+              reads a 2000-character slice starting at the class name, and a
+              comment in there pushes Delete out of what it can see. */}
+          {project ? (
+            <section
+              className="desk-panel desk-project-actions"
+              aria-label="Project"
+            >
+              <div className="desk-panel-head">
+                <span className="desk-eyebrow">Project</span>
+              </div>
+              <button
+                type="button"
+                className="desk-panel-link"
+                onClick={() => onBreakDownProject?.()}
+              >
+                Break down project
+              </button>
+              <button
+                type="button"
+                className="desk-panel-link"
+                onClick={() => onOpenHours?.()}
+              >
+                Hours &amp; invoice
+              </button>
+              <button
+                type="button"
+                className="desk-panel-link"
+                onClick={() => onArchiveProject?.()}
+              >
+                Archive project
+              </button>
+              <button
+                type="button"
+                className="desk-panel-link desk-action-danger"
+                onClick={() => onDeleteProject?.()}
+              >
+                Delete project
+              </button>
+            </section>
+          ) : null}
 
           {/* "This week" hours bars were here. Removed 2026-08-08 (owner).
               PRD §11 defers the time view outright — "I have no concept of

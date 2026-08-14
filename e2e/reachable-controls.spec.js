@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { skipIfCloud, unlockAndOnboard } from './helpers.js'
+import { skipIfCloud, toShell, unlockAndOnboard } from './helpers.js'
 
 /**
  * Controls that exist in the markup but cannot be reached on screen.
@@ -27,6 +27,7 @@ test('the Tools menu shows all of itself', async ({ page }) => {
   const gate = await unlockAndOnboard(page)
   skipIfCloud(test, gate)
 
+  await toShell(page)
   await page.locator('#tools-menu-button').click()
   const menu = page.locator('.more-menu')
   await expect(menu).toBeVisible()

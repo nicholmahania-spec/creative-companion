@@ -4,6 +4,7 @@ import {
   openDeliverSectionWith,
   pathNav,
   skipIfCloud,
+  toShell,
   stepByIdIn,
   unlockAndOnboard,
 } from './helpers.js'
@@ -25,8 +26,12 @@ test.describe('Desk reliability', () => {
     const path = await pathNav(page)
     await expect(path).toBeVisible()
     await stepByIdIn(path, 'deliver').click()
+    /* Two h1s answer to the stop's name on a stage — the stage's own sr-only
+       heading (Workroom's `aria-labelledby` target) and the masthead display
+       title — so take the first rather than tripping strict mode on a page
+       that is correct. Same note as `path-smoke.spec.js`. */
     await expect(
-      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') }).first()
     ).toBeVisible({ timeout: 10000 })
     await expect(
       page.getByRole('button', { name: /Brand book PDF/i })
@@ -40,11 +45,16 @@ test.describe('Desk reliability', () => {
   test('Esc closes Tools menu', async ({ page }) => {
     const gate = await unlockAndOnboard(page, { name: 'E2E Reliability' })
     skipIfCloud(test, gate)
+    await toShell(page)
     await page.getByRole('button', { name: 'Tools' }).click()
     await expect(page.locator('#tools-menu, .more-menu')).toBeVisible()
-    /* Print left Tools (lives on Assets/Export). First "This project" row is Export. */
+    /* What this test is about is Escape, so the menu's contents are only
+       evidence that it is open. Naming a specific row made it fail twice for
+       reasons that had nothing to do with Escape: Print left Tools for
+       Assets/Export, and then Export left too. Tools now carries Timer,
+       Review and Discovery notes. Assert that it is open and populated. */
     await expect(
-      page.locator('#tools-menu').getByRole('menuitem', { name: /Export/i })
+      page.locator('#tools-menu').getByRole('menuitem').first()
     ).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.locator('#tools-menu, .more-menu')).toHaveCount(0)
@@ -56,7 +66,7 @@ test.describe('Desk reliability', () => {
     const path = await pathNav(page)
     await stepByIdIn(path, 'deliver').click()
     await expect(
-      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') }).first()
     ).toBeVisible({ timeout: 10000 })
     await openDeliverSectionWith(page, /^Preview$/)
     await page.getByRole('button', { name: 'Preview', exact: true }).click()
