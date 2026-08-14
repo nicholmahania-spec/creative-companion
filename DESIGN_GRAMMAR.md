@@ -6,7 +6,7 @@ If a screen fights these, the screen is wrong — not the grammar.
 | | |
 |--|--|
 | **Product** | Customer / project system for a solo brand designer with ADHD |
-| **Path** | Exactly five stops (see G1) — declared once in `src/lib/journey.js` |
+| **Path** | Seven stops (see G1) — declared once in `src/lib/journey/journey.js` |
 | **Visual system** | Tech Studio: cool gray canvas, white cards, ink CTAs, 4px radius |
 | **Type** | Plus Jakarta Sans only (`--font-sans` / `--font-display`) — three weights 500 / 600 / 700 |
 | **Source of truth** | This file + `docs/PRD.md` + `AGENTS.md` |
@@ -114,6 +114,29 @@ Icon-only is a **closed list** (close, nav, arrows when paged thing is named, se
 | **Tools** | One tool job; return to path via chrome |
 
 **Ban:** second map of the same chapters, start-here chip ramps that jump to the first field, scoreboards (“0 of 35”), dual equal Next.
+
+**G3.1 Every stop is a `Workroom`, and the stage owns three things.**
+`Workroom.jsx` + `workroom.css`. Three fixed rows — **edge · plane · ledge**:
+
+- **Ledge = the next action, and only that.** It is a **slot, not a behaviour**:
+  the stage decides where a stop's next action sits and what it looks like; the
+  view decides what the action is. **No navigation lives in the ledge** — a
+  "Back to the desk" button there is a second navigation system a screen away
+  from the first, with the same label and the same target. It is a grid row of
+  the fixed stage, never sticky, so it cannot be scrolled past or stacked with
+  anything a view brings. A quiet note it should *say* rather than *do* sits
+  left.
+- **Exit = the universal escape.** Escape and `← Back to …` are one control.
+  Target is the previous stop **on the project's own path** (`stepsForProject`),
+  so a four-stage job never exits to a stage it does not have; the first stop
+  exits to the desk. Focus returns to the exact launcher. It **yields to any
+  layer open above it** (`modalLayers.js`) — Escape and Tab both, never one
+  trap fighting another — and the trap exempts `#cc-overlay-root`, since the
+  transient layer sits above the stage and must stay usable from inside it.
+- **The path edge is not optional.** Every stop of the project's path, one
+  hairline row, no boxes. Subordinate means small and quiet; it does not mean
+  gone — the first rebuilt rooms replaced it with one back-link and left
+  Identity with no route to Brief at all.
 
 **One path renderer per viewport.** `.step-rail` is the persistent desktop
 path — it follows the project across stops, the Desk and Tools screens, not
@@ -249,4 +272,4 @@ Non-user-facing code comments are out of scope — don't churn them.
 
 ---
 
-*Grammar 2.0 · 2026-08 · five-stop path · Tech Studio tokens. Supersedes honeycomb / purple-AI / seven-stop drafts.*
+*Grammar 2.0 · 2026-08 · seven-stop path on the canonical stage · Tech Studio tokens. Supersedes honeycomb / purple-AI drafts and the five-stop path.*
