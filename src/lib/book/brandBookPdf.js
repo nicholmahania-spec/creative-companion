@@ -775,6 +775,11 @@ export async function downloadBrandPackVectorPdf(
     const promise = clean(pack?.messagingPromise)
     const proof = clean(pack?.messagingProof)
     const personality = clean(pack?.messagingPersonality)
+    /* Resolved at the pack boundary now — see `buildBrandPackSnapshot`. The
+       second operand is kept as a COMPATIBILITY READ, not as resolution: this
+       generator is what `PublicBrandReveal` runs against a `delivery_pack`
+       stored before that resolution existed, where the answer sits only in
+       `toneOfVoice`. See the longer note in `bookDocument.js`. */
     const voice = clean(pack?.voice) || clean(pack?.toneOfVoice)
 
     /* The plan is read from bookDocument.js, not written out here. It used to

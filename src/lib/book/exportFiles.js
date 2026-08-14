@@ -18,6 +18,7 @@ import {
 import { toISODate } from '../dates'
 import { clientFacingName } from '../client/clientRecord'
 import { allBrandSurfaces } from '../journey/touchpoints'
+import { effectiveWord } from '../brand/briefWords'
 import { mapPaletteRoles, normalizeHex, bestTextOn } from '../color'
 import {
   DETECTIVE_CHAPTERS,
@@ -338,6 +339,35 @@ export function buildBrandPackSnapshot({
         : ['#1C1917', '#0F766E', '#A8A29E', '#FAFAF9']
 
   const d = p.detective || {}
+  /* THE BRIEF-OWNED WORDS, RESOLVED ONCE — HERE.
+     `briefWords.js` states the rule (RESOLVE, NEVER COPY) and claims this
+     function already honours it: "the same order `buildBrandPackSnapshot`
+     already resolves in, so what you see is what ships." It did not. Six of
+     the eight `BRIEF_WORD_SOURCES` fields read `p.X || ''` here, so a project
+     where the client had answered and the designer had written nothing showed
+     the client's words on the direction sheet and shipped a blank line in the
+     book. `voice` was then rescued twice downstream — in `bookDocument` and
+     again in `brandBookPdf` — which is the resolution rule reimplemented in
+     two consumers instead of applied once at the boundary, and it covered
+     only `voice`: `dontUse`, `messagingPersonality`, `orgEmail` and
+     `orgPhone` were rescued nowhere. The business card printed the client's
+     email and the book's contact line printed nothing, from one project.
+
+     This is the boundary. The pack is what gets delivered, so the pack is
+     where the project's fields become the book's fields — one resolver, one
+     precedence: what the designer wrote wins, the client's answer fills the
+     gap. `packBriefWord` binds the existing resolver to this project; it is
+     not a new one.
+
+     The `voice` reads downstream were NOT deleted, and the reason is worth
+     knowing before anyone tidies them: `publishDelivery` stores a pack in the
+     `client_portals` row and the client's reveal page regenerates their PDF
+     from that stored copy, so packs written before this resolution existed are
+     still being rendered. Those reads are compatibility for v1 payloads, not a
+     second resolution rule — `bookDocument.js` carries the full note and
+     `packResolvesBriefWords.test.js` pins that they never fire on a fresh
+     pack. */
+  const packBriefWord = (field) => effectiveWord(p, field).value
   return {
     /* The builder's page backgrounds, resolved to hex. Without this the whole
        page-background control was screen-only: the book on screen repainted
@@ -366,7 +396,7 @@ export function buildBrandPackSnapshot({
     projectName: clientFacingName(p),
     brief: p.brief || '',
     tagline: p.tagline || '',
-    voice: p.voice || '',
+    voice: packBriefWord('voice'),
     logoDirection: p.logoDirection || '',
     logoWordmark: p.logoWordmark || '',
     logoClearspace: p.logoClearspace || '',
@@ -386,6 +416,18 @@ export function buildBrandPackSnapshot({
        together with no punctuation — under a heading promising a positioning
        statement. That summary is a working artefact, not a sentence anyone
        wrote to be read. */
+    /* NOT resolved through `packBriefWord`, deliberately, and it is the one
+       `BRIEF_WORD_SOURCES` key that is not. The brief asks "What does your
+       business do?" (`usp`) — a description. A positioning statement is a
+       synthesis the designer writes FROM that description, which is why
+       `isBriefOwned('positioning')` is false and `FIELD_HOMES.positioning`
+       points at the sheet. Printing the client's own description under a
+       heading promising a positioning statement is the same defect as
+       printing the composed brief there, which the paragraph above records
+       correcting. A fallback is not the same fact — see
+       `identityConsumesBrief.test.js` and `positioningOwnership.test.js`,
+       which pin both halves. The sheet may show `usp` as the material to
+       write from; the delivered book prints only what the designer wrote. */
     positioning: p.positioning || '',
     story: d.story || '',
     usp: d.usp || '',
@@ -441,8 +483,11 @@ export function buildBrandPackSnapshot({
     typeLicenceNote: p.typeLicenceNote || '',
     fontFilesLicensed: p.fontFilesLicensed === true,
     packageAssets: Array.isArray(p.packageAssets) ? p.packageAssets : [],
+    /* `doUse` has no brief question behind it and stays the designer's own —
+       an empty box is the honest state. `dontUse` does: "Is there anything
+       you definitely don't want?" */
     doUse: p.doUse || '',
-    dontUse: p.dontUse || '',
+    dontUse: packBriefWord('dontUse'),
     deadline: p.deadline || '',
     palette: colors,
     openTasks: openTasks.map((t) => ({
@@ -469,9 +514,11 @@ export function buildBrandPackSnapshot({
     pinsStarredCount: starredCount,
     colorRoles: p.colorRoles || null,
     logoImage: p.logoImage || '',
-    orgEmail: p.orgEmail || '',
+    /* Asked once, in Chapter 01. `orgWebsite` has no brief question, so it
+       stays a plain project field. */
+    orgEmail: packBriefWord('orgEmail'),
     orgWebsite: p.orgWebsite || '',
-    orgPhone: p.orgPhone || '',
+    orgPhone: packBriefWord('orgPhone'),
     contacts: Array.isArray(p.contacts) ? p.contacts : [],
     logoMinSize: p.logoMinSize || '',
     logoDonts: p.logoDonts || '',
@@ -479,10 +526,15 @@ export function buildBrandPackSnapshot({
        read in three places (BrandArtboard, brandSystem, the brand book) and
        written in none — so Promise fell through to `voice` and Proof printed
        "\u2014". The brief now asks both; a designer-side value still wins if one
-       ever exists. */
-    messagingPromise: p.messagingPromise || d.messagingPromise || '',
-    messagingProof: p.messagingProof || d.messagingProof || '',
-    messagingPersonality: p.messagingPersonality || '',
+       ever exists.
+
+       These two were the only pair here that already resolved, as a
+       hand-written `p.X || d.X`. Same precedence, now through the same
+       resolver as their six siblings — a rule applied by one function cannot
+       drift from itself the way eight hand-written chains did. */
+    messagingPromise: packBriefWord('messagingPromise'),
+    messagingProof: packBriefWord('messagingProof'),
+    messagingPersonality: packBriefWord('messagingPersonality'),
     /* StoryBrand's plan and single CTA — client-answered only; there is no
        designer-side field for these, unlike Promise and Proof. */
     messagingPlan: d.messagingPlan || '',

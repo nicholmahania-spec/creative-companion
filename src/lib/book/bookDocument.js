@@ -72,10 +72,26 @@ export function bookInputs(packIn) {
        the client's book. A project with no story now gets no Story page, which
        is the rule everywhere else in this file. */
     story: clean(pack.story) || clean(d.story),
-    /* The hoisted copy wins, but a project answered before
-       buildBrandPackSnapshot hoisted toneOfVoice still has it only on the
-       detective — and the page's own text reads both, so the condition must
-       too, or the page is judged absent and then rendered with content. */
+    /* NOT a resolution rule — a COMPATIBILITY READ for packs written before
+       one existed. Keep it.
+
+       `buildBrandPackSnapshot` now resolves `voice` through `effectiveWord`,
+       so on any pack built today `pack.voice` is already the answer and the
+       two operands after it never fire. That made them look like dead
+       duplication, and deleting them is the obvious cleanup. It is not safe.
+
+       `publishDelivery` writes the pack into the `client_portals` row as
+       `delivery_pack {v:1}`, and `PublicBrandReveal` regenerates the client's
+       PDF from THAT STORED PACK, in the client's browser, whenever they open
+       their link. A book delivered before the boundary resolution landed is
+       stored with `voice: ''` and the answer only in `toneOfVoice` /
+       `detective.toneOfVoice`. Drop these and the Brand Voice page vanishes
+       from a book somebody has already sent a client — the page is judged
+       absent, and nothing on any screen would show it happening.
+
+       So this stays until `delivery_pack` is versioned past v1 or migrated.
+       `packResolvesBriefWords.test.js` pins that it never fires on a fresh
+       pack, which is the half that could otherwise rot unnoticed. */
     voice: clean(pack.voice) || clean(pack.toneOfVoice) || clean(d.toneOfVoice),
     decision: clean(decisionLineFromPack(pack)),
   }
