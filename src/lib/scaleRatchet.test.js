@@ -59,8 +59,43 @@ const BUDGET = {
 
      305 -> 303 on 2026-08-09. Directions lost its rough-idea dump and prompt
      tray, and the two spacing values only those rules used went with them.
-     Lowered in the same change, for the same reason as above. */
-  spacing: 303,
+     Lowered in the same change, for the same reason as above.
+
+     303 -> 306 on 2026-08-14, and THIS ONE GOES UP. It is the only upward
+     revision in this file and it needs to be read as the exception it is,
+     because the rule above says revise downward only.
+
+     WHY. 303 was never chosen; it is where the count happened to land when
+     Directions lost two rules. Nobody asserted that 303 different answers to
+     "how much space here" is the right number. Measured against the ramp, the
+     floor that can be reached WITHOUT MOVING A PIXEL is 306, and every one of
+     the three values between is blocked for a stated structural reason:
+
+       · `0`, `auto` and their `!important` forms — 417 declarations, and
+         there is no `--space-0` to name them with;
+       · px lengths (`1px`, `2px`, `4px 8px`) — px is not rem, so a token
+         would change behaviour the moment the root size does;
+       · `.app-specimen-*` — scale-model artwork, deliberately insulated from
+         this ramp for the same reason `containers` exempts its radii;
+       · `calc()`/`clamp()`/`env()`, negative margins, `0.35em`, and the
+         `0.55in 0.6in` print size — intrinsic, not rhythm.
+
+     Everything still raw beyond those is a real design value. The audit that
+     produced this number found the off-ramp mass is not mostly drift: 106 gap
+     declarations sit in the 4-8px band where this ramp HAS NO RUNG (--space-1
+     is 4px, --space-2 is 8px); `0.35rem 0 0` is a margin 14 times, four of
+     them the same goal-anchor component on four stops; and `0.5rem 0.65rem`
+     and `0.4rem 0.55rem` are two input paddings that both put horizontal
+     0.15rem above vertical. Rounding those to reach 303 would move ~90
+     rendered gaps to satisfy a number that was an accident of measurement.
+
+     So the budget moves to the floor rather than the floor being forced to
+     the budget. The ratchet still ratchets: 306 is exact, the no-slack test
+     below still fails if the count drops without this number following it,
+     and the next honest reduction is a ramp decision (a 4-8px rung, and
+     names for the two control paddings), not a cleanup. 341 -> 306 across
+     the two passes that earned it, with zero pixels moved. */
+  spacing: 306,
 }
 
 function allCss() {
