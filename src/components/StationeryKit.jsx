@@ -9,7 +9,7 @@ import { elementToPdf, elementToPng, PAGE_SIZES } from '../lib/book/stationery'
 /* Stationery rules live in lazy-design.css; import here so Assets can load
    the kit without visiting Identity first. */
 import '../styles/lazy-design.css'
-import { effectiveWord } from '../lib/brand/briefWords'
+import { BRIEF_PROVENANCE, effectiveWord } from '../lib/brand/briefWords'
 
 export default function StationeryKit({
   activeProject = {},
@@ -27,6 +27,28 @@ export default function StationeryKit({
   const bodyFont = fontFamilyFromLabel(activeProject.typeBody)
   const orgName = activeProject.logoWordmark || activeProject.name || 'Organization'
   const contacts = activeProject.contacts || []
+  /* THE ARTWORK RESOLVES; THE BOX DOES NOT PRE-FILL.
+     Phone and email are the two contact lines the brief also asks for, so
+     `effectiveWord` decides what the letterhead, card and signature PRINT —
+     the designer's own value if there is one, the client's answer otherwise.
+     That resolution stays exactly where it was, on the artwork.
+
+     The CONTROLS below hold the designer's own field instead. Bound to the
+     resolved value, the box showed the client's answer, so the first
+     keystroke sent `e.target.value` — their number and all — into
+     `project.orgPhone`, forking one fact into two columns and leaving no way
+     back to inheriting: clearing the box wrote `''`, which reads as an
+     override of nothing rather than a return to the brief.
+
+     This is the same correction `BrandArtboard`'s `sourceBehind` already
+     documents for Positioning, and the same shape: own words in the control,
+     the brief's answer named underneath as provenance. Unlike the five
+     BRIEF_OWNED_WORDS the artboard reports read-only, a studio may
+     legitimately print a different number on the letterhead than the one the
+     client gave, so the override stays available here — it just has to be
+     typed on purpose. */
+  const briefPhone = effectiveWord(activeProject, 'orgPhone')
+  const briefEmail = effectiveWord(activeProject, 'orgEmail')
 
   const [activeContactId, setActiveContactId] = useState(contacts[0]?.id || '')
   const activeContact = contacts.find((c) => c.id === activeContactId) || contacts[0] || null
@@ -74,20 +96,30 @@ export default function StationeryKit({
             <input
               id="org-phone"
               className="field-input"
-              value={effectiveWord(activeProject, 'orgPhone').value}
+              value={activeProject.orgPhone || ''}
               onChange={(e) => updateBrandField('orgPhone', e.target.value)}
               placeholder="(555) 555-0100"
             />
+            {briefPhone.fromBrief && (
+              <p className="artboard-word-source">
+                {`${BRIEF_PROVENANCE}: ${briefPhone.value}`}
+              </p>
+            )}
           </div>
           <div className="field-block">
             <label className="field-label" htmlFor="org-email">Email</label>
             <input
               id="org-email"
               className="field-input"
-              value={effectiveWord(activeProject, 'orgEmail').value}
+              value={activeProject.orgEmail || ''}
               onChange={(e) => updateBrandField('orgEmail', e.target.value)}
-              placeholder="you@yourstudio.com"
+              placeholder="name@business.com"
             />
+            {briefEmail.fromBrief && (
+              <p className="artboard-word-source">
+                {`${BRIEF_PROVENANCE}: ${briefEmail.value}`}
+              </p>
+            )}
           </div>
           <div className="field-block">
             <label className="field-label" htmlFor="org-website">Website</label>
