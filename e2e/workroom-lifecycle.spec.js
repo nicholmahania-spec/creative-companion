@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { seedProject, skipIfNoSeed } from './seed.js'
 import {
   WORKROOMS,
-  SHELL_STOPS,
+  SHELL_VIEWS,
   readLifecycle,
   landsInRoom,
   roomFor,
@@ -12,12 +12,15 @@ import { getPrevJourney, labelForView } from '../src/lib/journey/journey.js'
 /**
  * The workroom lifecycle, asserted from the DOM rather than from any one file.
  *
- * Three views implement this by hand today and the app-wide visual reset is
- * consolidating them. Nothing in the suite noticed that: a grep across e2e/
- * for `inert`, `aria-hidden`, `body.style.overflow` and launcher restoration
- * found ZERO assertions before this file. A room that stopped freezing body
- * scroll, or stopped putting focus inside itself, or leaked `inert` onto the
- * shell after closing, would have shipped green.
+ * Three views implemented this by hand when this file was written, and the
+ * consolidation it anticipated has happened twice over: one `Workroom`
+ * component owns the lifecycle, and every stop — not just the original three
+ * — mounts it. So the loop below covers all seven. Nothing in the suite
+ * noticed the original gap: a grep across e2e/ for `inert`, `aria-hidden`,
+ * `body.style.overflow` and launcher restoration found ZERO assertions
+ * before this file. A room that stopped freezing body scroll, or stopped
+ * putting focus inside itself, or leaked `inert` onto the shell after
+ * closing, would have shipped green.
  *
  * Every assertion here is on observable behaviour — no import of the views, no
  * knowledge of which component owns the effect — so the consolidation can land
@@ -77,40 +80,21 @@ test.describe('workroom lifecycle', () => {
     test(`${wr.view}: Tab and Shift+Tab stay inside the room`, async ({
       page,
     }) => {
-      /* KNOWN DEFECT ON TOUCHPOINTS — pinned, not papered over.
+      /* A `test.fail()` pin used to sit here for Touchpoints: the focus
+       * trap's selector omits `summary`, a <summary> is natively focusable,
+       * and the old hand-rolled room ENDED on one — so native Tab carried
+       * focus out to <body> and nothing pulled it back. The pin's own comment
+       * said to delete it the day the test passed unexpectedly, and that day
+       * came with the stage ledge: every stop's last focusable is a matched
+       * ledge control now, so the wrap fires and containment holds — measured
+       * on all seven stops, not assumed.
        *
-       * All three rooms trap focus with the same hand-written selector:
-       *
-       *   a[href], button:not([disabled]), input:not([disabled]),
-       *   select:not([disabled]), textarea:not([disabled]),
-       *   [tabindex]:not([tabindex="-1"])
-       *
-       * `summary` is missing from it, and a <summary> is natively focusable
-       * without carrying a tabindex attribute. Touchpoints ends on one —
-       * `.touchpoints-engine-hold-summary`, the "Recorded evidence · produce"
-       * disclosure — so `items.indexOf(document.activeElement)` is -1 there,
-       * the `index === items.length - 1` wrap never fires, and native Tab
-       * carries focus out to <body>. `focusin` does not fire for body, so the
-       * room never pulls it back: the keyboard user is silently outside a
-       * modal whose shell is inert, with nothing focusable to go back to.
-       *
-       * Directions and Identity pass only because their last focusable
-       * happens to be a matched element — the same latent gap is in all three.
-       * The one-line fix is `summary` in that selector, in whichever component
-       * ends up owning the trap. NOT MADE HERE: this task does not change
-       * production code.
-       *
-       * `test.fail()` keeps the assertion running and still checks its result
-       * — it simply says the current expected outcome is a failure. When the
-       * selector is fixed this test PASSES UNEXPECTEDLY and turns the run red,
-       * which is the prompt to delete these three lines.
+       * THE SELECTOR GAP ITSELF IS STILL LATENT. Workroom's FOCUSABLE list
+       * (Workroom.jsx) still omits `summary`, so a future stop whose LAST
+       * focusable is a bare <summary> would leak focus again — and this test
+       * is what will say so. The one-line production fix is `summary` in that
+       * selector; not made in the test-contract pass that removed the pin.
        */
-      if (wr.view === 'flow') {
-        test.fail(
-          true,
-          'focus trap omits <summary>; Touchpoints ends on one — see comment'
-        )
-      }
       test.setTimeout(120_000)
       await page.setViewportSize({ width: 1440, height: 900 })
       const seeded = await seedProject(page, wr.view)
@@ -173,8 +157,10 @@ test.describe('workroom lifecycle', () => {
 
       /* The room's declared exit and the path's own previous stop must be the
          same place. Asserted rather than assumed — a room that closes to a
-         stop the path does not consider previous is a silent detour. */
-      expect(getPrevJourney(wr.view)?.view).toBe(wr.closesTo)
+         stop the path does not consider previous is a silent detour. The
+         first stop has no previous; its exit is the desk, which is also what
+         the contract derives. */
+      expect(getPrevJourney(wr.view)?.view ?? 'desk').toBe(wr.closesTo)
 
       /* THE SHELL LOCK IS ONLY RELEASED WHEN THE DESTINATION IS A SHELL STOP,
          and this is the distinction the first draft of this test got wrong.
@@ -240,16 +226,19 @@ test.describe('workroom lifecycle', () => {
    * Where focus goes when a room closes.
    *
    * The rule is NOT "always back to the launcher", and finding that out is
-   * most of the value of this test. Only Directions closes onto a page, and
-   * there focus does return to the exact rail button that opened it. Identity
-   * and Touchpoints close onto another ROOM, and that room takes focus for
-   * itself on mount — which is correct for a modal that now owns the viewport,
-   * and is the behaviour pinned here so the consolidation cannot quietly
-   * change it in either direction.
+   * most of the value of this test. Only the FIRST stop closes onto a shell
+   * surface — the desk — and there focus does return to the exact rail
+   * button that opened it: the rail is the shell's persistent path and
+   * survives the trip. Every other stop closes onto the PREVIOUS stop's
+   * room, which mounts fresh and takes focus for itself — correct for a
+   * modal that now owns the viewport, and also the only honest option,
+   * because the launcher was a stop button inside the stage being closed
+   * FROM, and that stage unmounted with it.
    *
-   * Driven through the step rail, not a reload: App captures the launcher from
-   * `document.activeElement` as `setActiveView` runs (App.jsx:386-394), so a
-   * room arrived at by reload has no launcher to return to.
+   * Driven by focus + Enter, not a mouse click: App captures the launcher
+   * from `document.activeElement` as `setActiveView` runs, and a click can
+   * leave focus on body on some platforms — this is also exactly how a
+   * keyboard user opens a stop.
    */
   for (const wr of WORKROOMS) {
     test(`${wr.view}: closing puts focus where the destination demands`, async ({
@@ -257,57 +246,48 @@ test.describe('workroom lifecycle', () => {
     }) => {
       test.setTimeout(150_000)
       await page.setViewportSize({ width: 1440, height: 900 })
-      const seeded = await seedProject(page, 'studio')
-      skipIfNoSeed(test, seeded)
-
-      const rail = page.getByRole('navigation', { name: /Process position/i })
-      const launcher = rail.getByRole('button', {
-        name: new RegExp(`: ${labelForView(wr.view)}\\b`, 'i'),
-      })
-      await expect(launcher).toHaveCount(1)
-
-      /* Focus, then Enter. A mouse click can leave focus on body on some
-         platforms, and App can only capture an element that is ACTIVE — this
-         is also exactly how a keyboard user opens the room. */
-      await launcher.focus()
-      const launcherText = ((await launcher.textContent()) || '').trim()
-      await page.keyboard.press('Enter')
-
       const live = `${wr.room}:not(.is-suspended)`
-      await page.waitForFunction(
-        (sel) => {
-          const room = document.querySelector(sel)
-          return !!room && room.contains(document.activeElement)
-        },
-        live,
-        { timeout: 15_000 }
-      )
-
-      await page.keyboard.press('Escape')
-      await page
-        .locator(`.app.view-${wr.closesTo}`)
-        .waitFor({ state: 'attached', timeout: 15_000 })
-
-      if (landsInRoom(wr.closesTo)) {
-        const destination = `${roomFor(wr.closesTo)}:not(.is-suspended)`
-        await page.waitForFunction(
-          (sel) =>
-            document.querySelector(sel)?.contains(document.activeElement) ??
-            false,
-          destination,
+      const focusIn = (sel) =>
+        page.waitForFunction(
+          (s2) => {
+            const room = document.querySelector(s2)
+            return !!room && room.contains(document.activeElement)
+          },
+          sel,
           { timeout: 15_000 }
         )
-        const landed = await page.evaluate(() => ({
-          tag: document.activeElement?.tagName,
-          connected: document.activeElement?.isConnected ?? false,
-        }))
-        expect(
-          landed.tag,
-          'focus fell back to the document instead of entering the next room'
-        ).not.toBe('BODY')
-        expect(landed.connected).toBe(true)
-      } else {
-        /* Restoration runs two rAFs after the view change. */
+
+      if (!landsInRoom(wr.closesTo)) {
+        /* The first stop. Launch it from the desk rail, so there is a real
+           launcher for the close to restore. */
+        const seeded = await seedProject(page, 'desk')
+        skipIfNoSeed(test, seeded)
+
+        const rail = page.getByRole('navigation', {
+          name: /Process position/i,
+        })
+        const launcher = rail.getByRole('button', {
+          name: new RegExp(`: ${labelForView(wr.view)}\\b`, 'i'),
+        })
+        await expect(launcher).toHaveCount(1)
+        await launcher.focus()
+        const launcherText = ((await launcher.textContent()) || '').trim()
+        await page.keyboard.press('Enter')
+        await focusIn(live)
+
+        await page.keyboard.press('Escape')
+        await page
+          .locator(`.app.view-${wr.closesTo}`)
+          .waitFor({ state: 'attached', timeout: 15_000 })
+
+        /* THE EXACT LAUNCHER, not merely somewhere safe. A pinned version of
+           this assertion once accepted #main-content here, because the stop
+           is a lazy chunk: its Workroom mounted only after the import
+           resolved, by which time App's shortcut re-arm had parked focus in
+           main — so the "launcher" the room captured WAS main. App now
+           captures the launcher synchronously in setActiveView for every
+           path view (the ordering rule the three eager rooms always had),
+           and this assertion is the one that keeps it true. */
         await page.waitForFunction(
           (expected) => {
             const el = document.activeElement
@@ -321,25 +301,104 @@ test.describe('workroom lifecycle', () => {
           { timeout: 15_000 }
         )
         const landed = await page.evaluate(() => ({
-          cls:
-            typeof document.activeElement?.className === 'string'
-              ? document.activeElement.className
-              : '',
-          text: (document.activeElement?.textContent || '').trim(),
           connected: document.activeElement?.isConnected ?? false,
         }))
-        expect(
-          landed.cls,
-          'focus did not come back to the rail button that opened the room'
-        ).toContain('step-rail-step')
-        expect(landed.text).toBe(launcherText)
         expect(
           landed.connected,
           'focus landed on a detached node — a stale launcher reference'
         ).toBe(true)
+        return
       }
+
+      /* Every other stop: open it from the previous stop's own path edge,
+         which is how a designer walks forward. Closing lands back on that
+         stop, which mounts fresh and takes focus for itself. */
+      const seeded = await seedProject(page, wr.closesTo)
+      skipIfNoSeed(test, seeded)
+      const from = `${roomFor(wr.closesTo)}:not(.is-suspended)`
+      await focusIn(from)
+
+      const stop = page
+        .locator(`${from} .cc-stage-stop`)
+        .filter({ hasText: new RegExp(`^${labelForView(wr.view)}$`) })
+      await expect(stop).toHaveCount(1)
+      await stop.focus()
+      await page.keyboard.press('Enter')
+      await focusIn(live)
+
+      await page.keyboard.press('Escape')
+      await page
+        .locator(`.app.view-${wr.closesTo}`)
+        .waitFor({ state: 'attached', timeout: 15_000 })
+
+      await focusIn(from)
+      const landed = await page.evaluate(() => ({
+        tag: document.activeElement?.tagName,
+        connected: document.activeElement?.isConnected ?? false,
+      }))
+      expect(
+        landed.tag,
+        'focus fell back to the document instead of entering the previous room'
+      ).not.toBe('BODY')
+      expect(landed.connected).toBe(true)
     })
   }
+
+  /**
+   * The same round trip, pointer-driven.
+   *
+   * Enter and Escape are covered above; a mouse user opens the first stop by
+   * clicking the rail and leaves by clicking the stage exit, and App can only
+   * restore what it captured at that click. Chromium focuses a clicked
+   * button, so the capture path is the same — asserted rather than assumed,
+   * because "works by keyboard" and "works by pointer" have already diverged
+   * once in this suite's history.
+   */
+  test('clicking open and clicking the exit returns focus to the launcher', async ({
+    page,
+  }) => {
+    test.setTimeout(150_000)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const first = WORKROOMS[0]
+    const seeded = await seedProject(page, 'desk')
+    skipIfNoSeed(test, seeded)
+
+    const rail = page.getByRole('navigation', { name: /Process position/i })
+    const launcher = rail.getByRole('button', {
+      name: new RegExp(`: ${labelForView(first.view)}\\b`, 'i'),
+    })
+    await expect(launcher).toHaveCount(1)
+    const launcherText = ((await launcher.textContent()) || '').trim()
+    await launcher.click()
+
+    const live = `${first.room}:not(.is-suspended)`
+    await page.waitForFunction(
+      (sel) => {
+        const room = document.querySelector(sel)
+        return !!room && room.contains(document.activeElement)
+      },
+      live,
+      { timeout: 15_000 }
+    )
+
+    await page.locator(`${live} .cc-stage-exit`).click()
+    await page
+      .locator(`.app.view-${first.closesTo}`)
+      .waitFor({ state: 'attached', timeout: 15_000 })
+
+    await page.waitForFunction(
+      (expected) => {
+        const el = document.activeElement
+        return (
+          el instanceof HTMLElement &&
+          el.classList.contains('step-rail-step') &&
+          (el.textContent || '').trim() === expected
+        )
+      },
+      launcherText,
+      { timeout: 15_000 }
+    )
+  })
 
   /**
    * A stale launcher must never be focused.
@@ -358,7 +417,7 @@ test.describe('workroom lifecycle', () => {
     const seeded = await seedProject(page, 'spark')
     skipIfNoSeed(test, seeded)
 
-    const live = '.direction-room:not(.is-suspended)'
+    const live = '.cc-stage--ideate:not(.is-suspended)'
     await page.waitForFunction(
       (sel) => {
         const room = document.querySelector(sel)
@@ -388,17 +447,20 @@ test.describe('workroom lifecycle', () => {
   /**
    * The negative half of the contract.
    *
-   * Brief, Research, Brand book and Delivery are ordinary shell pages. If a
-   * future change gives one of them a room — or leaks a room's lock onto one —
-   * the shell silently stops working, and nothing else would catch it.
+   * This used to walk "the shell stops" — Brief, Research, Brand book,
+   * Delivery — and assert they carried no room lock. Every stop is a room
+   * now, so the honest negative space is the true shell surfaces, and the
+   * desk is the one that matters most: it is the first stop's own exit
+   * target, so a room that leaked `inert` on the way out would strand a
+   * designer exactly here, with a working-looking page that answers nothing.
    */
-  for (const stop of SHELL_STOPS) {
-    test(`${stop.view}: renders in the shell, with no room lock`, async ({
+  for (const view of SHELL_VIEWS) {
+    test(`${view}: renders in the shell, with no room lock`, async ({
       page,
     }) => {
       test.setTimeout(120_000)
       await page.setViewportSize({ width: 1440, height: 900 })
-      const seeded = await seedProject(page, stop.view)
+      const seeded = await seedProject(page, view)
       skipIfNoSeed(test, seeded)
       await page.waitForTimeout(600)
 
@@ -411,10 +473,13 @@ test.describe('workroom lifecycle', () => {
           bodyOverflow: document.body.style.overflow,
         }
       })
-      expect(l.rootInert, `${stop.view} left #root inert`).toBe(false)
+      expect(l.rootInert, `${view} left #root inert`).toBe(false)
       expect(l.rootAriaHidden).toBeNull()
       expect(l.rootVisibility).not.toBe('hidden')
       expect(l.bodyOverflow).not.toBe('hidden')
+
+      /* No stage claims the viewport here. */
+      await expect(page.locator('.cc-stage:not(.is-suspended)')).toHaveCount(0)
 
       /* The rail is the shell's own navigation and must be operable here. */
       await expect(

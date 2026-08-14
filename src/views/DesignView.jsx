@@ -140,7 +140,7 @@ export default function DesignView({
   projectPalette = [],
   studioName = '',
   setActiveView,
-  identityWorkroomLauncherRef,
+  workroomLauncherRef,
   pathCtx = null,
   flashToast,
   offerUndo,
@@ -970,7 +970,7 @@ export default function DesignView({
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
-      launcherRef={identityWorkroomLauncherRef}
+      launcherRef={workroomLauncherRef}
       suspended={suspended}
       className="identity-workroom"
       status={`Working on ${IDENTITY_SUBSTEPS[substepIndex]?.label || 'Mark'}`}
@@ -981,12 +981,21 @@ export default function DesignView({
          this table is being made rather than chosen, and the tool shelf
          below already says which part of it is on the bench. */
       masthead={<h1 className="cc-stage-display">{labelForStepId('design')}</h1>}
-      /* Same buttons, same substep logic, same handlers as the footer this
-         replaces — only the place they sit and the treatment around them
-         changed. Back walks the substeps first and falls back to the desk on
-         the first one; Next walks the substeps and falls through to the path.
-         Order flipped so the primary is last, which is where the ledge puts
-         it on every other stop. */
+      /* SUBNAV, NOT PATH NAV — which is the whole reason a Back survives here
+         and nowhere else. `Back · <substep>` walks Mark → Color → Type →
+         Handover inside this one stop; it is the "Subnav" G3 names in
+         Identity's recipe, and the stage edge cannot offer it because the
+         edge only knows stops.
+
+         The `: <Back to the desk>` branch it replaced was a different animal.
+         It appeared only on the FIRST substep, pointed somewhere the stage
+         edge does not (the edge reads "← Back to Directions" here), and
+         vanished the moment you stepped to Color — an escape that disappears
+         when you move forward is not an escape. Leaving Identity is the
+         edge's job at every substep, so nothing sits on the left at Mark.
+
+         Next walks the substeps and falls through to the path. Order puts the
+         primary last, which is where the ledge puts it on every stop. */
       ledge={
         <>
           {prevSubstep ? (
@@ -997,15 +1006,7 @@ export default function DesignView({
             >
               Back · {prevSubstep.label}
             </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setActiveView?.('desk')}
-            >
-              Back to the desk
-            </button>
-          )}
+          ) : null}
           <button
             type="button"
             className="btn btn-primary work-path-next"

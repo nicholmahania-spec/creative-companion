@@ -1,0 +1,82 @@
+/* ── The transient layer ───────────────────────────────────────────────────
+   Everything that must be seen and used while a Workroom stage owns the
+   viewport: the undo chip, the action toast, the Export dialog, the share
+   panel, the breakdown wizard.
+
+   WHY IT EXISTS. Workroom sets `#root` to `inert` + `aria-hidden` +
+   `visibility: hidden` while a stop is up (src/components/Workroom.jsx), and
+   that immersion is deliberate. But the whole transient layer was rendered
+   inside `#root`, so it went to sleep with the shell: an undo raised from
+   Touchpoints measured 241x39 with visibility hidden and `.cc-stage-ledge`
+   sitting on top of it, and pressing Preview on Delivery opened a
+   1280x720 `role="dialog"` that could not be seen. This host is a DOM sibling
+   of `#root`, so the isolation code is unchanged and simply cannot reach it.
+
+   Not to be confused with the stage's own chrome. The stage still owns its
+   edge and its ledge; this owns only what is temporary and must outrank
+   whatever is beneath it. */
+
+:root {
+  /* Declared as a PAIR, in one place, because neither number means anything
+     on its own — the only fact that matters is that the transient layer is
+     one tick above the stage. `workroom.css` consumes `--z-stage` from here:
+     tokens live in an eagerly-loaded sheet and lazy sheets read them, never
+     the other way around (docs/ONBOARDING.md — the `.direction-palette`
+     failure is the same shape). */
+  --z-stage: 2000000;
+  --z-overlay: 2000100;
+
+  /* NOT INT_MAX, and that is the whole point.
+     The stage used to sit at 2147483647. Chromium clamps z-index near the
+     32-bit ceiling — measured, both 2147483646 and 2147483647 computed to
+     2147480000 — so "one above the stage" was not a representable position and
+     the transient layer silently lost every stacking contest it appeared to
+     win. Two million is four orders of magnitude above the highest z-index in
+     the app (10001, the skip link) and nowhere near the clamp. */
+}
+
+#cc-overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  /* The empty layer must intercept nothing. It covers the viewport so its
+     fixed children size against the initial containing block; without this
+     it would eat every click on the stage underneath. Re-enabled per child
+     below, because `pointer-events` inherits and the wrapper generates no
+     box of its own to carry it. */
+  pointer-events: none;
+}
+
+/* A cascade scope, never a box.
+   The deep palette is declared on `.app.deep`, not on `:root` — so anything
+   portalled out of `.app` renders with the light tokens on a dark canvas.
+   `display: contents` keeps every `.app.deep <descendant>` rule matching and
+   every custom property inheriting (both are DOM relationships, not box
+   relationships) while `.app`'s own `min-height`, `display` and `background`
+   paint nothing. Specificity (0,2,0) beats `.app`'s (0,1,0). */
+.app.cc-overlay-layer {
+  display: contents;
+}
+
+.cc-overlay-layer > * {
+  pointer-events: auto;
+}
+
+/* Printing lays the pack out in normal flow — `shell.css` makes
+   `.export-overlay` `position: static` under `body.cc-printing-pack` so the
+   book paginates instead of being one viewport tall. A fixed host would be
+   the containing block for that static child's own fixed descendants and clip
+   the whole thing back to one screen, which is a failure you only see in a
+   PDF nobody generated during review. */
+body.cc-printing-pack #cc-overlay-root,
+body.cc-printing-page #cc-overlay-root {
+  /* No `!important` needed and none used: `body.<class> #id` outranks the bare
+     `#id` rule above on specificity alone. The `.export-overlay` print rules
+     in `shell.css` need it because they fight a rule of equal weight; this one
+     does not, and the ratchet in `lib/importantRatchet.test.js` is right to
+     make that the default. */
+  position: static;
+  inset: auto;
+  z-index: auto;
+  pointer-events: auto;
+}

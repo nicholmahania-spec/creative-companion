@@ -43,10 +43,12 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useStageSignals, stageSignalLines } from '../lib/stageSignals'
 import { getPrevJourney, labelForStepId } from '../lib/journey/journey'
 import { stepsForProject } from '../lib/journey/projectTypes'
 import { pathStepHasContent } from '../lib/journey/journeyProgress'
 import '../styles/workroom.css'
+import { hasOpenModalLayer } from '../lib/modalLayers.js'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -66,6 +68,28 @@ const FOCUSABLE =
  * @param {string} [p.testId]
  * @param {React.ReactNode} p.children
  */
+/**
+ * The two signals the stage may show from outside itself.
+ *
+ * Says nothing at all when there is nothing to say: no provider, no unread
+ * and no open to-dos all render empty rather than "0". A zero here would be
+ * a scoreboard of nothing, which is the read `openTodoCount`'s own comment in
+ * App.jsx already refuses on the header pill.
+ */
+function StageSignals() {
+  const lines = stageSignalLines(useStageSignals())
+  if (!lines.length) return null
+  return (
+    <p className="cc-stage-signals">
+      {lines.map((line) => (
+        <span key={line} className="cc-stage-signal">
+          {line}
+        </span>
+      ))}
+    </p>
+  )
+}
+
 export default function Workroom({
   stepId,
   project = null,
@@ -151,6 +175,12 @@ export default function Workroom({
     }
 
     const onKeyDown = (event) => {
+      /* Yield to whatever is open above this stage.
+         Both branches, not just Escape: a nested dialog runs its own focus
+         trap, and two traps wrapping in opposite directions on the same Tab
+         is the same class of bug as two handlers acting on the same Escape.
+         See `src/lib/modalLayers.js`. */
+      if (hasOpenModalLayer()) return
       if (event.key === 'Escape') {
         event.preventDefault()
         close()
@@ -175,7 +205,20 @@ export default function Workroom({
     }
 
     const onFocusIn = (event) => {
-      if (roomRef.current && !roomRef.current.contains(event.target)) focusRoom()
+      const room = roomRef.current
+      if (!room || room.contains(event.target)) return
+      /* The transient layer sits ABOVE this stage, deliberately outside the
+         room — an undo chip and the Export dialog are raised from in here and
+         have to be usable from in here. Pulling focus back out of them would
+         make them look reachable and behave as if they were not, which is a
+         worse failure than the one this trap prevents.
+
+         Narrow on purpose, and vacuous by construction: `#cc-overlay-root` is
+         empty unless something transient is mounted, so with nothing open this
+         exemption cannot match anything and the trap is exactly as tight as it
+         was. The shell is still `inert`, so this opens no route back into it. */
+      if (event.target?.closest?.('#cc-overlay-root')) return
+      focusRoom()
     }
 
     requestAnimationFrame(() => roomRef.current?.focus({ preventScroll: true }))
@@ -241,9 +284,14 @@ export default function Workroom({
           </ol>
         </nav>
 
-        <p className="cc-stage-status" role="status">
-          {status}
-        </p>
+        <div className="cc-stage-aside">
+          {/* What the shell would have told you, if the shell were visible.
+              Read-only by design — see `lib/stageSignals.js`. */}
+          <StageSignals />
+          <p className="cc-stage-status" role="status">
+            {status}
+          </p>
+        </div>
       </header>
 
       <h1 id={headingId} className="sr-only">

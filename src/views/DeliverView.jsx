@@ -14,13 +14,12 @@ import {
   packBriefMarkdown,
   creditedFooter,
 } from '../lib/book/exportFiles'
+import { FIELD_HOMES } from '../lib/book/bookContent'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
 import { clientFacingName } from '../lib/client/clientRecord'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
 import { deliverStatusLine } from '../lib/deliver/deliverStatus'
 import {
-  BOOK_PAGE_SIZES,
-  BOOK_EDGE_SPACE,
   bookSetupSummary,
 } from '../lib/book/brandBookSetup'
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
@@ -38,29 +37,9 @@ const DeliverToClient = lazy(
  * A row of named stops. Options come from brandBookSetup so the labels here
  * and the geometry the PDF applies are the same declaration.
  */
-function SetupChoice({ label, options, value, onChange }) {
-  return (
-    <div className="book-setup-row">
-      <span className="book-setup-label">{label}</span>
-      <div className="book-setup-stops" role="group" aria-label={label}>
-        {options.map((o) => (
-          <button
-            key={o.id}
-            type="button"
-            className={`book-setup-stop${value === o.id ? ' is-on' : ''}`}
-            aria-pressed={value === o.id}
-            onClick={() => onChange(o.id)}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function DeliverView({
   navDir = 'none',
+  workroomLauncherRef = null,
   activeProject = null,
   projectPalette = [],
   studioName = '',
@@ -103,8 +82,6 @@ export default function DeliverView({
      to write `prefs.book*` while the Brand Book Builder wrote its own
      per-project copy, so the two surfaces could disagree about the trim the
      client would actually receive. Same three controls, one home. */
-  const setBookBuilder = useAppStore((s) => s.setBookBuilder)
-  const setBookSetup = (patch) => setBookBuilder(patch)
   const addContact = useAppStore((s) => s.addContact)
   const updateContact = useAppStore((s) => s.updateContact)
   const removeContact = useAppStore((s) => s.removeContact)
@@ -159,6 +136,7 @@ export default function DeliverView({
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
+      launcherRef={workroomLauncherRef}
       /* `.assets-status` in the masthead already carries this line. Two copies
          of one status on one screen is two facts to reconcile. */
       masthead={
@@ -382,28 +360,22 @@ export default function DeliverView({
       <div className="assets-secondary">
         <details className="deliver-advanced" open={false}>
           <summary>Page setup · print size</summary>
+          {/* READ-ONLY. The sheet is the book's decision, proofed against the
+              book's own pages, and it had two editors — here and in the
+              Builder — writing the one field the store's v10 migration gave a
+              single home. Reporting it here and linking to the home is the
+              same shape the Builder already uses for facts Identity owns
+              (`BookOwnedElsewhere`), and `FIELD_HOMES.pageSize` is where that
+              destination is declared rather than restated. */}
           <div className="book-setup" role="group" aria-label="Page setup">
-            <SetupChoice
-              label="Page size"
-              options={BOOK_PAGE_SIZES}
-              value={bookSetup.pageSize}
-              onChange={(v) => setBookSetup({ pageSize: v })}
-            />
-            <SetupChoice
-              label="Edge space"
-              options={BOOK_EDGE_SPACE}
-              value={bookSetup.edgeSpace}
-              onChange={(v) => setBookSetup({ edgeSpace: v })}
-            />
-            <label className="book-setup-shop">
-              <input
-                type="checkbox"
-                checked={bookSetup.printShop}
-                onChange={(e) => setBookSetup({ printShop: e.target.checked })}
-              />
-              <span>Going to a print shop</span>
-            </label>
             <p className="book-setup-state">{bookSetupSummary(bookSetup)}</p>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setActiveView?.(FIELD_HOMES.pageSize.view)}
+            >
+              {`Edit in ${FIELD_HOMES.pageSize.label} →`}
+            </button>
           </div>
         </details>
 

@@ -6,6 +6,7 @@ import {
   SPECTRUM_FIELDS,
 } from '../lib/brief/detectiveBrief'
 import { attributesFromBrief } from '../lib/brand/strategySeed'
+import { consolidateDiscovery } from '../lib/brief/discoveryConsolidation'
 /* Page setup is seeded from prefs at creation and migration ONLY — see
    `seededBookSetup`. No other read of `prefs.book*` exists. */
 import { seededBookSetup } from '../lib/book/bookBuilder'
@@ -2222,17 +2223,14 @@ const useAppStore = create(
         }),
 
       /** Client discovery brief — merged project-brief + questionnaire */
-      updateDiscoveryField: (fieldId, value) =>
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== state.currentProjectId) return p
-            return {
-              ...p,
-              discoveryAnswers: { ...(p.discoveryAnswers || {}), [fieldId]: value },
-            }
-          }),
-        })),
-
+      /* `updateDiscoveryField` was here — the studio's write path into the
+         retired 30-question `discoveryAnswers` schema. Removed with the
+         intake it served: client answers arrive through
+         `mergeDiscoveryAnswers` from /f/:shareId, and the designer's own
+         capture is the Brief and its Call mode, both of which write
+         `detective`. `discoveryAnswers` itself stays — it holds real answers
+         from before the retirement and the hand-off exports read it — but
+         nothing in the studio writes to it any more. */
       setDiscoveryUpload: (upload) =>
         set((state) => ({
           projects: state.projects.map((p) =>
@@ -4353,7 +4351,7 @@ const useAppStore = create(
           }
         },
       },
-      version: 10,
+      version: 11,
       migrate: (persisted, fromVersion) => {
         // Keep real user data; only normalize missing arrays
         if (!persisted || typeof persisted !== 'object') {
@@ -4456,7 +4454,16 @@ const useAppStore = create(
              lacks, it may not decide that "no projects" is damage. */
           projects:
             Array.isArray(persisted.projects)
-              ? persisted.projects.map((p) => ({
+              /* v11: THE PROVEN HALF OF THE RETIRED DISCOVERY SCHEMA.
+                 Eighteen of its thirty questions have a canonical home; this
+                 copies those answers into `detective` where the rest of the
+                 app already looks. It only ever fills a blank — the same
+                 precedence `mergeDiscoveryAnswers` has always used — so it is
+                 idempotent, and it returns `discoveryAnswers` untouched so the
+                 notes surface and the markdown hand-off still read what the
+                 client actually wrote. The other twelve stay put; see
+                 `DISCOVERY_DEFERRED` for why each one does. */
+              ? persisted.projects.map(consolidateDiscovery).map((p) => ({
                   ...p,
                   /* v5: the work clock used to write into `timeLog`, the
                      array the invoice bills from. Lift those measured rows

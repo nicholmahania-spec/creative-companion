@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import {
   headingForStep,
+  openIdentitySubstep,
   pathNav,
   skipIfCloud,
   stepByIdIn,
@@ -101,7 +102,16 @@ test('one route is open, and tapping material puts it in that route', async ({
   // A second route takes the tap next, and the first keeps what it had.
   await page.locator('#dir-add').click()
   await page.waitForTimeout(250)
-  await expect(page.locator('.ideate-dir-card').nth(1)).toHaveClass(/is-open/)
+  /* Addressed by which route is open, not by position. The Formation Table
+     hoists the open route to the head of the list (`tableRoutes` in
+     SparkView.jsx), so the new route B is card 0, not card 1 — asserting
+     `.nth(1)` described the pre-table order and failed on a correct screen.
+     What this line is for is "the tap moved to the route you just made". */
+  const openCard = page.locator('.ideate-dir-card.is-open')
+  await expect(openCard).toHaveCount(1)
+  await expect(
+    openCard.getByRole('button', { name: 'Open route B' })
+  ).toBeVisible()
   await page.locator('.dir-ev-item').nth(1).click()
   await page.waitForTimeout(250)
 
@@ -259,12 +269,15 @@ test('Develop grounds Identity in chosen route material without overwriting the 
   const strip = page.locator('.dir-developing')
   await expect(strip).toBeVisible()
   await expect(strip).toContainText('Warm editorial')
-  await expect(strip.locator('.dir-developing-parts')).toBeVisible()
+  /* `.dir-developing-parts` is deliberately `display: none` on Identity —
+     lazy-design.css: "A direction is a provisional source, not a second
+     inspector … the fuller breakdown remains in Directions". So the strip
+     still has to NAME the route's material, which is what this test is
+     about; it just does not list it here. */
   await expect(strip).toContainText(/Color/i)
 
   /* Identity sub-nav Color — not Visual Discovery's Color tab. */
-  await page.locator('.identity-subnav-btn', { hasText: 'Color' }).click()
-  await page.waitForTimeout(400)
+  await openIdentitySubstep(page, 'colors')
   await expect(page.locator('[data-testid="dir-route-colour"]')).toBeVisible({
     timeout: 8000,
   })
@@ -277,8 +290,7 @@ test('Develop grounds Identity in chosen route material without overwriting the 
   expect(after.active).toBe('a')
 
   /* Incomplete Type/Mark: L1 owns attention; L3 brand system secondary. */
-  await page.locator('.identity-subnav-btn', { hasText: 'Type' }).click()
-  await page.waitForTimeout(300)
+  await openIdentitySubstep(page, 'type')
   const typeLead = page.locator('[data-testid="dir-route-type"]')
   await expect(typeLead).toBeVisible({ timeout: 8000 })
   await expect(typeLead).toContainText(
@@ -293,8 +305,7 @@ test('Develop grounds Identity in chosen route material without overwriting the 
   })
 
   /* Color: L2 draft from route evidence; L3 factory separate; Set promotes. */
-  await page.locator('.identity-subnav-btn', { hasText: 'Color' }).click()
-  await page.waitForTimeout(400)
+  await openIdentitySubstep(page, 'colors')
   await expect(page.locator('[data-testid="dir-route-colour"]')).toBeVisible()
   await expect(page.locator('[data-testid="dir-colour-develop"]')).toBeVisible()
   await expect(page.locator('[data-testid="dir-colour-canonical"]')).toBeVisible()
@@ -315,8 +326,7 @@ test('Develop grounds Identity in chosen route material without overwriting the 
     expect(afterSet.palette).not.toBe(paletteBefore)
   }
 
-  await page.locator('.identity-subnav-btn', { hasText: 'Mark' }).click()
-  await page.waitForTimeout(300)
+  await openIdentitySubstep(page, 'logo')
   const markLead = page.locator('[data-testid="dir-route-mark"]')
   await expect(markLead).toBeVisible()
   await expect(markLead).toContainText(/No mark on this route/i)

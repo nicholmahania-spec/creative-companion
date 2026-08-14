@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, skipIfCloud, pathNav, stepByIdIn } from './helpers.js'
+import { skipIfCloud, toShell, unlockAndOnboard } from './helpers.js'
 
 /**
  * Characterisation test for the "Break down" wizard — five screens that turn a
@@ -11,32 +11,45 @@ import { unlockAndOnboard, skipIfCloud, pathNav, stepByIdIn } from './helpers.js
  * safely move. It passes identically against both shapes — that is the point.
  */
 /**
- * Reaching the wizard from a project that already has steps is still awkward,
- * and this helper mirrors it: the "Break down project" button lives inside a
- * per-step "More" <details>, inside the current-step card. That entry point
- * used to be the ONLY one, which left the wizard unreachable on an empty
- * project — the state where breaking a project down is most useful. The empty
- * state now carries its own trigger; see the reachability test below.
+ * WHERE THE DOOR IS NOW, and why the old one is not coming back.
+ *
+ * The wizard used to be opened from two places on the drafting Sketch screen:
+ * a per-step "More" <details>, and — added later, precisely because the first
+ * one needed a step to exist — a trigger on the empty state. The Touchpoints
+ * rebuild replaced that whole screen and deleted both, leaving `openBreakdown`
+ * with no caller but the wizard's own "start over" button. The wizard was
+ * unreachable by any route: not a stop, not the Tools menu, not a shortcut,
+ * not a link.
+ *
+ * The door is now the Desk's Project panel, beside Hours, Archive and Delete.
+ * That is not a restoration of the old trigger — the screen it lived on is
+ * gone and is not being rebuilt. It is the same capability at the address the
+ * current architecture produces: the panel's own rule is scope, "actions that
+ * only ever act on the project you are looking at", and breaking a project
+ * into steps is exactly that. It also answers the question the empty-state
+ * trigger existed for — "big job, no idea where to start" is asked from the
+ * Desk, before you have chosen a stop.
+ *
+ * The Desk is shell, so a stage has to be left first; that is what a designer
+ * does too.
  */
-const goToSketch = async (page) => {
-  const path = await pathNav(page)
-  await stepByIdIn(path, 'sketch').click()
-  await expect(page.locator('#desk-capture')).toBeVisible({ timeout: 10000 })
-}
-
-const addStep = async (page, title) => {
-  await page.locator('#desk-capture').fill(title)
-  await page.locator('#desk-capture').press('Enter')
-  await expect(page.locator('.step-focus')).toBeVisible({ timeout: 10000 })
-}
-
 const openWizard = async (page) => {
+  await toShell(page)
   const trigger = page.getByRole('button', { name: /Break down project/i })
-  /* <details> stays open across a wizard open/close cycle, so toggling it
-     unconditionally would hide the button on the second call. */
-  if (!(await trigger.isVisible().catch(() => false))) {
-    await page.locator('.step-more-details summary').first().click()
-  }
+
+  /* ONE DOOR. The panel's whole point is that a project action has a single
+     home — a second copy somewhere else is how the previous one rotted
+     unnoticed. */
+  await expect(trigger).toHaveCount(1)
+
+  /* And it is directly clickable: no disclosure to open first. The old
+     entry point was inside a <details> and that is the reason the reachability
+     fix was needed in the first place. */
+  expect(
+    await trigger.evaluate((el) => !!el.closest('details')),
+    'the trigger must not be behind a disclosure'
+  ).toBe(false)
+
   await expect(trigger).toBeVisible()
   await trigger.click()
   await expect(
@@ -50,8 +63,6 @@ test('the wizard walks five screens and lands steps in Sketch', async ({
   const gate = await unlockAndOnboard(page, { name: 'Breakdown Project' })
   skipIfCloud(test, gate)
 
-  await goToSketch(page)
-  await addStep(page, 'First step')
   await openWizard(page)
   const dialog = page.getByRole('dialog', {
     name: /Break project into micro-steps/i,
@@ -103,22 +114,20 @@ test('the wizard walks five screens and lands steps in Sketch', async ({
   )
   expect(reported).toBe(generated)
 
-  /* "Start #1" closes the wizard and lands back on Sketch. The committed
-     micro-steps go into the queue, which the commit deliberately collapses —
-     so the assertion is "we are on Sketch with a current step", not "the new
-     step is on screen". */
+  /* "Start #1" closes the wizard and takes you to the stop the steps went to.
+     The committed micro-steps go into the queue, which the commit deliberately
+     collapses, so the assertion is where you ARE, not what is on screen. */
   await dialog.getByRole('button', { name: /^Start #1$/ }).click()
   await expect(dialog).toHaveCount(0)
-  await expect(page.locator('.step-focus')).toBeVisible({ timeout: 10000 })
-  await expect(page.locator('#desk-capture')).toBeVisible()
+  await expect(page.locator('.cc-stage--sketch')).toHaveCount(1, {
+    timeout: 10000,
+  })
 })
 
 test('reopening starts a clean run, and Escape closes', async ({ page }) => {
   const gate = await unlockAndOnboard(page, { name: 'Breakdown Reset' })
   skipIfCloud(test, gate)
 
-  await goToSketch(page)
-  await addStep(page, 'First step')
   await openWizard(page)
   const dialog = page.getByRole('dialog', {
     name: /Break project into micro-steps/i,
@@ -145,18 +154,13 @@ test('the wizard is reachable on an empty project', async ({ page }) => {
   const gate = await unlockAndOnboard(page, { name: 'Breakdown Empty' })
   skipIfCloud(test, gate)
 
-  await goToSketch(page)
-
-  /* The state under test: no step has ever been added, so the current-step
-     card renders its empty state and the per-step "More" <details> — the
-     wizard's only previous entry point — does not exist at all. */
-  await expect(page.locator('.sketch-empty')).toBeVisible({ timeout: 10000 })
-  await expect(page.locator('.step-more-details')).toHaveCount(0)
-
-  /* No <details> to open first: the trigger is on screen and directly
-     clickable, which is the whole point of the fix. */
+  /* The state under test: a project with no steps at all. This is the moment
+     the tool is FOR, and the moment the old entry point could not serve —
+     it needed a step to exist before it appeared. The Desk door does not. */
+  await toShell(page)
   const trigger = page.getByRole('button', { name: /Break down project/i })
   await expect(trigger).toBeVisible()
+  expect(await trigger.evaluate((el) => !!el.closest('details'))).toBe(false)
   await trigger.click()
 
   await expect(

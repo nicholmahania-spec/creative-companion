@@ -61,6 +61,7 @@ export default function SparkView({
   flashMicro,
   projectId,
   goSystemSection,
+  journeyNext = null,
   suspended = false,
 }) {
   const addDirection = useAppStore((s) => s.addDirection)
@@ -211,6 +212,22 @@ export default function SparkView({
       className="spark-view ideate-studio"
       status={
         openRoute ? `Working on route ${openRoute.letter}` : 'Private route table'
+      }
+      /* Directions was the last stop with NO ledge — the only one whose G3
+         recipe ends in "continue" while the screen offered none. Its forward
+         route was `Develop →` on a named route, which is not the same thing:
+         it opens Identity ON that route, so it is unavailable until a route
+         has a name, and it carries a decision. The path's own next step
+         should not require one. Same target, same derivation, same place as
+         every other stop. */
+      ledge={
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.(journeyNext?.view || 'brand')}
+        >
+          {`Next · ${journeyNext?.label || labelForStepId('design')}`}
+        </button>
       }
     >
 

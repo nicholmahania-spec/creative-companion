@@ -43,6 +43,21 @@ const goToStage = async (page, id) => {
 
 const chip = (page) => page.locator('.work-clock-chip')
 
+/* PRESENCE, NOT VISIBILITY, is the clock's user-visible contract now.
+ *
+ * The chip is shell chrome (`src/App.jsx`), and every path stop is a Workroom
+ * that sets `#root` to `inert` + `visibility: hidden`. `src/lib/stageSignals.js`
+ * states the rule the shell now follows — only unread client activity and open
+ * to-dos cross into a stage, and "everything else the header carries can wait
+ * for the exit". So the clock is deliberately not on screen while you are in a
+ * stop, and asserting `toBeVisible` there was asserting against a decision.
+ *
+ * What these tests are actually about survives intact: the chip is rendered
+ * only while `workRunning`, so ATTACHED means running and count 0 means
+ * stopped. Both of those are still exactly what is asserted below — and the
+ * one place the clock IS on screen (the shell) still gets `toBeVisible`.
+ */
+
 test('the clock runs on a project stage and reads as just started', async ({
   page,
 }) => {
@@ -50,7 +65,7 @@ test('the clock runs on a project stage and reads as just started', async ({
   skipIfCloud(test, gate)
 
   await goToStage(page, 'sketch')
-  await expect(chip(page)).toBeVisible({ timeout: 10000 })
+  await expect(chip(page)).toBeAttached({ timeout: 10000 })
 
   /* sessionLabel's first branch: under a minute is words, not a 0m readout. */
   await expect(chip(page)).toContainText('just started')
@@ -63,16 +78,16 @@ test('the clock keeps running across a move between stages', async ({
   skipIfCloud(test, gate)
 
   await goToStage(page, 'sketch')
-  await expect(chip(page)).toBeVisible({ timeout: 10000 })
+  await expect(chip(page)).toBeAttached({ timeout: 10000 })
 
   /* Moving between two stages banks the open segment and opens a new one.
      The user-visible contract is that the clock does not stop: both views are
      stage views, so workRunning stays true straight through. */
   await goToStage(page, 'design')
-  await expect(chip(page)).toBeVisible()
+  await expect(chip(page)).toBeAttached()
 
   await goToStage(page, 'define')
-  await expect(chip(page)).toBeVisible()
+  await expect(chip(page)).toBeAttached()
 })
 
 test('the clock stops on a view that is not a project stage', async ({
@@ -82,7 +97,7 @@ test('the clock stops on a view that is not a project stage', async ({
   skipIfCloud(test, gate)
 
   await goToStage(page, 'sketch')
-  await expect(chip(page)).toBeVisible({ timeout: 10000 })
+  await expect(chip(page)).toBeAttached({ timeout: 10000 })
 
   /* A tool is not a stage. STAGE_VIEWS is derived from JOURNEY_STEPS, so this
      is the boundary the clock actually draws: time in a tool is not stage
@@ -101,5 +116,5 @@ test('the clock stops on a view that is not a project stage', async ({
      so the rail would also work; the shortcut is left as-is because it is the
      narrower dependency.) */
   await goToStepByKey(page, 'sketch')
-  await expect(chip(page)).toBeVisible({ timeout: 10000 })
+  await expect(chip(page)).toBeAttached({ timeout: 10000 })
 })

@@ -4,6 +4,7 @@ import {
   openIdentitySubstep,
   pathNav,
   skipIfCloud,
+  toShell,
   stepByIdIn,
   unlockAndOnboard,
 } from './helpers.js'
@@ -86,6 +87,7 @@ test('the real Timer still works where it lives', async ({ page }) => {
   const errors = []
   page.on('pageerror', (e) => errors.push(String(e)))
 
+  await toShell(page)
   await page.locator('#tools-menu-button').click()
   await page.getByRole('menuitem', { name: /Timer/ }).click()
   await expect(page.locator('.insights-focus-actions')).toBeVisible({

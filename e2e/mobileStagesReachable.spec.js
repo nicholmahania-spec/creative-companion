@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { JOURNEY_STEPS } from '../src/lib/journey/journey.js'
-import { skipIfCloud, unlockAndOnboard } from './helpers.js'
+import { gotoView, skipIfCloud, unlockAndOnboard } from './helpers.js'
 
 /**
  * Every journey stage must be reachable in the mobile drawer.
@@ -30,6 +30,14 @@ test.describe('mobile drawer reaches every stage', () => {
     skipIfCloud(test, gate)
 
     await page.setViewportSize({ width: 390, height: 844 })
+
+    /* Onboarding leaves you inside the project — on the Brief STAGE, which
+       owns the viewport and puts the shell, menu toggle included, to sleep.
+       The drawer is shell furniture, so open it from a shell surface: the
+       desk. Inside a stage the "every stop findable" job belongs to the
+       stage's own path edge, which draws all the stops by name and is
+       asserted in nav-destinations — this file guards the shell's copy. */
+    await gotoView(page, 'desk')
     await page.waitForTimeout(400)
 
     await page.locator('.header-menu-toggle').first().click()

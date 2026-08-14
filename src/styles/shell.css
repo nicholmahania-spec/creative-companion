@@ -42,11 +42,11 @@
   --dopamine-plate-hover: #4330C0;
   --on-dopamine: #FFFFFF;
 
-  --bg-canvas: #F5F5F5;
-  --bg-warm: #FFFFFF;
-  --bg-card: #FFFFFF;
-  --bg-elevated: #FFFFFF;
-  --bg-muted: #EBEBEB;
+  --bg-canvas: #ece7dd;
+  --bg-warm: #f5f1e9;
+  --bg-card: #f5f1e9;
+  --bg-elevated: #f5f1e9;
+  --bg-muted: #e3ded2;
 
   /* ---- Ink and paper -------------------------------------------------
      Two surfaces, and the difference is meaning, not decoration.
@@ -69,16 +69,16 @@
   --paper-ink: #1A1A1A;
   --paper-edge: rgba(26, 26, 26, 0.14);
 
-  --text-primary: #1A1A1A;
-  --text-secondary: rgba(26, 26, 26, 0.68);
+  --text-primary: #17140f;
+  --text-secondary: rgba(23, 20, 15, 0.68);
   /* Was #A1A1A1, which scored 2.58:1 on white and 2.37:1 on the canvas grey
      against a 4.5:1 floor — and it's used 127 times, so every hint, count and
      secondary line in the app failed. #6B6B73 is 5.28:1 on white, 4.84:1 on
      canvas, and still reads as clearly secondary next to #1A1A1A. */
-  --text-muted: #6B6B73;
-  --border-subtle: #E7E7E7;
-  --border-strong: #D3D3D3;
-  --border-hairline: #E7E7E7;
+  --text-muted: #66625a;
+  --border-subtle: rgba(23, 20, 15, 0.16);
+  --border-strong: rgba(23, 20, 15, 0.32);
+  --border-hairline: rgba(23, 20, 15, 0.16);
   --border-accent: #A1A1A1; /* hover-emphasis border, used by .field-input:hover */
   --highlight-inset: none;
 
@@ -142,7 +142,11 @@
      screen silently rendered in the second font anyway. Naming the font we
      actually load means what's specified is what's drawn. */
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: var(--font-sans);
+  /* The display face the stage has always drawn its stop names in, promoted
+     from a hardcoded declaration to the token it should always have been.
+     It aliased --font-sans, so every one of its 22 readers was silently
+     getting the sans and the serif lived only inside workroom.css. */
+  --font-display: Georgia, 'Times New Roman', serif;
   --tracking-display: -0.01em;
 
   /* ---- Radius: three values, and only three ----------------------------
@@ -560,7 +564,7 @@ h3 {
   color: var(--text-secondary);
   font-size: 0.9rem;
   max-width: 40rem;
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-4);
   line-height: 1.45;
   font-weight: 500;
 }
@@ -578,7 +582,7 @@ h3 {
   border: none;
   background: none;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
@@ -653,7 +657,7 @@ h3 {
 .panel-head {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin-bottom: 0.9rem;
 }
 
@@ -700,7 +704,7 @@ h3 {
 }
 
 .empty-state {
-  padding: 1.5rem 0.25rem 0.75rem;
+  padding: var(--space-5) var(--space-1) var(--space-3);
   text-align: left;
 }
 
@@ -712,7 +716,7 @@ h3 {
 }
 
 .empty-state-subtitle {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.825rem;
   color: var(--text-secondary);
 }
@@ -833,7 +837,7 @@ h3 {
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-weight: 700;
   font-size: 1.05rem;
   letter-spacing: -0.03em;
@@ -943,7 +947,7 @@ h3 {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   border: 1px solid var(--border-subtle);
 }
 
@@ -952,7 +956,7 @@ h3 {
 }
 
 .forced-break-body {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   font-size: 0.92rem;
   font-weight: 500;
   line-height: 1.45;
@@ -1067,7 +1071,7 @@ h3 {
 .header-content-simple {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   max-width: 1120px;
   /* Without this the flex container inherits `min-width: auto` and reports the
      sum of its children's intrinsic widths as its own minimum — which is how
@@ -1816,7 +1820,7 @@ h3 {
 }
 
 .home-eyebrow {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -1943,7 +1947,7 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   padding: 1.1rem 1.15rem 0.7rem;
 }
 
@@ -2445,7 +2449,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   min-height: 2.5rem;
   padding: 0.55rem 1.2rem;
   /* Moved up from .btn-primary. Only primary carried nowrap, so a ghost
@@ -2456,7 +2460,7 @@ h3 {
   border: 1px solid var(--border-subtle);
   cursor: pointer;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.01em;
@@ -2938,7 +2942,7 @@ h3 {
 }
 
 .insights-focus {
-  margin: 0.25rem 0 2rem;
+  margin: var(--space-1) 0 var(--space-6);
   padding-bottom: 1.75rem;
   border-bottom: 1px solid var(--border-hairline);
 }
@@ -2956,7 +2960,7 @@ h3 {
 .insights-focus-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
@@ -2969,13 +2973,17 @@ h3 {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.85rem 1.25rem;
-  margin-bottom: 1.75rem;
-  /* 2026 design dressing: the hard 2px baseline under every page title —
-     the one intentional heavy rule per screen, anchoring the head the way
-     the handoff draws it on all of its screens. */
+  /* Same rhythm the Research row uses, so the two kinds of head sit on one
+     grid instead of two hand-set ones. */
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  /* The baseline under a page title stays — a utility page is allowed to
+     anchor its head in a way a stage does not. What changed is WHAT it is
+     drawn in: full ink at 2px was the heaviest line in the app and, against
+     the warm ground, read as a bar rather than a baseline. `--border-strong`
+     is the same token the rest of the system draws its firm edges with. */
   padding-bottom: var(--space-4);
-  border-bottom: 2px solid var(--text-primary);
+  border-bottom: 2px solid var(--border-strong);
 }
 
 /* ——— Material system: desk / wall / document (flat Tech-Studio) ——— */
@@ -3038,7 +3046,7 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
   margin-bottom: 0.65rem;
 }
 
@@ -3105,7 +3113,7 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%;
   margin: 0;
   padding: 0;
@@ -3429,7 +3437,7 @@ html[data-reduce-motion='true'] *::after {
 .done-title {
   flex: 1;
   min-width: 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 500;
   color: var(--text-secondary);
   text-decoration: line-through;
@@ -3479,7 +3487,7 @@ html[data-reduce-motion='true'] *::after {
 }
 
 .path-view-skeleton {
-  margin: 1rem;
+  margin: var(--space-4);
   max-width: 40rem;
   display: flex;
   flex-direction: column;
@@ -3543,7 +3551,7 @@ html[data-reduce-motion='true'] *::after {
 .deadline-edit-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -3600,7 +3608,7 @@ html[data-reduce-motion='true'] *::after {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-bottom: 0.85rem;
 }
 
@@ -3616,7 +3624,7 @@ html[data-reduce-motion='true'] *::after {
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
+  gap: var(--space-1);
   margin-bottom: 0.35rem;
   font-size: 0.7rem;
   font-weight: 700;
@@ -3716,7 +3724,7 @@ html[data-reduce-motion='true'] *::after {
 
 .deadline-list-item strong {
   display: block;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 700;
   margin-bottom: 0.15rem;
 }
@@ -3840,7 +3848,7 @@ html[data-reduce-motion='true'] *::after {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   background: var(--bg-warm);
   color: var(--text-primary);
 }
@@ -3858,7 +3866,7 @@ html[data-reduce-motion='true'] *::after {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -3881,7 +3889,7 @@ html[data-reduce-motion='true'] *::after {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 500;
   background: var(--bg-warm);
   color: var(--text-primary);
@@ -4416,7 +4424,7 @@ body.cc-printing-page button {
 
 .info-reveal {
   display: inline-block;
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
 }
 
 .info-reveal-toggle {
@@ -4450,7 +4458,7 @@ body.cc-printing-page button {
 }
 
 .work-context-line {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -4625,7 +4633,7 @@ body.cc-printing-page button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
   margin: 0.85rem 0 1rem;
 }
 
@@ -4680,7 +4688,7 @@ body.cc-printing-page button {
 }
 
 .type-specimen-h {
-  margin: 0 0 0.25rem;
+  margin: 0 0 var(--space-1);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -4816,11 +4824,11 @@ body.cc-printing-page button {
   }
 
 .step-focus-title {
-    font-size: 1.25rem !important;
+    font-size: var(--fs-4) !important;
   }
 
 .system-accordion-nav {
-    gap: 0.25rem;
+    gap: var(--space-1);
   }
 }
 
@@ -4854,7 +4862,7 @@ body.cc-printing-page button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: var(--space-5);
 }
 
 .export-panel {
@@ -4887,7 +4895,7 @@ body.cc-printing-page button {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: var(--space-4);
   margin-bottom: 1rem;
 }
 
@@ -4916,7 +4924,7 @@ body.cc-printing-page button {
   }
 
 .export-overlay {
-    padding: 0.75rem;
+    padding: var(--space-3);
     align-items: center;
   }
 
@@ -5441,14 +5449,6 @@ body.cc-printing-page button {
 
 /* ——— Redline v1.0.0 craft pass ——— */
 
-.work-page-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  margin: 0 0 0.2rem;
-}
-
 .app.is-pack-view .app-footer {
   display: none;
 }
@@ -5599,7 +5599,7 @@ html[data-reduce-motion="true"] .btn-primary:hover:not(:disabled) {
 .empty-illu {
   display: flex;
   justify-content: center;
-  margin: 0 auto 0.75rem;
+  margin: 0 auto var(--space-3);
   color: var(--text-primary);
   opacity: 0.9;
 }
@@ -5726,7 +5726,7 @@ html[dir="rtl"] .settings-jump {
 html[dir="rtl"] .back-link {
   display: inline-flex;
   flex-direction: row-reverse;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 /* Swap slide direction in RTL */
@@ -5840,7 +5840,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   padding: 0.75rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -5968,7 +5968,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   padding: 0.5rem 0.65rem;
   border: none;
   border-radius: var(--radius);
@@ -6435,7 +6435,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 .journey-sidebar .journey-step {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   padding: 0.55rem 0.65rem;
   border: none;
@@ -6530,7 +6530,7 @@ html[dir="rtl"] .buddy-shell.buddy-float {
     width: 100%;
     min-width: 0;
     padding: 0;
-    gap: 0.25rem;
+    gap: var(--space-1);
   }
 
   .journey-sidebar .journey-bar-item {
@@ -6610,12 +6610,6 @@ html[dir="rtl"] .buddy-shell.buddy-float {
 
 .flow-view .flow-top:hover {
   opacity: 1;
-}
-
-.work-page-title {
-  font-size: clamp(1.15rem, 2vw, 1.35rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
 }
 
 .work-context-line,
@@ -7194,7 +7188,7 @@ body:has(.app.deep)::after {
 .asset-audit-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem;
   border-radius: var(--radius);
   background: var(--bg-elevated);
@@ -7401,7 +7395,7 @@ body:has(.app.deep)::after {
 
 .header-redesign {
   min-height: 48px;
-  padding: 0.5rem 1rem !important;
+  padding: var(--space-2) var(--space-4) !important;
   border-bottom: 1px solid var(--border-subtle) !important;
   background: var(--bg-card) !important;
   box-shadow: none !important;
@@ -7412,7 +7406,7 @@ body:has(.app.deep)::after {
 
 .journey-gap-strip {
   display: flex !important;
-  padding: 0.25rem 1rem !important;
+  padding: var(--space-1) var(--space-4) !important;
   background: transparent !important;
   border-bottom: 1px solid var(--border-subtle) !important;
   opacity: 0.75;
@@ -7420,7 +7414,7 @@ body:has(.app.deep)::after {
 
 .journey-gap-strip-btn {
   border-radius: var(--radius-sm) !important;
-  font-size: 0.75rem !important;
+  font-size: var(--fs-1) !important;
 }
 
 .journey-sidebar .journey-progress-pill {
@@ -7439,7 +7433,7 @@ body:has(.app.deep)::after {
 
 .journey-sidebar {
   width: 200px;
-  padding: 0.75rem 0 !important;
+  padding: var(--space-3) 0 !important;
   background: var(--bg-card) !important;
   border-right: 1px solid var(--border-subtle) !important;
 }
@@ -7821,7 +7815,7 @@ body,
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-top: 1rem;
   padding: 0.75rem 0 calc(0.25rem + env(safe-area-inset-bottom, 0px));
   background: var(--ts-canvas, var(--bg-canvas));
@@ -7971,12 +7965,12 @@ select:focus {
 
 .command-studio .command-item {
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
 }
 
 .command-studio .command-empty {
-  margin: 0.5rem 0;
+  margin: var(--space-2) 0;
   font-size: 0.85rem;
   color: var(--text-muted);
 }
@@ -8086,7 +8080,7 @@ select:focus {
   border-top: 1px solid var(--ts-border, #E7E7E7) !important;
   box-shadow: none !important;
   background: var(--ts-panel, #FFFFFF) !important;
-  padding: 0.75rem 1rem !important;
+  padding: var(--space-3) var(--space-4) !important;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -8127,7 +8121,7 @@ select:focus {
 }
 
 .forced-break-studio .forced-break-body {
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   color: var(--ts-mute, #A1A1A1);
   margin: 0 0 0.85rem;
@@ -8278,14 +8272,14 @@ select:focus {
 
 .insights-studio .session-done-line {
   margin: 0.65rem 0 0.35rem;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   font-weight: 600;
   text-align: center;
 }
 
 .insights-studio .insights-continue {
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .settings-studio .panel.brand-section {
@@ -8597,7 +8591,7 @@ select:focus {
     display: flex !important;
     flex-wrap: nowrap !important;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     max-width: none !important;
   }
   .header-menu-toggle {
@@ -8721,7 +8715,7 @@ select:focus {
     box-shadow: 0 12px 32px rgba(23, 23, 23, 0.22) !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
-    padding: 0.75rem 0 !important;
+    padding: var(--space-3) 0 !important;
     opacity: 0;
     transform: scale(0.97);
     transition: opacity 0.16s ease, transform 0.16s ease;
@@ -8761,7 +8755,7 @@ select:focus {
     flex-direction: row !important;
     justify-content: flex-start !important;
     align-items: center !important;
-    gap: 0.5rem !important;
+    gap: var(--space-2) !important;
     text-align: left !important;
     border-left: 2px solid transparent !important;
     border-bottom: none !important;
@@ -9120,9 +9114,9 @@ select:focus {
   z-index: 30;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   min-width: 180px;
-  padding: 0.5rem;
+  padding: var(--space-2);
   border-radius: var(--radius);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
@@ -9158,7 +9152,7 @@ select:focus {
   width: min(320px, 100vw);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 1rem 0.85rem;
   background: var(--ts-panel, var(--bg-elevated));
   border-left: 1px solid var(--ts-border, var(--border-subtle));
@@ -9210,7 +9204,7 @@ select:focus {
 .running-todo-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem 0.2rem;
   border-radius: var(--radius);
 }
@@ -9283,7 +9277,7 @@ select:focus {
 .running-todo-panel-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-top: auto;
   padding-top: 0.6rem;
   border-top: 1px solid var(--ts-border, var(--border-subtle));
@@ -9331,7 +9325,7 @@ select:focus {
 .running-todo-prompt-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-top: 0.85rem;
 }
 
@@ -9361,7 +9355,7 @@ select:focus {
 .case-study-answers li {
   display: grid;
   grid-template-columns: 9.5rem 1fr;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.79rem;
 }
 .case-study-q {
@@ -9414,73 +9408,6 @@ select:focus {
   }
 }
 
-/* Layout patterns — closed reference in Sketch */
-
-.layout-scan-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-  margin: 0.5rem 0 0.75rem;
-}
-.layout-scan {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin: 0;
-  font-size: 0.78rem;
-}
-.layout-scan-when,
-.layout-scan-why {
-  color: var(--text-secondary);
-}
-.layout-scan-do {
-  font-weight: 600;
-}
-.layout-pattern-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-.layout-pattern {
-  border-bottom: 1px solid var(--ts-border, var(--border-subtle));
-}
-.layout-pattern-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1rem;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0.4rem 0;
-  cursor: pointer;
-  text-align: left;
-  min-height: 44px;
-}
-.layout-pattern-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-.layout-pattern-structure {
-  font-size: 0.76rem;
-  color: var(--text-secondary);
-}
-.layout-pattern-body {
-  padding: 0 0 0.5rem;
-  font-size: 0.78rem;
-}
-.layout-pattern-body p {
-  margin: 0 0 0.25rem;
-}
-.layout-pattern-scan {
-  color: var(--text-secondary);
-}
-@media (max-width: 640px) {
-  .layout-scan-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Client survey answers — studio side, grouped by theme */
 
 .survey-answers {
@@ -9519,7 +9446,7 @@ select:focus {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   background: none;
   border: none;
@@ -9536,7 +9463,7 @@ select:focus {
 .scope-panel-body {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem 0 0.2rem;
 }
 /* Top of the body, next to the gap count — not the bottom. The owner's rule
@@ -9548,7 +9475,7 @@ select:focus {
   display: grid;
   grid-template-columns: 1fr minmax(0, 12rem);
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .scope-row-stack {
   grid-template-columns: 1fr;
@@ -9576,7 +9503,7 @@ select:focus {
 /* Revision rounds + feedback log — Review */
 
 .revision-line {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -9584,13 +9511,13 @@ select:focus {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .revision-bill-block {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .revision-bill-check {
   display: inline-flex;
@@ -9682,7 +9609,7 @@ select:focus {
 /* Hours & invoice panel — reuses .running-todo-panel chrome */
 
 .hours-invoice-panel {
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .hours-log-list {
@@ -9786,7 +9713,7 @@ select:focus {
   align-items: center;
   justify-content: flex-start;
   min-height: var(--tap-min);
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   flex: 1 1 auto;
   min-width: 0;
@@ -9940,7 +9867,7 @@ select:focus {
   width: 100%;
   padding: 0.5rem 0.625rem;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   background: transparent;
   border: none;
   border-radius: var(--radius);
@@ -9964,7 +9891,7 @@ select:focus {
 .project-menu-restore {
   width: 100%;
   padding: 0.5rem 0.625rem;
-  font-size: 0.875rem;
+  font-size: var(--fs-2);
   border-radius: var(--radius);
   border: 1px solid var(--border-subtle);
 }
@@ -9981,7 +9908,7 @@ select:focus {
 }
 
 .more-menu-group-label {
-  margin: 0.5rem 0.5rem 0.25rem;
+  margin: var(--space-2) var(--space-2) var(--space-1);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -10261,12 +10188,12 @@ body:has(input:focus, textarea:focus, select:focus) .todo-fab {
 .public-fill-error {
   color: var(--danger);
   font-size: 0.85rem;
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
 }
 
 .client-portal-step-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .client-portal-chat-form .field-input {
@@ -11021,7 +10948,7 @@ textarea.artboard-brief-input {
 
 .error-boundary button {
   margin-top: var(--space-4);
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   min-height: 44px;
   background: var(--text-primary);
   color: var(--bg-card);
@@ -11053,7 +10980,7 @@ textarea.artboard-brief-input {
   min-width: 3rem;
   padding: 0 0.875rem;
   border-radius: var(--radius-pill);
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .todo-fab__label {
@@ -11297,7 +11224,7 @@ textarea.artboard-brief-input {
    ordinary body text stating what will print. PRODUCT.md §21 rules out the
    red/badge version of this. */
 .deliver-credit {
-  margin: 0.5rem 0 0.75rem;
+  margin: var(--space-2) 0 var(--space-3);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;

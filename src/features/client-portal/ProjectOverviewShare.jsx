@@ -9,7 +9,7 @@
  * half-checked scan to a stray backdrop click is the abandonment case.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { portalPushableSteps } from '../../lib/journey/journey'
+import { portalPushableSteps, labelForStepId } from '../../lib/journey/journey'
 import { DETECTIVE_CHAPTERS, coerceScannedAnswers } from '../../lib/brief/detectiveBrief'
 import { downloadProjectOverviewPdf } from '../../lib/book/exportFiles'
 import { groupMessagesByDay } from '../../lib/client/messageDayLabel'
@@ -169,8 +169,12 @@ export function ProjectOverviewSharePanel({
     >
       <div className="export-panel overview-share-panel" ref={panelRef}>
         <div className="export-panel-header">
+          {/* DERIVED. The stop was renamed Strategy -> Brief (DESIGN_GRAMMAR
+              G1) and this title kept the retired word, so the panel and the
+              stop that opens it disagreed about what the client is being
+              sent. Reading the label means the next rename carries here. */}
           <h3 id="overview-share-title" className="overview-share-title">
-            Share Strategy form
+            Share the {labelForStepId('define').toLowerCase()}
           </h3>
           <button
             type="button"
