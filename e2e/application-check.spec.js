@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import {
+  openTouchpointEngine,
   headingForStep,
   pathNav,
   skipIfCloud,
@@ -60,6 +61,7 @@ async function openTouchpointWithPalette(page, name) {
     timeout: 10000,
   })
   await page.locator('.touchpoints-quick button').first().click()
+  await openTouchpointEngine(page)
   const card = page.locator('.touchpoints-card').first()
   await expect(card).toBeVisible({ timeout: 8000 })
   return card
@@ -210,8 +212,12 @@ test('clearing a check offers undo rather than a confirmation dialog', async ({
   await card.getByRole('button', { name: /^Clear$/ }).click()
   // Back to the offer, and the undo is there — a dialog is a decision, undo
   // is not, and this audience is the reason that rule exists.
-  await expect(
-    card.getByRole('button', { name: /Check the finished file/i })
-  ).toBeVisible()
+  /* The offer is `.app-check-open`, matched by class rather than by copy.
+     Its label used to be "Check the finished file" and is now "Sample colours
+     from a file" — a deliberate rename carrying its own rationale in
+     `ApplicationCheck.jsx` ("ARTIFACT HONESTY: the file is transient … Do not
+     call it 'the finished file'"). What this test protects is that clearing
+     returns you to the offer, which is true under either wording. */
+  await expect(card.locator('.app-check-open')).toBeVisible()
   await expect(page.getByRole('button', { name: /undo/i }).first()).toBeVisible()
 })

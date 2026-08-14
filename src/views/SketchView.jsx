@@ -99,7 +99,7 @@ export default function SketchView(props) {
     activeProject = null,
     projectPalette = [],
     setActiveView,
-    applicationWorkroomLauncherRef,
+    workroomLauncherRef,
     pathCtx = null,
     flashMicro,
     offerUndo,
@@ -128,6 +128,18 @@ export default function SketchView(props) {
     apps: hasBriefSurfaces ? touchpointApps : [],
     proofs: touchpointProofs,
   })
+
+  /* Quick-add surfaces that raise a touchpoint under a different name, read
+     out of the same map the filmstrip uses. Today that is Print → Business
+     card; if the map changes, this changes with it rather than going stale. */
+  const quickSurfaceExtras = QUICK_SURFACES.map((s) => {
+    const brings = touchpointsFor([s.id], [])
+      .filter((t) => t !== s.id)
+      .map((t) => touchpointLabel(t).toLowerCase())
+    return brings.length
+      ? { id: s.id, label: s.label, brings: joinWords(brings) }
+      : null
+  }).filter(Boolean)
 
   const projectKey = activeProject?.id || ''
 
@@ -241,7 +253,7 @@ export default function SketchView(props) {
       project={activeProject}
       pathCtx={pathCtx}
       setActiveView={setActiveView}
-      launcherRef={applicationWorkroomLauncherRef}
+      launcherRef={workroomLauncherRef}
       className="application-workroom"
       testId="application-workroom"
       status={
@@ -249,26 +261,35 @@ export default function SketchView(props) {
           ? `Working on ${touchpointLabel(activeSurfaceId)}`
           : labelForStepId('sketch')
       }
+      /* Touchpoints was the one stop that named itself nowhere on the page —
+         the edge said "Working on Business card" while the plane opened on an
+         unlabelled filmstrip, so the screen answered "which surface" before it
+         had answered "where am I". Same masthead shape as Research: the stop's
+         own name, then the one line that says what is in it. */
+      masthead={
+        <>
+          <h1 className="cc-stage-display">{labelForStepId('sketch')}</h1>
+          <p className="cc-stage-meta touchpoints-status" role="status">
+            {statusLine}
+          </p>
+        </>
+      }
       /* Touchpoints had NO next-action affordance at all — one of the two
          stops the census found without one. Same journey target the path edge
-         offers, in the place every other stop now puts it. */
+         offers, in the place every other stop now puts it.
+
+         THE BACK BUTTON BESIDE IT IS GONE, not moved. The stage edge already
+         renders "← Back to Identity" from the project's own path, so this was
+         the same word, the same destination and the same derivation, drawn
+         twice on one screen. */
       ledge={
-        <>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setActiveView?.('brand')}
-          >
-            Back to {labelForStepId('design')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary work-path-next"
-            onClick={() => setActiveView?.(journeyNext?.view || 'book')}
-          >
-            {`Next · ${journeyNext?.label || labelForStepId('book')}`}
-          </button>
-        </>
+        <button
+          type="button"
+          className="btn btn-primary work-path-next"
+          onClick={() => setActiveView?.(journeyNext?.view || 'book')}
+        >
+          {`Next · ${journeyNext?.label || labelForStepId('book')}`}
+        </button>
       }
     >
       <div
@@ -301,6 +322,26 @@ export default function SketchView(props) {
               </button>
             ))}
           </div>
+          {/* A surface can carry a touchpoint that is not its own name, and
+              exactly one does: Print brings the business card — the surface a
+              designer is most likely to come here looking for by name, and the
+              one with an in-app produce path behind it. Without this the only
+              route to it is adding Print and finding out afterwards.
+
+              DERIVED, not restated: the pairs come from `touchpointsFor`, the
+              same map the filmstrip is built from, so a surface that gains or
+              loses a touchpoint changes this line with it. Deliberately not a
+              second button — the brief's own `deliverablesPicked` already
+              raises the business card on its own, and a control that duplicates
+              Print would be two doors to one room. */}
+          {quickSurfaceExtras.length > 0 ? (
+            <p className="touchpoints-empty-sub">
+              {quickSurfaceExtras
+                .map((x) => `${x.label} also brings the ${x.brings}`)
+                .join('. ')}
+              .
+            </p>
+          ) : null}
         </div>
       ) : (
         <section
@@ -439,7 +480,7 @@ export default function SketchView(props) {
                   const before = (touchpointProofs[activeSurfaceId] || {})
                     .check
                   setTouchpointApp(activeSurfaceId, { check: null })
-                  offerUndo?.('Colour sample cleared', () =>
+                  offerUndo?.('Color sample cleared', () =>
                     setTouchpointApp(activeSurfaceId, { check: before })
                   )
                 }}
@@ -454,15 +495,18 @@ export default function SketchView(props) {
           Keeps produce + sample + notes reachable without a card-grid stage. */}
       <details className="touchpoints-engine-hold">
         <summary className="touchpoints-engine-hold-summary">
-          Recorded evidence · produce · colour sample
+          Recorded evidence · produce · color sample
           {statusLine ? ` · ${statusLine}` : ''}
         </summary>
         <section className="touchpoints-block" aria-label="Application mocks">
+          {/* The status line moved to the masthead, where the stop names
+              itself. It stays in this block's own <summary> above, so the
+              collapsed disclosure still reports without being opened — but
+              three copies of one sentence read as three facts that happen to
+              agree, which is the duplication ResearchView's masthead note
+              already argues against. */}
           <div className="touchpoints-head">
             <h2 className="touchpoints-heading">Application mocks</h2>
-            <p className="touchpoints-status" role="status">
-              {statusLine}
-            </p>
           </div>
 
           {hasBriefSurfaces && touchpointApps.length > 0 ? (
@@ -479,7 +523,7 @@ export default function SketchView(props) {
                 const appProduced = cardProduced || emailProduced
                 const proofBits = []
                 if (done) proofBits.push('Mock accepted')
-                if (hasCheck) proofBits.push('Colour sample')
+                if (hasCheck) proofBits.push('Color sample')
                 if (String(note).trim()) proofBits.push('Note')
                 if (appProduced) proofBits.push('Application produced')
                 return (
@@ -565,13 +609,13 @@ export default function SketchView(props) {
                           onChecked={(check) => {
                             setTouchpointApp(id, { check })
                             flashMicro?.(
-                              `${touchpointLabel(id)} · colour sample`
+                              `${touchpointLabel(id)} · color sample`
                             )
                           }}
                           onClear={() => {
                             const before = row.check
                             setTouchpointApp(id, { check: null })
-                            offerUndo?.('Colour sample cleared', () =>
+                            offerUndo?.('Color sample cleared', () =>
                               setTouchpointApp(id, { check: before })
                             )
                           }}

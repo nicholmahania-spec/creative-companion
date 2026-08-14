@@ -87,7 +87,7 @@ test.describe('state preservation', () => {
 
     await goToStop(page, 'studio', 'ideate')
     await page
-      .locator('.direction-room:not(.is-suspended)')
+      .locator('.cc-stage--ideate:not(.is-suspended)')
       .waitFor({ state: 'visible', timeout: 15_000 })
 
     await goToStop(page, 'spark', 'research')

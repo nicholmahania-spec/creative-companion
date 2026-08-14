@@ -30,8 +30,12 @@ test('a cancelled save leaves a way to finish, not a dead end', async ({ page })
 
   const path = await pathNav(page)
   await stepByIdIn(path, 'deliver').click()
+  /* Two h1s answer to the stop's name on a stage — the stage's own sr-only
+     heading (Workroom's `aria-labelledby` target) and the masthead display
+     title — so take the first rather than tripping strict mode on a page
+     that is correct. Same note as `path-smoke.spec.js`. */
   await expect(
-    page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
+    page.getByRole('heading', { level: 1, name: labelForStep('deliver') }).first()
   ).toBeVisible({ timeout: 10000 })
 
   await page.getByRole('button', { name: /Download brand book PDF/i }).click()

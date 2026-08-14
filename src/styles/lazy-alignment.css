@@ -25,7 +25,7 @@
   display: grid;
   grid-template-columns: 5.5rem 4.5rem 1fr 4.5rem 8rem;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
@@ -132,7 +132,7 @@
   display: grid;
   grid-template-columns: 5.5rem 4.5rem 1fr 4.5rem 4.5rem 3rem;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.8rem;
 }
 .tagger-axis {
@@ -196,7 +196,7 @@
 }
 .strategy-add-row {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 .strategy-add-row .field-input {
@@ -207,12 +207,12 @@
   margin: var(--space-3) 0 0;
   padding: 0;
   display: grid;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .strategy-item-head {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .strategy-item-head strong {
   flex: 1;

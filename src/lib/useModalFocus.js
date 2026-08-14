@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { isTopModalLayer, pushModalLayer } from './modalLayers.js'
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -36,6 +37,13 @@ export function useModalFocus(open, getRoot, opts = {}) {
     const root = typeof getR === 'function' ? getR() : null
     if (!root) return undefined
 
+    /* Register as the innermost open layer for as long as this modal is up.
+       Workroom listens for Escape on capture and would otherwise close the
+       whole stage out from under this dialog — see `lib/modalLayers.js` for
+       why the fix is an ordering registry rather than `stopPropagation`. */
+    const token = {}
+    const popLayer = pushModalLayer(token)
+
     const prev = document.activeElement
     const list = () =>
       [...root.querySelectorAll(FOCUSABLE)].filter(
@@ -57,6 +65,9 @@ export function useModalFocus(open, getRoot, opts = {}) {
     const raf = window.requestAnimationFrame(focusInitial)
 
     const onKey = (e) => {
+      /* Something opened on top of this one. It answers, we do not — one
+         Escape closes one thing. */
+      if (!isTopModalLayer(token)) return
       if (e.key === 'Escape' && onCloseRef.current) {
         e.preventDefault()
         onCloseRef.current()
@@ -79,6 +90,9 @@ export function useModalFocus(open, getRoot, opts = {}) {
     return () => {
       window.cancelAnimationFrame(raf)
       document.removeEventListener('keydown', onKey)
+      /* Popped BEFORE the focus restore: restoring focus can synchronously
+         mount or unmount another layer, and this one is already gone. */
+      popLayer()
       if (prev && typeof prev.focus === 'function') {
         try {
           prev.focus()

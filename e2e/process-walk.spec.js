@@ -95,18 +95,17 @@ test.describe('Process walk (artifacts)', () => {
     await page.locator('#dir-title-b').fill('Warm product toolkit')
     // Hyper-focus mask disables pointer events on unfocused cards — blur first
     await page.locator('#dir-title-b').blur()
-    await page
+    /* Route A by identity, not by position. The Formation Table hoists the
+       OPEN route to the head of the list (`tableRoutes` in SparkView.jsx),
+       and B was just made, so `.first()` is B here — which is why `#dir-note-a`
+       never appeared. */
+    const cardA = page
       .locator('.ideate-dir-card')
-      .first()
-      .getByRole('button', { name: /^Choose this$/i })
-      .click()
+      .filter({ has: page.getByRole('button', { name: 'Open route A' }) })
+    await cardA.getByRole('button', { name: /^Choose this$/i }).click()
     /* Why lives under Edit/Why disclosure — closed cards no longer show
        #dir-note-* on the face (Directions form reduction). */
-    await page
-      .locator('.ideate-dir-card')
-      .first()
-      .getByRole('button', { name: /^Why$/i })
-      .click()
+    await cardA.getByRole('button', { name: /^Why$/i }).click()
     const whyA = page.locator('#dir-note-a')
     await expect(whyA).toBeVisible({ timeout: 5000 })
     await whyA.fill('Hierarchy carries calm')
@@ -157,8 +156,12 @@ test.describe('Process walk (artifacts)', () => {
     // Last stop — handoff + learnings + brand book CTA. Again returning
     // from a Tool (Review), so no rail.
     await goToStepByKey(page, 'deliver')
+    /* Two h1s answer to the stop's name on a stage — the stage's own sr-only
+       heading (Workroom's `aria-labelledby` target) and the masthead display
+       title — so take the first rather than tripping strict mode on a page
+       that is correct. Same note as `path-smoke.spec.js`. */
     await expect(
-      page.getByRole('heading', { level: 1, name: labelForStep('deliver') })
+      page.getByRole('heading', { level: 1, name: labelForStep('deliver') }).first()
     ).toBeVisible({ timeout: 10000 })
     await page
       .locator('#handoff-note')

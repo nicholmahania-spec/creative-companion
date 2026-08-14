@@ -368,7 +368,7 @@
 .define-field-control {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .brief-spectrum-scale {
@@ -506,7 +506,7 @@
 
 .define-workbook {
   position: relative;
-  margin: 0 0 1.5rem;
+  margin: 0 0 var(--space-5);
   padding: 1.5rem 1.35rem 1.25rem;
   border-radius: var(--radius);
   background: var(--define-card);
@@ -526,7 +526,7 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem 1.5rem;
+  gap: var(--space-4) var(--space-5);
   margin-bottom: 1.35rem;
 }
 
@@ -1307,7 +1307,7 @@
   display: flex;
   flex-wrap: wrap; /* nowrap overflowed to 450px at 360vw once a date was set */
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .define-deadline-inline label {
@@ -1393,7 +1393,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 /* Plain-language deadline. Read-only signal beside the date input, not a
@@ -1595,7 +1595,7 @@
   flex: none;
   min-width: 44px;
   min-height: 44px;
-  font-size: 1.25rem;
+  font-size: var(--fs-4);
   line-height: 1;
 }
 
@@ -1631,7 +1631,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
   margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
@@ -1645,7 +1645,7 @@
 /* Fields the scan did not pick up — shown so the user can see what is
    missing rather than having to remember the full field list. */
 .overview-share-missed {
-  margin: 0.5rem 0 0.75rem;
+  margin: var(--space-2) 0 var(--space-3);
   padding: 0.6rem 0.7rem;
   border: 1px dashed var(--border-subtle);
   border-radius: var(--radius);
@@ -1795,4 +1795,26 @@
    keep a measure; the masthead and the footer keep the table. */
 .cc-stage--define .define-split-form {
   max-width: 54rem;
+}
+
+/* The client link's own controls sit on the masthead's line rather than
+   claiming one of their own — they are one control's worth of the cluster,
+   not a second group. Same gap as the cluster around them, so the row reads
+   as evenly spaced whether the link exists yet or not. */
+.brief-client-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The share's state is a caption, not a control. It had no rule at all, so it
+   inherited body size and full ink and came out LOUDER than the four buttons
+   it sits between — the one word in the cluster nobody clicks was the one the
+   eye landed on first. Same register as `.cc-stage-meta`, one step down
+   because it shares a line with `btn-sm`. */
+.brief-client-link-state {
+  color: var(--stage-mute);
+  font-size: var(--fs-1);
+  white-space: nowrap;
 }

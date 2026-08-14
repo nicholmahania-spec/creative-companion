@@ -143,11 +143,12 @@ test.describe('Define page regressions', () => {
     // Title → form → footer. No CSS `order` scramble — visual top must
     // match DOM top (WCAG 2.4.3).
     const orders = await page.evaluate(() => {
-      const parts = [
-        'define-brief-title',
-        'define-chapters',
-        'define-brief-footer',
-      ]
+      /* The Brief's own title and footer chrome moved into the stage's two
+         slots when the stop became a Workroom: `.cc-stage-masthead` holds
+         what `.define-brief-title` used to, and `.cc-stage-ledge` holds the
+         footer's action. The class names changed; the rule under test — the
+         WCAG 2.4.3 one, that visual top matches DOM top — did not. */
+      const parts = ['cc-stage-masthead', 'define-chapters', 'cc-stage-ledge']
       const nodes = [...document.querySelectorAll(parts.map((c) => `.${c}`).join(', '))]
       /* Name a node by WHICH of the three it matched, not by its first class
          token. The old helper took `className.split(/\s+/)[0]`, so the title —
@@ -166,9 +167,9 @@ test.describe('Define page regressions', () => {
         .map(name)
       return { dom, visual }
     })
-    expect(orders.dom).toContain('define-brief-title')
+    expect(orders.dom).toContain('cc-stage-masthead')
     expect(orders.dom).toContain('define-chapters')
-    expect(orders.dom).toContain('define-brief-footer')
+    expect(orders.dom).toContain('cc-stage-ledge')
     expect(orders.dom.length).toBeGreaterThanOrEqual(3)
     expect(orders.visual).toEqual(orders.dom)
   })

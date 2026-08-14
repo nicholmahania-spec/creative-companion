@@ -1,9 +1,28 @@
 /**
- * Discovery Brief — merged brand-identity project brief + client
- * questionnaire. Three ways to use it: fill it out yourself, run it
- * as a live one-question-at-a-time call script, or hand it off to the
- * client (email draft + downloadable fillable markdown, or accept a
- * completed file back).
+ * DISCOVERY NOTES — read-only. This is no longer an intake.
+ *
+ * It was: a second 30-question brief with its own `discoveryAnswers` store,
+ * fillable here, runnable as a call script, and hand-offable to the client.
+ * That made it a competing source of client/strategic truth — the designer
+ * filled one schema while the client filled another at /f/:shareId, and the
+ * Define sheet, which reads `detective`, never showed a word of the second.
+ *
+ * Both of its capture modes are gone and both have canonical replacements:
+ *
+ *   fill it out myself   → the Brief itself
+ *   run as a call script → the Brief's Call mode, on DETECTIVE_CHAPTERS
+ *
+ * WHAT SURVIVES, AND WHY THIS FILE STILL EXISTS. Projects already hold
+ * `discoveryAnswers` from before the retirement, and the markdown /
+ * plain-text hand-off is written against that schema. Deleting the surface
+ * would take real user answers off the screen and take the hand-off with it.
+ * So the questions and answers remain VISIBLE and remain EXPORTABLE, and are
+ * no longer editable. `DISCOVERY_FIELDS` stays for exactly that reason: it is
+ * what the historical values are keyed by and what the exporters read.
+ *
+ * Nothing here reinterprets a stored value. The four free-text spectrum
+ * answers in particular are displayed as they were typed and are never
+ * mapped onto `detective`'s five-token scale.
  */
 import { useState, useRef } from 'react'
 import { useModalFocus } from '../../lib/useModalFocus'
@@ -15,12 +34,6 @@ import {
   discoveryBriefToPlainText,
   countAnswered,
 } from '../../lib/client/discoveryBrief'
-import {
-  createDiscoveryShare,
-  discoveryShareUrl,
-  fetchDiscoveryShare,
-  revokeDiscoveryShare,
-} from '../../lib/client/discoveryShare'
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 
@@ -40,19 +53,12 @@ export function DiscoveryBriefPanel({
   open,
   onClose,
   answers = {},
-  onUpdateField,
   clientName = '',
   upload = null,
   onSetUpload,
   flashToast,
-  projectId = null,
-  shareId = null,
-  shareStatus = null,
-  onSetShare,
-  onMergeAnswers,
 }) {
   const [mode, setMode] = useState('menu')
-  const [callIndex, setCallIndex] = useState(0)
 
   /* Focus trap, focus restore, and Escape — this dialog had none of them.
      It set aria-modal="true", which tells assistive tech the rest of the page
@@ -81,13 +87,13 @@ export function DiscoveryBriefPanel({
       <div className="export-panel discovery-brief-panel">
         <div className="export-panel-header">
           <h3 id="discovery-brief-title" style={{ margin: 0 }}>
-            Discovery brief
+            Discovery notes
           </h3>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
             onClick={onClose}
-            aria-label="Close discovery brief"
+            aria-label="Close discovery notes"
           >
             ×
           </button>
@@ -111,18 +117,12 @@ export function DiscoveryBriefPanel({
 
         {mode === 'menu' && (
           <div className="discovery-brief-menu">
-            <button type="button" className="btn btn-secondary" onClick={() => setMode('fill')}>
-              Fill it out myself
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                setCallIndex(0)
-                setMode('call')
-              }}
-            >
-              Run as a call script
+            {/* "Fill it out myself" and "Run as a call script" were here.
+                Both are capture, and capture belongs to the Brief now — the
+                sheet itself, and its Call mode, which walks the SAME
+                canonical questions the client answers at /f/:shareId. */}
+            <button type="button" className="btn btn-secondary" onClick={() => setMode('notes')}>
+              Read the answers
             </button>
             <button type="button" className="btn btn-secondary" onClick={() => setMode('handoff')}>
               Email to client / upload a completed form
@@ -130,19 +130,7 @@ export function DiscoveryBriefPanel({
           </div>
         )}
 
-        {mode === 'fill' && (
-          <FillMode answers={answers} onUpdateField={onUpdateField} onBack={backToMenu} />
-        )}
-
-        {mode === 'call' && (
-          <CallMode
-            answers={answers}
-            onUpdateField={onUpdateField}
-            index={callIndex}
-            setIndex={setCallIndex}
-            onBack={backToMenu}
-          />
-        )}
+        {mode === 'notes' && <NotesMode answers={answers} onBack={backToMenu} />}
 
         {mode === 'handoff' && (
           <HandoffMode
@@ -152,11 +140,6 @@ export function DiscoveryBriefPanel({
             onSetUpload={onSetUpload}
             onBack={backToMenu}
             flashToast={flashToast}
-            projectId={projectId}
-            shareId={shareId}
-            shareStatus={shareStatus}
-            onSetShare={onSetShare}
-            onMergeAnswers={onMergeAnswers}
           />
         )}
       </div>
@@ -164,94 +147,49 @@ export function DiscoveryBriefPanel({
   )
 }
 
-function FillMode({ answers, onUpdateField, onBack }) {
+/**
+ * The historical answers, as they were stored.
+ *
+ * Read-only by construction, not by a `readOnly` attribute: there is no input
+ * here to disable. A greyed-out field still reads as "you may edit this once
+ * something unlocks", which is the wrong promise — these answers belong to a
+ * retired schema and the place to change what the client said is the Brief.
+ *
+ * Values are printed verbatim. The four free-text spectrum answers are the
+ * reason that matters: `detective` stores a spectrum as one of five tokens,
+ * and anything typed into the old free-text version cannot become one of
+ * those without inventing a position the client never gave.
+ */
+function NotesMode({ answers, onBack }) {
+  const filled = DISCOVERY_SECTIONS.map((section) => ({
+    section,
+    rows: section.fields.filter((f) => String(answers?.[f.id] ?? '').trim()),
+  })).filter((g) => g.rows.length)
+
   return (
     <div className="discovery-brief-fill">
-      <button type="button" className="btn btn-ghost btn-sm discovery-brief-back" onClick={onBack}>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>
         ← Back
       </button>
-      {DISCOVERY_SECTIONS.map((section) => (
-        <details key={section.id} className="discovery-brief-section" open>
-          <summary>{section.label}</summary>
-          {section.fields.map((f) => (
-            <div className="field-block" key={f.id}>
-              <label className="field-label" htmlFor={`discovery-${f.id}`}>
-                {f.label}
-              </label>
-              {f.prompt && <p className="discovery-brief-hint">{f.prompt}</p>}
-              {f.type === 'textarea' ? (
-                <textarea
-                  id={`discovery-${f.id}`}
-                  className="field-input"
-                  rows={2}
-                  value={answers[f.id] || ''}
-                  onChange={(e) => onUpdateField(f.id, e.target.value)}
-                />
-              ) : (
-                <input
-                  id={`discovery-${f.id}`}
-                  className="field-input"
-                  value={answers[f.id] || ''}
-                  onChange={(e) => onUpdateField(f.id, e.target.value)}
-                />
-              )}
-            </div>
-          ))}
-        </details>
-      ))}
-    </div>
-  )
-}
-
-function CallMode({ answers, onUpdateField, index, setIndex, onBack }) {
-  const field = DISCOVERY_FIELDS[index]
-  const section = DISCOVERY_SECTIONS.find((s) => s.fields.some((f) => f.id === field.id))
-
-  return (
-    <div className="discovery-brief-call">
-      <button type="button" className="btn btn-ghost btn-sm discovery-brief-back" onClick={onBack}>
-        ← Back
-      </button>
-      <p className="discovery-brief-call-progress">
-        Question {index + 1} of {DISCOVERY_FIELDS.length} · {section?.label}
+      <p className="discovery-brief-hint">
+        Answers from the earlier discovery form, kept as they were written.
+        The brief is where client answers are edited now.
       </p>
-      <p className="discovery-brief-call-question">{field.label}</p>
-      {field.prompt && <p className="discovery-brief-hint">{field.prompt}</p>}
-      <textarea
-        autoFocus
-        className="field-input discovery-brief-call-input"
-        rows={4}
-        value={answers[field.id] || ''}
-        onChange={(e) => onUpdateField(field.id, e.target.value)}
-        placeholder="Type the client's answer as they talk…"
-      />
-      <div className="discovery-brief-call-nav">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          disabled={index === 0}
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-        >
-          Previous
-        </button>
-        {/* The script ends with a way out, not with the primary button going
-            grey. A finished run that offers no next action reads as an
-            unfinished one, and the only route back was the small ghost
-            "← Back" at the top of the panel. */}
-        {index >= DISCOVERY_FIELDS.length - 1 ? (
-          <button type="button" className="btn btn-primary" onClick={onBack}>
-            Done — back to brief
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setIndex((i) => Math.min(DISCOVERY_FIELDS.length - 1, i + 1))}
-          >
-            Next question
-          </button>
-        )}
-      </div>
+      {!filled.length ? (
+        <p className="discovery-brief-hint">Nothing was answered here.</p>
+      ) : (
+        filled.map(({ section, rows }) => (
+          <details key={section.id} className="discovery-brief-section" open>
+            <summary>{section.label}</summary>
+            {rows.map((f) => (
+              <div className="field-block" key={f.id}>
+                <p className="field-label">{f.label}</p>
+                <p className="discovery-brief-answer">{answers[f.id]}</p>
+              </div>
+            ))}
+          </details>
+        ))
+      )}
     </div>
   )
 }
@@ -263,71 +201,18 @@ function HandoffMode({
   onSetUpload,
   onBack,
   flashToast,
-  projectId,
-  shareId,
-  shareStatus,
-  onSetShare,
-  onMergeAnswers,
 }) {
-  const [creatingLink, setCreatingLink] = useState(false)
-  const [checkingLink, setCheckingLink] = useState(false)
-  // Two-tap confirm for revoke — destructive/outbound, so a word + inline
-  // confirm, no modal. `revoked` reflects the kill locally (this surface
+  // The revoke confirm and the link controls left with the share UI — the
+  // Brief owns them now. What is below is the hand-off: markdown, plain
+  // text, and accepting a completed form back.
+  // (
   // doesn't re-fetch the share's revoked_at).
-  const [revoked, setRevoked] = useState(false)
-  const [revokeArmed, setRevokeArmed] = useState(false)
-  const [revoking, setRevoking] = useState(false)
 
-  const handleRevokeShare = async () => {
-    if (!revokeArmed) {
-      setRevokeArmed(true)
-      return
-    }
-    setRevoking(true)
-    const r = await revokeDiscoveryShare(shareId)
-    setRevoking(false)
-    setRevokeArmed(false)
-    if (r.ok) {
-      setRevoked(true)
-      flashToast?.('Link revoked — the old link no longer opens')
-    } else {
-      flashToast?.(r.error || 'Couldn’t revoke the link')
-    }
-  }
 
-  const handleCreateLink = async () => {
-    setCreatingLink(true)
-    const r = await createDiscoveryShare({ projectLocalId: projectId, clientName, answers })
-    setCreatingLink(false)
-    if (!r.ok) {
-      flashToast?.(r.error || 'Couldn’t create the link')
-      return
-    }
-    onSetShare?.(r.shareId, 'pending')
-    navigator.clipboard?.writeText(discoveryShareUrl(r.shareId))
-    flashToast?.('Client link created and copied')
-  }
 
-  const handleCheckSubmission = async () => {
-    if (!shareId) return
-    setCheckingLink(true)
-    const r = await fetchDiscoveryShare(shareId)
-    setCheckingLink(false)
-    if (!r.ok) {
-      flashToast?.(r.error || 'Couldn’t check the link')
-      return
-    }
-    if (r.status !== 'submitted') {
-      flashToast?.('Client hasn’t submitted yet')
-      return
-    }
-    // Pass the project this check was started for, not whatever is current
-    // when the fetch resolves — the user can switch projects mid-request,
-    // and the merge only fills blanks, so landing on the wrong client would
-    // be silent.
-    onMergeAnswers?.(projectId, r.answers)
-    flashToast?.('Client’s answers merged in')
-  }
+
+
+
 
   const handleUpload = (file) => {
     if (!file) return
@@ -364,13 +249,7 @@ function HandoffMode({
     return `mailto:?subject=${subject}&body=${body}`
   }
 
-  const linkMailtoHref = () => {
-    const subject = encodeURIComponent(`Quick brand questionnaire${clientName ? ` — ${clientName}` : ''}`)
-    const body = encodeURIComponent(
-      `Hi — before we start, could you fill out this quick brand questionnaire?\n\n${discoveryShareUrl(shareId)}\n\nTakes about 10 minutes, and you can leave anything blank if you're not sure yet.`
-    )
-    return `mailto:?subject=${subject}&body=${body}`
-  }
+
 
   return (
     <div className="discovery-brief-handoff">
@@ -378,86 +257,17 @@ function HandoffMode({
         ← Back
       </button>
 
-      <div className="discovery-brief-handoff-block">
-        <p className="discovery-brief-hint">
-          Send a link the client fills out themselves — no account needed. Their answers
-          come back into this project once submitted.
-        </p>
-        {!shareId ? (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={creatingLink}
-            onClick={handleCreateLink}
-          >
-            {creatingLink ? 'Creating link…' : 'Create client link'}
-          </button>
-        ) : revoked ? (
-          <p className="client-portal-revoked-note">
-            Link revoked — the old link no longer opens. Anything the client
-            already submitted is kept. Create a new link to share again.
-          </p>
-        ) : (
-          <>
-            <div className="discovery-brief-share-row">
-              <input
-                className="field-input"
-                readOnly
-                value={discoveryShareUrl(shareId)}
-                onFocus={(e) => e.target.select()}
-              />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  navigator.clipboard?.writeText(discoveryShareUrl(shareId))
-                  flashToast?.('Link copied')
-                }}
-              >
-                Copy
-              </button>
-            </div>
-            <div className="discovery-brief-handoff-actions">
-              <a className="btn btn-secondary" href={linkMailtoHref()}>
-                Email link to client
-              </a>
-              {shareStatus === 'submitted' ? (
-                <span className="discovery-brief-hint">Client submitted — merged in.</span>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  disabled={checkingLink}
-                  onClick={handleCheckSubmission}
-                >
-                  {checkingLink ? 'Checking…' : 'Check for client’s answers'}
-                </button>
-              )}
-            </div>
-            <div className="client-portal-revoke-row">
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm client-portal-revoke-btn"
-                onClick={handleRevokeShare}
-                onBlur={() => setRevokeArmed(false)}
-                disabled={revoking}
-              >
-                {revoking
-                  ? 'Revoking…'
-                  : revokeArmed
-                    ? 'Tap again to revoke'
-                    : 'Revoke link'}
-              </button>
-              {revokeArmed && !revoking ? (
-                <span className="client-portal-revoke-hint">
-                  Kills this link for anyone holding it. Submitted answers are
-                  kept.
-                </span>
-              ) : null}
-            </div>
-          </>
-        )}
-      </div>
+      {/* THE CLIENT-LINK CONTROLS WERE HERE — create, copy, email, check,
+          revoke. They moved to the Brief masthead (d6382cf), which is the
+          canonical home: the Brief owns the thing being shared, and two sets
+          of controls over one link means two places to look and two places a
+          revoke could be missed.
+
+          Nothing about the share system moved with them. `discoveryShare`'s
+          functions, the share ids, `discoveryShareId` / `discoveryShareStatus`
+          and `/f/:shareId` are all untouched — only this duplicate way in is
+          gone. What remains below is this surface's own job: handing the
+          historical answers over as markdown or plain text. */}
 
       <div className="discovery-brief-handoff-block">
         <p className="discovery-brief-hint">

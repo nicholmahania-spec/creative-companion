@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import JSZip from 'jszip'
 import {
+  openTouchpointEngine,
   headingForStep,
   pathNav,
   skipIfCloud,
@@ -114,6 +115,7 @@ async function openBusinessCardCard(page) {
       await page.locator('.touchpoints-quick button').first().click()
     }
   }
+  await openTouchpointEngine(page)
   const card = page.locator('.touchpoints-card[data-touchpoint="businessCard"]').first()
   await expect(card).toBeVisible({ timeout: 8000 })
   return card
@@ -321,6 +323,10 @@ test.describe('business card real application artifact', () => {
     await expect(headingForStep(page, 'sketch').first()).toBeVisible({
       timeout: 10000,
     })
+    /* Leaving and returning re-closes the engine disclosure, so the return
+       trip has to open it too — the persistence claim is about the card's
+       state, not about the disclosure remembering it. */
+    await openTouchpointEngine(page)
     const cardAgain = page.locator('.touchpoints-card[data-touchpoint="businessCard"]')
     await expect(cardAgain).toBeVisible()
     await expect(cardAgain).toHaveAttribute('data-application-produced', 'true')

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { unlockAndOnboard, skipIfCloud } from './helpers.js'
+import { skipIfCloud, toShell, unlockAndOnboard } from './helpers.js'
 
 /**
  * Account menu keyboard behaviour — WAI-ARIA APG menu button pattern.
@@ -20,6 +20,7 @@ test.describe('Account menu keyboard', () => {
   })
 
   const openMenu = async (page) => {
+    await toShell(page)
     await page.locator('#account-menu-button').click()
     await expect(page.locator('#account-menu')).toBeVisible()
   }

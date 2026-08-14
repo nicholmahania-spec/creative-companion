@@ -110,6 +110,22 @@ export default function DetectiveSheet({
    * surfaces can keep the rail.
    */
   showChapterRail = true,
+  /**
+   * CALL MODE — the Brief's second capture mode, not a second Brief.
+   *
+   * The client fills this same schema themselves at /f/:shareId; this is the
+   * designer filling it while the client talks. One question on screen at a
+   * time, because reading a wall of fields aloud is not how a call goes.
+   *
+   * It is a FILTER over the ordinary render below, deliberately: every field
+   * type — spectrum's five-value control, checklists, the attachment rows —
+   * draws exactly as it does on the page, writes through the same
+   * `updateDetective`, and so lands in `detective` with no second schema to
+   * keep in step. The retired Discovery modal's script had its own 30-field
+   * store, which is the whole reason it drifted.
+   */
+  callMode = false,
+  callIndex = 0,
   /** The deadline lives on the project record, not in `detective` — it drives
    *  the calendar and the relative label — so it is threaded in rather than
    *  read from the answers object. */
@@ -139,6 +155,11 @@ export default function DetectiveSheet({
     st.projects.find((p) => p.id === st.currentProjectId)
   )
   const [currentChapter, setCurrentChapter] = useState(DETECTIVE_CHAPTERS[0].id)
+
+  /* Every canonical question in chapter order — the call's running order, and
+     the same order the client meets them in. Derived, never listed. */
+  const callFields = DETECTIVE_CHAPTERS.flatMap((ch) => ch.fields)
+  const callField = callMode ? callFields[Math.max(0, Math.min(callIndex, callFields.length - 1))] : null
   const [focusField, setFocusField] = useState(null)
   const isMobile = useIsMobile()
 
@@ -237,7 +258,9 @@ export default function DetectiveSheet({
       )}
 
       <div className="define-chapters">
-        {DETECTIVE_CHAPTERS.map((ch) => {
+        {DETECTIVE_CHAPTERS.filter(
+          (ch) => !callMode || ch.fields.some((f) => f.id === callField?.id)
+        ).map((ch) => {
           const st = chapterStats.find((s) => s.id === ch.id)
           const isCurrent = currentChapter === ch.id
           return (
@@ -272,7 +295,9 @@ export default function DetectiveSheet({
               <div
                 className="define-fields"
                 id={`define-chapter-fields-${ch.id}`}>
-                {ch.fields.map((f) => {
+                {ch.fields
+                  .filter((f) => !callMode || f.id === callField?.id)
+                  .map((f) => {
                   const focused = focusField === f.id
                   const filled = isFilled(detective?.[f.id])
                   return (
