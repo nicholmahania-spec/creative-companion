@@ -1345,10 +1345,29 @@
 }
 
 /* The book preview is the artefact on this stop — it gets the sheet
-   treatment the artboard gets on Identity, not a bordered viewport. */
+   treatment the artboard gets on Identity, not a bordered viewport.
+
+   AND IT IS NOT A WINDOW ONTO ITSELF. Two rules clamp this element —
+   `.assets-preview-frame` to `min(78dvh, 46rem)` here, and
+   `.pack-view .deliver-pack-preview` to `min(70vh, 48rem)` in
+   `lazy-design.css` — both with their own `overflow: auto`. That was a
+   preview pane on a page that scrolled. On the stage the plane is the only
+   scroller, so what was left is a 630px window onto 5675px of pack: MEASURED
+   at 1440, the last page of the book could not be brought on screen AT ALL,
+   because the outer plane had already run out and the inner scrollbar was
+   never drawn. The whole point of this stop is looking at what you are about
+   to send.
+
+   The frame sizes to the pack and the plane scrolls it. Same correction as
+   `.cc-stage--design .system-artboard` in `lazy-design.css`, same reasoning.
+   Both source rules are left alone: they are the right geometry everywhere
+   the stage is not, and this element renders only inside DeliverView, so the
+   scoped rule is the whole of the behaviour change. */
 .cc-stage--deliver .assets-preview-frame,
 .cc-stage--deliver .pack-view .deliver-pack-preview {
   border: 0;
   border-radius: var(--radius-none);
   background: transparent;
+  max-height: none;
+  overflow: visible;
 }

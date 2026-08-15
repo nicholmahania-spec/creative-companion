@@ -2738,11 +2738,51 @@
   border-radius: var(--radius-none);
   background: transparent;
   overflow: visible;
+  /* THE SHEET IS AS TALL AS THE SHEET.
+     `.design-artboard-column` clamps itself to `calc(100vh - var(--space-7))`
+     — correct while this wrapper was the scrolling card the rule above just
+     removed. With `overflow: visible` and the clamp still in place the sheet
+     would be cut off at the column's edge with nothing to scroll, so the
+     clamp goes with the box it belonged to. The plane is the scroller now;
+     see the note on `.cc-stage--design .system-artboard` below. */
+  max-height: none;
+  /* Sticky is KEPT and still earns its place: while the sheet is shorter than
+     the viewport it follows the tool column down, which is the whole reason a
+     colour change is visible at the moment it is made. Once the sheet is
+     taller it simply scrolls with the plane, which is the ordinary behaviour
+     of a sticky box taller than its viewport — not a regression, and better
+     than the alternative the clamp bought, which was stickiness paid for by
+     hiding two thirds of the artefact. */
 }
 
+/* THE ARTEFACT IS NOT A WINDOW ONTO THE ARTEFACT.
+   `.design-studio .system-artboard` pins the sheet to `min(56vh, 34rem)` with
+   `overflow: auto`, and the phone rule at the 720px breakpoint pins it to
+   `55dvh`. Both were safe while the wrapper above scrolled: the sheet was a
+   pane inside a scrolling card, on a page that also scrolled.
+
+   The stage removed both of those. `.cc-stage` is `position: fixed` with
+   three grid rows and `overflow: hidden`, and `.cc-stage-plane` is the single
+   scroller — deliberately, so the path edge and the action ledge sit at the
+   stage edges without being sticky. What survived was a fixed-height box with
+   its own scrollbar sitting inside that plane: MEASURED at 504px of a 1554px
+   sheet on desktop and 464px of 1679px at 390px, with no scrollbar drawn, no
+   edge cue, and the document itself unscrollable behind it. Two thirds of the
+   thing this stop exists to judge, invisible.
+
+   So the sheet sizes to its content and the plane scrolls it, which is what
+   every other stop already does. This is the same correction, in the same
+   shape, as `.cc-stage--deliver`'s in `lazy-deliver.css`.
+
+   NOT a change to `.design-studio`'s own rules: off the stage — Review, the
+   print overlay — the sheet keeps the geometry it has always had. This is
+   stage composition, scoped like every other rule in this block. */
 .cc-stage--design .system-artboard {
   border-radius: var(--radius-none);
   box-shadow: var(--stage-lift);
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .cc-stage--design .design-edit-column > .panel.brand-section {
