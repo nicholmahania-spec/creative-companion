@@ -110,4 +110,85 @@ describe('the client’s contact details are asked once', () => {
       effectiveWord({ ...brief, orgPhone: '0200 111 111' }, 'orgPhone')
     ).toEqual({ value: '0200 111 111', fromBrief: false })
   })
+
+  /**
+   * INHERITING IS NOT THE SAME AS HAVING TYPED IT.
+   *
+   * The two contact boxes were bound to the RESOLVED value, so on a project
+   * where only the client had answered, the box displayed their number and
+   * the first keystroke sent `e.target.value` — their number and all — into
+   * `project.orgPhone`. One fact forked into two columns, and clearing the
+   * box afterwards wrote `''`, which reads as an override of nothing rather
+   * than a return to the brief: there was no way back to inheriting.
+   *
+   * `BrandArtboard`'s `sourceBehind` already records this correction for
+   * Positioning. These pin the same shape on the kit: the ARTWORK resolves,
+   * the CONTROL holds the designer's own field, and the brief's answer is
+   * named underneath as provenance rather than pre-filled into the input.
+   *
+   * Source greps for the bindings, per this file's header — the environment
+   * is `node`, there is no renderer, and the failure mode is a binding being
+   * quietly changed back. The semantics either side of the binding are real
+   * assertions on `effectiveWord`.
+   */
+  it('the control holds the designer’s own value, never the resolved one', () => {
+    /* The assertion that flips: before the fix these read
+       `value={effectiveWord(activeProject, 'orgPhone').value}`. */
+    expect(stationery).toContain("value={activeProject.orgPhone || ''}")
+    expect(stationery).toContain("value={activeProject.orgEmail || ''}")
+    expect(stationery).not.toContain(
+      "value={effectiveWord(activeProject, 'orgPhone').value}"
+    )
+    expect(stationery).not.toContain(
+      "value={effectiveWord(activeProject, 'orgEmail').value}"
+    )
+  })
+
+  it('typing is still an explicit override, and writes only its own field', () => {
+    expect(stationery).toContain(
+      "onChange={(e) => updateBrandField('orgPhone', e.target.value)}"
+    )
+    expect(stationery).toContain(
+      "onChange={(e) => updateBrandField('orgEmail', e.target.value)}"
+    )
+    /* The client's answer is the brief's. Nothing here may write back to it,
+       or "override" would silently mean "edit the client's brief". */
+    expect(stationery).not.toContain('clientPhone')
+    expect(stationery).not.toContain('clientEmail')
+    expect(stationery).not.toContain('detective')
+  })
+
+  it('clearing the box returns to the brief rather than overriding with nothing', () => {
+    const brief = { detective: { clientPhone: '0100 000 000' } }
+    /* What the control now writes when the designer empties it — and what the
+       artwork resolves immediately afterwards. `clean()` trims, so a box of
+       spaces is not an override either. */
+    for (const cleared of ['', '   ']) {
+      expect(effectiveWord({ ...brief, orgPhone: cleared }, 'orgPhone')).toEqual({
+        value: '0100 000 000',
+        fromBrief: true,
+      })
+    }
+  })
+
+  it('the artwork still prints the resolved value, not the empty control', () => {
+    /* If this ever stopped being true the fix would have traded a fork for a
+       blank letterhead — the box is empty while inheriting, so the artwork is
+       the only place the inherited number is printed. */
+    expect(stationery).toContain("effectiveWord(activeProject, 'orgPhone').value")
+    expect(stationery).toContain("effectiveWord(activeProject, 'orgEmail').value")
+    /* And it is named under the control while it is the client's. */
+    expect(stationery).toContain('BRIEF_PROVENANCE')
+    expect(stationery).toContain('briefPhone.fromBrief')
+    expect(stationery).toContain('briefEmail.fromBrief')
+  })
+
+  it('leaves the contact fields the brief never asks about alone', () => {
+    /* Address and website have no brief source, so they were never forked and
+       must not grow provenance or resolution they have no basis for. */
+    expect(BRIEF_WORD_SOURCES.orgAddress).toBeUndefined()
+    expect(BRIEF_WORD_SOURCES.orgWebsite).toBeUndefined()
+    expect(stationery).toContain("value={activeProject.orgAddress || ''}")
+    expect(stationery).toContain("value={activeProject.orgWebsite || ''}")
+  })
 })
