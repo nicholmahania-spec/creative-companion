@@ -1069,6 +1069,32 @@
   gap: var(--space-1);
 }
 
+/* ── The rail's phase seams ───────────────────────────────────────────────
+   PHONE ONLY, AND FOR A MEASURED REASON. Below 768px the To-do pill exists
+   (`shell.css` hides it at min-width: 768px) and searches upward for a resting
+   place holding no interactive control. Its reach is the 320px lift cap plus
+   its own height; a seat needs that height plus `CLEARANCE_GAP`. Measured
+   2026-08-15 at 320/390/430, seven stops run 481.7px unbroken on 4px gaps, so
+   at some scroll offsets nothing in reach is clear, `chooseLift` returns null
+   and the pill sits home on top of a stop. Two seams cut the run into three
+   segments and the collision goes away — measured 19 stolen-tap offsets to 0
+   on the rail. Shrinking a stop instead would need a 42.3px target, under the
+   44px floor, so it is not available.
+
+   The size is the pill plus its gap, written that way rather than as 54px, so
+   it tracks `.todo-fab`'s own `height: 3rem` if the root scale ever moves.
+   The list's 4px grid gap sits on top of this, which is the headroom.
+
+   WHICH stops carry it is not decided here — `lib/journey/stopGroups.js` owns
+   that, keyed to step ids, because a positional seam lands in the wrong place
+   the moment the rail draws a reduced stop set. Desktop gets none of this: the
+   pill is not there to seat, so the gap would be 108px of rail for nothing. */
+@media (max-width: 767px) {
+  .desk-stop-list > li.is-group-start {
+    margin-top: calc(3rem + 6px);
+  }
+}
+
 .desk-stop {
   display: grid;
   grid-template-columns: 1fr auto;

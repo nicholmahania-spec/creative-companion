@@ -34,6 +34,7 @@ import {
 } from '../lib/book/exportFiles'
 import { paletteIsUntouched } from '../lib/color'
 import { stopEstablished } from '../lib/journey/stopEstablished'
+import { groupBreaksFor } from '../lib/journey/stopGroups'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import BrandCheckPanel from '../components/BrandCheckPanel'
 import YoursOnlyPanel from '../components/YoursOnlyPanel'
@@ -214,6 +215,14 @@ export default function DeskView({
   onDeleteProject,
 }) {
   const gapRow = nextGap || null
+
+  /* Where the rail's three phases begin — groundwork, design, handoff. A
+     seam is a clearance measure on a phone, not decoration: see
+     `lib/journey/stopGroups.js` for which stops open a phase and why, and
+     `lazy-desk.css` for how much room one opens. Derived from the stops
+     actually rendered, so a reduced rail collapses its empty groups rather
+     than gapping where their stops would have been. */
+  const groupBreaks = groupBreaksFor(rows.map((r) => r.id))
 
   /* ALL FIVE, ALWAYS, IN ORDER — navigation, not a to-do list.
      What each card says is what is ESTABLISHED at that stop ("6 starred,
@@ -615,7 +624,10 @@ export default function DeskView({
             </div>
             <ul className="desk-stop-list">
               {stopCards.map((r) => (
-                <li key={r.id}>
+                <li
+                  key={r.id}
+                  className={groupBreaks.has(r.id) ? 'is-group-start' : undefined}
+                >
                   <button
                     type="button"
                     className={`desk-stop${
