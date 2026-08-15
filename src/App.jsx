@@ -1998,7 +1998,6 @@ function App() {
     )
     if (!atCentre || (atCentre !== fab && !fab.contains(atCentre))) return
 
-    const cs = window.getComputedStyle(fab)
     const width = Math.max(fab.offsetWidth, fabWidthRef.current)
     fabWidthRef.current = width
     /* The count badge is absolutely positioned outside the button's box, so the
@@ -2017,9 +2016,27 @@ function App() {
         left: Math.max(over.left, own.left - cr.left),
       }
     }
-    const bottom = window.innerHeight - (parseFloat(cs.bottom) || 0) + over.bottom
-    const right = window.innerWidth - (parseFloat(cs.right) || 0) + over.right
+    /* Off the pill's own rect, NOT off the viewport minus its CSS inset. The
+       inset is resolved against the fixed-position containing block, and
+       `window.innerWidth` includes the classic scrollbar that block excludes —
+       so `innerWidth - right` put the search column 15px to the RIGHT of the
+       pill at every width and every scroll offset (390: 372 vs a real 357;
+       320: 302 vs 287). The column was the correct size and in the wrong
+       place: the leftmost 15px of the pill's real footprint was never
+       searched, and 15px of empty gutter was searched instead.
+
+       Only the horizontal read was wrong — measured vertical error was 0,
+       because there is no horizontal scrollbar to inflate `innerHeight`. Both
+       sides are taken from the rect now anyway, so neither can drift again.
+
+       Safe to read mid-settle, which the offsets above are not: `right` is
+       unaffected by the width transition (the pill is right-anchored, so
+       min-width/padding move its LEFT edge), and the lift is a transform that
+       is deliberately NOT transitioned — see the note on `.todo-fab` in
+       shell.css — so adding it back yields the exact home edge. */
     const lift = fabLiftRef.current
+    const bottom = own.bottom + lift + over.bottom
+    const right = own.right + over.right
     const column = {
       left: right - width - over.left - over.right,
       right,
