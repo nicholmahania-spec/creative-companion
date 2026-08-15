@@ -1,7 +1,7 @@
 {
   "name": "creative-companion-react",
   "private": true,
-  "version": "3.77.18",
+  "version": "3.77.19",
   "engines": {
     "node": ">=24"
   },
