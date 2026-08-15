@@ -161,6 +161,52 @@ function tapOwnerAt(doc, fab, x, y) {
   return top ? top.closest(INTERACTIVE_SELECTOR) : null
 }
 
+/** How far past its own border box a control's target may reach, and how
+ *  finely to look for the edge of it.
+ *
+ *  48 covers the 44px `--tap-min` floor with a little slack, and is a bound
+ *  rather than a guess: a centred pseudo-element can only ever hang half its
+ *  height off each side, so a 44px target on a 0px box reaches 22px. 3 is the
+ *  resolution the clearance check samples at, so the extent can never be
+ *  measured more coarsely than the thing it has to satisfy. */
+const EXTENT_REACH = 48
+export const EXTENT_STEP = 3
+
+/**
+ * The band a finger actually hits for this owner, not the band it paints.
+ *
+ * Walks out from the border box at the x the owner was found at, one probe
+ * every `EXTENT_STEP`, and stops the moment the point stops belonging to it.
+ * Bounded both ways: never past `EXTENT_REACH` (so a full-height container
+ * cannot turn this into a page scan) and never outside the band the pill can
+ * reach anyway (so work is never done on geometry that cannot matter).
+ *
+ * Cost is per DISTINCT owner, not per probe — `record` runs once per owner —
+ * so a view with 3-8 blockers pays at most a few dozen extra hit tests on the
+ * 90ms settle fuse, against the 49-74 the rect sweep already costs.
+ */
+function tapExtent(doc, fab, owner, x, rect, bandTop, bandBottom) {
+  const win = doc.defaultView
+  const px = clamp(x, 0, win.innerWidth - 1)
+  const probe = (y) =>
+    tapOwnerAt(doc, fab, px, clamp(y, 0, win.innerHeight - 1)) === owner
+
+  let top = rect.top
+  let bottom = rect.bottom
+  const floor = Math.max(bandTop, rect.top - EXTENT_REACH)
+  const ceiling = Math.min(bandBottom, rect.bottom + EXTENT_REACH)
+
+  for (let y = rect.top - EXTENT_STEP; y >= floor; y -= EXTENT_STEP) {
+    if (!probe(y)) break
+    top = y
+  }
+  for (let y = rect.bottom + EXTENT_STEP; y <= ceiling; y += EXTENT_STEP) {
+    if (!probe(y)) break
+    bottom = y
+  }
+  return { top, bottom }
+}
+
 /**
  * The controls that would take a tap anywhere in the pill's column, within
  * climbing reach of home.
@@ -182,6 +228,17 @@ function tapOwnerAt(doc, fab, x, y) {
  * thing a finger would actually land on, so it is the thing the pill has to
  * stay off.
  *
+ * AND THE OWNER'S RECT IS NOT THE OWNER'S TARGET, which is the whole reason
+ * `tapExtent` exists. This codebase deliberately grows small controls to the
+ * 44px touch floor with a centred pseudo-element — `.desk-card-aside-link`,
+ * `.brief-attach-remove`, `.done-undo` all do it. A pseudo-element takes hit
+ * tests but does NOT appear in `getBoundingClientRect()`, so trusting the rect
+ * recorded a 19px band for a control whose target is 44px. Measured on Desk at
+ * 320x844: rect 794-813, real target 781.5-825.5. `chooseLift` then cleared
+ * 794 honestly and seated the pill at 740-788 — 7px inside a live link, which
+ * is precisely the tap this module exists to protect. The search was narrower
+ * than the check while looking exactly as if it were not.
+ *
  * @param {Element} fab
  * @param {{left:number,right:number,top:number,bottom:number,maxLift:number}} column
  * @returns {{top:number,bottom:number}[]}
@@ -194,11 +251,11 @@ export function collectBlockers(fab, column) {
   const owners = new Set()
   const out = []
 
-  const record = (owner) => {
+  const record = (owner, px) => {
     if (!owner || owners.has(owner)) return false
     owners.add(owner)
     const or = owner.getBoundingClientRect()
-    out.push({ top: or.top, bottom: or.bottom })
+    out.push(tapExtent(doc, fab, owner, px, or, bandTop, column.bottom))
     return true
   }
 
@@ -222,7 +279,7 @@ export function collectBlockers(fab, column) {
       for (const f of [0.5, 0.15, 0.85]) {
         const px = clamp(x0 + (x1 - x0) * f, 0, win.innerWidth - 1)
         const owner = tapOwnerAt(doc, fab, px, py)
-        record(owner)
+        record(owner, px)
         // The candidate itself owns a pixel here: nothing more to learn from
         // it, and this is the ordinary case, so the grid usually costs one probe.
         if (owner === el) found = true
