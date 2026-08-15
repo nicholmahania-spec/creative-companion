@@ -143,7 +143,22 @@ export default function AssetLibraryView({
           className="sr-only"
           aria-label="Choose files to add to the asset library"
           onChange={(e) => {
-            const files = e.target.files
+            /* SNAPSHOT BEFORE CLEARING, and the order is the whole fix.
+               `e.target.files` is a LIVE FileList bound to the input, so
+               `value = ''` empties the object this variable still points at.
+               Holding the reference across the clear handed `take()` an empty
+               list, it hit `if (!list.length) return`, and the picker did
+               nothing at all: no asset, no refusal, no toast, no console
+               error. Measured — captured FileList went from length 1 to 0 the
+               moment the input was cleared, and the shelf stayed empty while
+               the drop path filed the same file correctly through the same
+               `take()`.
+
+               The clear itself has to stay: without it, choosing the same
+               file twice in a row fires no `change` event the second time.
+               `Array.from` copies the entries out first, which is what
+               `ClientPackagePanel`'s picker already does. */
+            const files = Array.from(e.target.files || [])
             e.target.value = ''
             void take(files)
           }}
