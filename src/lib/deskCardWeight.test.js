@@ -81,6 +81,20 @@ describe("the What's next card offers one button", () => {
     expect(block).toMatch(/onOpenView\(gapRow\.view\)/)
   })
 
+  /* The card's FACE is not a second door. `.desk-card-hit` made the whole
+     face a button pointing at the same destination as the primary below it —
+     a third `onOpenView(gapRow.view)` target on a screen that already had two.
+     Removed 2026-08-16; this is what stops it coming back, because the `btn`
+     count above would not catch it (it carried no `btn` class). */
+  it('does not make the card face a competing interactive target', () => {
+    /* The className, not the bare word — the source comment above the face
+       names `.desk-card-hit` to say why it is gone, and this file reads raw
+       source. What must never come back is the attribute. */
+    expect(block).not.toMatch(/className="desk-card-hit"/)
+    const opens = block.match(/onOpenView\(gapRow\.view\)/g) || []
+    expect(opens, `found ${opens.length} openers in the card`).toHaveLength(1)
+  })
+
   it('carries no secondary or ghost button', () => {
     // These are the two the card actually shipped with, so they are named
     // rather than caught by a general pattern — a regression here will most

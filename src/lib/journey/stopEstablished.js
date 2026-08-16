@@ -5,22 +5,31 @@
  * finished, minus the current gap, minus any you had skipped — a leftovers
  * list. Three things were wrong with it:
  *
- *   1. It was a SECOND process map. The sidebar already lists all five
+ *   1. It was a SECOND process map. The sidebar already lists all seven
  *      (DESIGN_GRAMMAR G3 bans a second map of the same chapters).
  *   2. It was completion debt wearing navigation's clothes: a stop appeared
  *      only while it was outstanding and vanished on completion, so the list
  *      was a to-do and the only way to clear an inapplicable stop was to
  *      press "Skip this one" — an acknowledgement whose whole purpose was to
  *      prune a list that should not have existed.
- *   3. On a phone it was the ONLY route to a workspace from the Desk. The
- *      horizontal step rail renders only on path views (`journeyActive`), and
- *      the sidebar becomes a centered dialog behind the menu button below
- *      768px. So the leftovers list was standing in for navigation the Desk
- *      never had.
+ *   3. It was believed to be the ONLY route to a workspace from the Desk on a
+ *      phone. CORRECTED 2026-08-16: that was never true. The horizontal step
+ *      rail's guard in `App.jsx` includes `activeView === 'desk'`, and the
+ *      max-width:767px block moves it into the `hud` row rather than hiding
+ *      it — measured visible and interactive on Desk at 320/390/430 and 1440.
+ *      The Desk has always had a stop navigator.
  *
- * All five are listed now, always, in path order, and each says what is
+ * All seven are listed now, always, in path order, and each says what is
  * ESTABLISHED there rather than whether it is finished. "6 starred, 14 pins"
  * is a fact about the work; a tick is a verdict about you.
+ *
+ * AND THEY ARE NOT LINKS (owner decision, 2026-08-16). With the step rail
+ * established as the Desk's navigator, a second set of destinations for the
+ * same seven stops was the G3 duplication this header already objected to.
+ * The rows are information: label plus what is established. Navigation is the
+ * rail's job; this is orientation, which is why all seven are listed whatever
+ * the project has switched off — the process is universal even when a given
+ * project does not walk all of it.
  */
 import { getDetectiveProgress } from '../brief/detectiveBrief'
 import { touchpointsFor } from '../journey/touchpoints'

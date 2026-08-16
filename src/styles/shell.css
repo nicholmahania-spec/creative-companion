@@ -10698,9 +10698,17 @@ textarea.artboard-brief-input {
   .step-rail-list li:has(.step-rail-step:not(.is-active)) .step-rail-step {
     display: grid;
     place-items: center;
-    /* Dot is small; the tap target stays a full 24px square. */
-    width: var(--space-5);
-    height: var(--space-5);
+    /* The DOT is small — 0.4rem, drawn by the ::before below. The TARGET is
+       not: these are the stop navigator on a phone, and they were 24px
+       against this project's own `--tap-min: 44px`, asserted in 27 other
+       places. Measured 2026-08-16 at 44px: no page overflow at 320/390/430
+       (305/375/415 against 320/390/430). At 320 the dot row itself scrolls —
+       281px visible against 332 needed — which is the mechanism this block
+       already provides two rules down ("The map scrolls, the action does
+       not"). The rail row grows 40px -> 60px at every narrow width, which is
+       the accepted cost. */
+    width: var(--tap-min);
+    height: var(--tap-min);
     font-size: 0;
   }
   .step-rail-list li:has(.step-rail-step:not(.is-active)) .step-rail-step::before {
