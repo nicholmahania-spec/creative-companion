@@ -420,23 +420,11 @@
   background: var(--bg-card);
 }
 
-.desk-card-hit {
+.desk-card-face {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   width: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-}
-
-.desk-card-hit:hover .desk-card-title {
-  color: var(--text-muted);
 }
 
 .desk-card-tag {
@@ -1072,9 +1060,10 @@
 }
 
 /* ── Workspaces ──────────────────────────────────────────────────────────
-   Five cards, always all five, in path order. Orientation + navigation +
-   what is established — not five miniature dashboards, and not a checklist.
-   No ticks, no counts of things undone, no skipped state. */
+   Seven cards, always all seven, in path order. Orientation and what is
+   established — NOT navigation: the step rail owns that (owner decision,
+   2026-08-16), so these rows are static. Not seven miniature dashboards, and
+   not a checklist. No ticks, no counts of things undone, no skipped state. */
 
 .desk-stop-list {
   list-style: none;
@@ -1084,31 +1073,6 @@
   gap: var(--space-1);
 }
 
-/* ── The rail's phase seams ───────────────────────────────────────────────
-   PHONE ONLY, AND FOR A MEASURED REASON. Below 768px the To-do pill exists
-   (`shell.css` hides it at min-width: 768px) and searches upward for a resting
-   place holding no interactive control. Its reach is the 320px lift cap plus
-   its own height; a seat needs that height plus `CLEARANCE_GAP`. Measured
-   2026-08-15 at 320/390/430, seven stops run 481.7px unbroken on 4px gaps, so
-   at some scroll offsets nothing in reach is clear, `chooseLift` returns null
-   and the pill sits home on top of a stop. Two seams cut the run into three
-   segments and the collision goes away — measured 19 stolen-tap offsets to 0
-   on the rail. Shrinking a stop instead would need a 42.3px target, under the
-   44px floor, so it is not available.
-
-   The size is the pill plus its gap, written that way rather than as 54px, so
-   it tracks `.todo-fab`'s own `height: 3rem` if the root scale ever moves.
-   The list's 4px grid gap sits on top of this, which is the headroom.
-
-   WHICH stops carry it is not decided here — `lib/journey/stopGroups.js` owns
-   that, keyed to step ids, because a positional seam lands in the wrong place
-   the moment the rail draws a reduced stop set. Desktop gets none of this: the
-   pill is not there to seat, so the gap would be 108px of rail for nothing. */
-@media (max-width: 767px) {
-  .desk-stop-list > li.is-group-start {
-    margin-top: calc(3rem + 6px);
-  }
-}
 
 .desk-stop {
   display: grid;
@@ -1117,24 +1081,10 @@
   gap: var(--space-1) var(--space-3);
   width: 100%;
   text-align: left;
-  font: inherit;
-  background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
   padding: var(--space-2) var(--space-3);
-  cursor: pointer;
   color: var(--text-primary);
-  transition: background var(--transition), border-color var(--transition);
-}
-
-.desk-stop:hover {
-  background: var(--bg-canvas);
-  border-color: var(--border-subtle);
-}
-
-.desk-stop:focus-visible {
-  outline: 2px solid var(--dopamine);
-  outline-offset: 1px;
 }
 
 /* The one the gap card is pointing at. A hairline, not a badge: it marks

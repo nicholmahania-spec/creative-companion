@@ -38,7 +38,7 @@ export default function AlignmentBars({
   if (!strategySpeaks && !tokenSpeaks) {
     return (
       <p className="align-empty">
-        Set a few words in Strategy — warm, playful, trustworthy — and they
+        Set a few words in the Brief — warm, playful, trustworthy — and they
         show up here as you choose.
       </p>
     )
@@ -57,7 +57,7 @@ export default function AlignmentBars({
           not dressed up as the app judging the work. */}
       <p className="align-basis">
         {derived
-          ? `Read from ${thingLabel} itself, against the words you set in Strategy.`
+          ? `Read from ${thingLabel} itself, against the words you set in the Brief.`
           : `Comparing where you placed ${thingLabel} against where you placed your words — it does not look at the work itself.`}
       </p>
       {note ? (

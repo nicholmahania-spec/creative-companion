@@ -34,7 +34,6 @@ import {
 } from '../lib/book/exportFiles'
 import { paletteIsUntouched } from '../lib/color'
 import { stopEstablished } from '../lib/journey/stopEstablished'
-import { groupBreaksFor } from '../lib/journey/stopGroups'
 import DeskLiveArtboard from '../components/DeskLiveArtboard'
 import BrandCheckPanel from '../components/BrandCheckPanel'
 import YoursOnlyPanel from '../components/YoursOnlyPanel'
@@ -216,16 +215,8 @@ export default function DeskView({
 }) {
   const gapRow = nextGap || null
 
-  /* Where the rail's three phases begin — groundwork, design, handoff. A
-     seam is a clearance measure on a phone, not decoration: see
-     `lib/journey/stopGroups.js` for which stops open a phase and why, and
-     `lazy-desk.css` for how much room one opens. Derived from the stops
-     actually rendered, so a reduced rail collapses its empty groups rather
-     than gapping where their stops would have been. */
-  const groupBreaks = groupBreaksFor(rows.map((r) => r.id))
-
-  /* ALL FIVE, ALWAYS, IN ORDER — navigation, not a to-do list.
-     What each card says is what is ESTABLISHED at that stop ("6 starred,
+  /* ALL SEVEN, ALWAYS, IN ORDER — status, not navigation and not a to-do
+     list. What each row says is what is ESTABLISHED at that stop ("6 starred,
      14 pins"), never whether it is finished. A fact about the work; a tick
      would be a verdict about the person. See `stopEstablished`. */
   const stopCards = rows.map((r) => ({
@@ -547,14 +538,18 @@ export default function DeskView({
 
             {gapRow && (
               <div className="desk-card">
-                <button
-                  type="button"
-                  className="desk-card-hit"
-                  onClick={() => onOpenView(gapRow.view)}
-                >
+                {/* The card's face is what it SAYS, not a second button.
+                    `.desk-card-hit` made the whole face a third control
+                    pointing at the same destination as the primary below it
+                    and the artboard-foot primary above — one screen, three
+                    identical openers for the gap stop. The primary in
+                    `.desk-card-actions` is the card's one action, and
+                    `deskCardWeight.test.js` is the contract that keeps it
+                    that way. Removed 2026-08-16; the text is unchanged. */}
+                <div className="desk-card-face">
                   <span className="desk-card-tag">{gapRow.label}</span>
                   <span className="desk-card-title">{gapTitle}</span>
-                </button>
+                </div>
                 <div className="desk-card-actions">
                   <button
                     type="button"
@@ -602,19 +597,28 @@ export default function DeskView({
             ) : null}
           </section>
 
-          {/* ── The five workspaces ──────────────────────────────────────
-              Navigation with context, replacing a leftovers list.
+          {/* ── The seven workspaces ─────────────────────────────────────
+              Status with context, replacing a leftovers list. NOT
+              navigation — see the row markup below.
 
               What was here: the stops you had not finished, minus the
               current gap, minus any you had skipped. Three problems — it
               was a second copy of the sidebar's map (G3), it was completion
               debt shaped like navigation (a stop vanished on completion, so
-              the list was a to-do), and on a phone it was the ONLY route to
-              a workspace from the Desk, because the horizontal step rail
-              renders only on path views and the sidebar collapses to a
-              dialog behind the menu button below 768px.
+              the list was a to-do), and it was believed to be the only route
+              to a workspace from the Desk on a phone.
 
-              All five, always, in order. Each says what is ESTABLISHED
+              THAT THIRD REASON WAS NEVER TRUE, and correcting it is what
+              settled what this rail is for (owner decision, 2026-08-16). The
+              horizontal step rail's guard in `App.jsx` includes
+              `activeView === 'desk'`, and the max-width:767px block moves it
+              into the `hud` row rather than hiding it — measured present,
+              visible and interactive on Desk at 320/390/430 and 1440. The
+              Desk has always had a stop navigator, so this rail was never
+              standing in for one; it was the second map G3 bans. It carries
+              status now, and the step rail carries the destinations.
+
+              All seven, always, in order. Each says what is ESTABLISHED
               there, which is the answer to "what have I already decided" —
               not whether it is finished, which is a verdict with no action
               attached. */}
@@ -624,16 +628,20 @@ export default function DeskView({
             </div>
             <ul className="desk-stop-list">
               {stopCards.map((r) => (
-                <li
-                  key={r.id}
-                  className={groupBreaks.has(r.id) ? 'is-group-start' : undefined}
-                >
-                  <button
-                    type="button"
+                <li key={r.id}>
+                  {/* NOT A LINK, and that is the decision this rail now
+                      carries. The step rail is the Desk's navigator — it
+                      renders here at every width, which the comment at the top
+                      of this file used to deny. A second set of destinations
+                      for the same seven stops was the second map
+                      DESIGN_GRAMMAR G3 bans, and `stopEstablished`'s own
+                      header objected to it while this rail was one. What is
+                      unique here is the established line, and that needs no
+                      click. Owner decision, 2026-08-16. */}
+                  <div
                     className={`desk-stop${
                       gapRow?.id === r.id ? ' is-next' : ''
                     }`}
-                    onClick={() => onOpenView(r.view)}
                   >
                     <span className="desk-stop-name">{r.label}</span>
                     <span className="desk-stop-line">{r.line}</span>
@@ -654,7 +662,7 @@ export default function DeskView({
                         ))}
                       </span>
                     )}
-                  </button>
+                  </div>
                 </li>
               ))}
             </ul>
