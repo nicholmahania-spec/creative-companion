@@ -492,13 +492,28 @@
 
 /* Quiet is not the same as small to hit. The visual stays a text link; the
    touch target reaches the 44px floor via a centred pseudo-element, the same
-   move `.brief-attach-remove` and `.done-undo` already make in shell.css. */
+   move `.brief-attach-remove` and `.done-undo` already make in shell.css.
+
+   44 WIDE, NOT `100%`, AND THAT IS THE WHOLE FIX HERE. This rule used to
+   claim the two above as precedent while doing something they do not: both
+   are `width: var(--tap-min)`, this was `width: 100%`. On a full-width link
+   that made the target a 264px-wide band (measured at 390), which reached
+   into the column the To-do pill searches for a seat — and reached in from a
+   border box sitting 3.5px BELOW that column, so `collectBlockers` culled the
+   element on its box before `tapExtent` could see the target. The pill then
+   read its home as clear and sat on the link. Measured 2026-08-16: one stolen
+   tap at 320/390/430, gone once the target is 44 wide and centred (patch at
+   x 130-175 / 165-210 / 185-230; the pill's column starts at 201/271/311).
+
+   The 44px floor is unchanged — this is the same 44x44 centred target the
+   siblings use, and the link's own box stays clickable across its full width.
+   `min-width` is left in place as a floor should `width` ever be revisited. */
 .desk-card-aside-link::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100%;
+  width: var(--tap-min);
   min-width: var(--tap-min);
   height: var(--tap-min);
   transform: translate(-50%, -50%);
