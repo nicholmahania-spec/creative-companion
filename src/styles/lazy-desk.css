@@ -492,13 +492,28 @@
 
 /* Quiet is not the same as small to hit. The visual stays a text link; the
    touch target reaches the 44px floor via a centred pseudo-element, the same
-   move `.brief-attach-remove` and `.done-undo` already make in shell.css. */
+   move `.brief-attach-remove` and `.done-undo` already make in shell.css.
+
+   44 WIDE, NOT `100%`, AND THAT IS THE WHOLE FIX HERE. This rule used to
+   claim the two above as precedent while doing something they do not: both
+   are `width: var(--tap-min)`, this was `width: 100%`. On a full-width link
+   that made the target a 264px-wide band (measured at 390), which reached
+   into the column the To-do pill searches for a seat — and reached in from a
+   border box sitting 3.5px BELOW that column, so `collectBlockers` culled the
+   element on its box before `tapExtent` could see the target. The pill then
+   read its home as clear and sat on the link. Measured 2026-08-16: one stolen
+   tap at 320/390/430, gone once the target is 44 wide and centred (patch at
+   x 130-175 / 165-210 / 185-230; the pill's column starts at 201/271/311).
+
+   The 44px floor is unchanged — this is the same 44x44 centred target the
+   siblings use, and the link's own box stays clickable across its full width.
+   `min-width` is left in place as a floor should `width` ever be revisited. */
 .desk-card-aside-link::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100%;
+  width: var(--tap-min);
   min-width: var(--tap-min);
   height: var(--tap-min);
   transform: translate(-50%, -50%);
@@ -1067,6 +1082,32 @@
   padding: 0;
   display: grid;
   gap: var(--space-1);
+}
+
+/* ── The rail's phase seams ───────────────────────────────────────────────
+   PHONE ONLY, AND FOR A MEASURED REASON. Below 768px the To-do pill exists
+   (`shell.css` hides it at min-width: 768px) and searches upward for a resting
+   place holding no interactive control. Its reach is the 320px lift cap plus
+   its own height; a seat needs that height plus `CLEARANCE_GAP`. Measured
+   2026-08-15 at 320/390/430, seven stops run 481.7px unbroken on 4px gaps, so
+   at some scroll offsets nothing in reach is clear, `chooseLift` returns null
+   and the pill sits home on top of a stop. Two seams cut the run into three
+   segments and the collision goes away — measured 19 stolen-tap offsets to 0
+   on the rail. Shrinking a stop instead would need a 42.3px target, under the
+   44px floor, so it is not available.
+
+   The size is the pill plus its gap, written that way rather than as 54px, so
+   it tracks `.todo-fab`'s own `height: 3rem` if the root scale ever moves.
+   The list's 4px grid gap sits on top of this, which is the headroom.
+
+   WHICH stops carry it is not decided here — `lib/journey/stopGroups.js` owns
+   that, keyed to step ids, because a positional seam lands in the wrong place
+   the moment the rail draws a reduced stop set. Desktop gets none of this: the
+   pill is not there to seat, so the gap would be 108px of rail for nothing. */
+@media (max-width: 767px) {
+  .desk-stop-list > li.is-group-start {
+    margin-top: calc(3rem + 6px);
+  }
 }
 
 .desk-stop {
