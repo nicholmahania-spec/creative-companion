@@ -566,6 +566,8 @@ class VersionService {
          design-relevant parts of the project" (see createVersionSnapshot), and
          rolling the identity back to v1 must not move the project's due date
          back with it. */
+      /* These setters write the chosen concept when one exists, and only
+         the compatibility fields on a legacy project with no concepts. */
       await setLogoDirection(data.logoDirection || '')
       /* Snapshots store '[image-omitted]' instead of the data URL — do not
          wipe the live mark with that sentinel. */

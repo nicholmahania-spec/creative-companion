@@ -198,9 +198,11 @@ describe('logo concepts', () => {
     const beforeMark = current().logoImage
     useAppStore.getState().removeLogoConcept(before[0].id)
     useAppStore.getState().setLogoConcepts(before)
-    useAppStore.getState().setLogoImage(beforeMark)
     expect(current().logoConcepts).toEqual(before)
     expect(current().logoImage).toBe(beforeMark)
+    expect(current().logoImage).toBe(
+      current().logoConcepts.find((c) => c.chosen).image
+    )
   })
 })
 

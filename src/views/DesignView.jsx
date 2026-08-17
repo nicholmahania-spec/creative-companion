@@ -176,7 +176,6 @@ export default function DesignView({
   const updateLogoConcept = useAppStore((s) => s.updateLogoConcept)
   const removeLogoConcept = useAppStore((s) => s.removeLogoConcept)
   const setLogoConcepts = useAppStore((s) => s.setLogoConcepts)
-  const setLogoImage = useAppStore((s) => s.setLogoImage)
   const moodItems = useAppStore((s) => s.moodItems)
 
   /* Resume from project; sub-nav / Next / deep link all write identitySubstep. */
@@ -1273,11 +1272,9 @@ export default function DesignView({
                         className="text-link mark-concept-remove"
                         onClick={() => {
                           const before = concepts
-                          const beforeMark = activeProject?.logoImage
                           removeLogoConcept(concept.id, activeProject?.id)
                           offerUndo?.('Concept removed', () => {
                             setLogoConcepts(before, activeProject?.id)
-                            setLogoImage(beforeMark, activeProject?.id)
                           })
                         }}
                       >
