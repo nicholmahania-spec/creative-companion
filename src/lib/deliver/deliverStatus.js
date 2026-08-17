@@ -13,6 +13,7 @@
  * one living in a status line is how two surfaces start disagreeing about
  * whether a job can ship.
  */
+import { hasStoredMark } from './markSource'
 
 /**
  * WHY A DELIVERABLE GAP OUTRANKS THE REST.
@@ -41,4 +42,19 @@ export function deliverStatusLine(ready, firstCoreGap, gapCount) {
   if (firstCoreGap) return `Still to add · ${firstCoreGap.label}`
   if (gapCount > 0) return 'Add a handoff note when you ship'
   return 'Preview the book, then download'
+}
+
+/**
+ * The Brand Book's own document stamp — additive, never a readiness input.
+ *
+ * `hasStoredMark` is the same gate the PDF cover uses. This line does not
+ * change `allDone`. A pack can be Ready to ship and still be a working
+ * document because the mark artwork is not stored.
+ *
+ * @param {object|null} pack
+ * @returns {string} the cover phrase, or '' when the mark is stored
+ */
+export function workingDocumentMarkStatus(pack) {
+  if (hasStoredMark(pack?.logoImage)) return ''
+  return 'Working document — mark to come'
 }

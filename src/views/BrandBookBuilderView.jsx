@@ -604,10 +604,7 @@ function AppsPage({ kit, style, pageIndex = 0, id, touchpoints = [], project }) 
     bodySize,
   } = kit
   const palette = (kit.colors || []).map((c) => c.hex).filter(Boolean)
-  const list =
-    Array.isArray(touchpoints) && touchpoints.length
-      ? touchpoints
-      : ['businessCard', 'social', 'packaging', 'signage']
+  const list = Array.isArray(touchpoints) ? touchpoints.filter(Boolean) : []
 
   return (
     <div
@@ -803,6 +800,7 @@ const GAP_DESTINATION = {
      Caught by counting actionable rows against omitted rows rather than by
      reading the map. */
   brief: 'project',
+  apps: 'project',
   imagery: 'studio',
   usage: 'flow',
   handoff: 'finish',

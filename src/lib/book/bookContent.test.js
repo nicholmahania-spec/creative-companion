@@ -38,15 +38,14 @@ const plannedIds = (pack) => {
 describe('bookContentPages', () => {
   it('invents nothing for an empty project', () => {
     /* The failure this guards is the Promise/Proof bug: pages rendering from
-       fields nothing ever wrote. Every prose page must be absent.
-
-       Applications is the one page that survives, and not because content was
-       invented for it — `touchpointsFor` falls back to four default mocks when
-       no surface is picked, which is behaviour the PDF has always had and this
-       now matches. It is called out here so the exception stays deliberate
-       rather than becoming the crack the rule leaks through. */
+       fields nothing ever wrote. Every prose page must be absent — including
+       Applications. An empty derived surface set omits the section rather
+       than inventing four stock mocks. */
     const r = bookContentPages({})
-    expect(ids(r)).toEqual(['apps'])
+    expect(ids(r)).toEqual([])
+    const apps = r.omitted.find((o) => o.id === 'apps')
+    expect(apps, 'Applications must be reported omitted, not silently dropped').toBeTruthy()
+    expect(apps.needs).toMatch(/surfaces picked in the brief/i)
   })
 
   it('survives a null project', () => {

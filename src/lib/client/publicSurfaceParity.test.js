@@ -96,4 +96,11 @@ describe('public client surfaces keep parity', () => {
       expect(src, `${name} must not show a raw error`).toMatch(/clientFacingError/)
     }
   })
+
+  it('the reveal is the brand book, not the package', () => {
+    expect(reveal).toMatch(/This is the brand book/)
+    expect(reveal).toMatch(/Download the PDF/)
+    expect(reveal).not.toMatch(/downloadClientPackage|packageAssets/)
+    expect(reveal).not.toMatch(/Download the ZIP|Build the client package/)
+  })
 })
