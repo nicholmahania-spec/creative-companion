@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { skipIfCloud, toShell, unlockAndOnboard } from './helpers.js'
+import { skipIfCloud, unlockAndOnboard } from './helpers.js'
 
 /**
  * Controls that exist in the markup but cannot be reached on screen.
@@ -22,32 +22,6 @@ import { skipIfCloud, toShell, unlockAndOnboard } from './helpers.js'
  *    no depth cue, so its last four rows — Settings, Keyboard shortcuts, the
  *    theme switch and Log out — were simply not on screen.
  */
-
-test('the Tools menu shows all of itself', async ({ page }) => {
-  const gate = await unlockAndOnboard(page)
-  skipIfCloud(test, gate)
-
-  await toShell(page)
-  await page.locator('#tools-menu-button').click()
-  const menu = page.locator('.more-menu')
-  await expect(menu).toBeVisible()
-
-  const fit = await menu.evaluate((m) => {
-    const box = m.getBoundingClientRect()
-    return {
-      overflow: m.scrollHeight - m.clientHeight,
-      below: [...m.querySelectorAll('button')]
-        .filter((el) => el.getBoundingClientRect().bottom > box.bottom + 1)
-        .map((el) => el.innerText.trim()),
-    }
-  })
-
-  /* Not "it scrolls" — it must not need to. A menu that scrolls with nothing
-     saying so is the bug; the last row being reachable in principle was true
-     the whole time it was invisible in practice. */
-  expect(fit.below, 'menu rows are cut off below its visible bottom').toEqual([])
-  expect(fit.overflow, 'menu content is taller than the box').toBeLessThanOrEqual(1)
-})
 
 test('Settings is reachable, and holds what left the Tools menu', async ({ page }) => {
   const gate = await unlockAndOnboard(page)
@@ -108,8 +82,7 @@ test('every preference switch has a visible, clickable body', async ({ page }) =
   /* Timer is the screen the bug actually shipped on — its root is
      `insights-studio`, not `settings-studio`, so it never received the width
      that was masking the missing base rule. */
-  await page.locator('#tools-menu-button').click()
-  await page.getByRole('menuitem', { name: /Timer/ }).click()
+  await page.getByRole('button', { name: /^Timer$/ }).first().click()
   await expect(page.locator('.insights-break-row')).toBeVisible()
   await check('Timer')
 

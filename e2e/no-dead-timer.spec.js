@@ -81,15 +81,14 @@ test('the real Timer still works where it lives', async ({ page }) => {
   const gate = await unlockAndOnboard(page, { name: 'Real Timer' })
   skipIfCloud(test, gate)
 
-  /* Removing the broken copies must not have removed the feature. Tools →
+  /* Removing the broken copies must not have removed the feature. Studio →
      Timer is where it is wired, and its controls must still be there and
      must not throw. */
   const errors = []
   page.on('pageerror', (e) => errors.push(String(e)))
 
   await toShell(page)
-  await page.locator('#tools-menu-button').click()
-  await page.getByRole('menuitem', { name: /Timer/ }).click()
+  await page.getByRole('button', { name: /^Timer$/ }).first().click()
   await expect(page.locator('.insights-focus-actions')).toBeVisible({
     timeout: 8000,
   })

@@ -139,7 +139,6 @@ import { guessRunningTodoStage } from './lib/billing/runningTodoStages'
 import { installAutoGrow } from './lib/autoGrow'
 import { chooseLift, collectBlockers, maxLiftFor } from './lib/fabClearance'
 import { useModalFocus } from './lib/useModalFocus'
-import { useMenuKeyboard } from './lib/useMenuKeyboard'
 import useIsMobile from './lib/useIsMobile'
 import {
   isSessionOpen,
@@ -466,15 +465,6 @@ function App() {
   const [navDir, setNavDir] = useState('none')
   const prevJourneyIdx = useRef(0)
   const [savePulse, setSavePulse] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
-  /* Tools is a menu hung off a button, not a modal — see useMenuKeyboard. */
-  const toolsMenuRef = useRef(null)
-  const toolsButtonRef = useRef(null)
-  const closeMore = useCallback(() => setMoreOpen(false), [])
-  const { onKeyDown: onToolsKeyDown, dismiss: dismissTools } = useMenuKeyboard(
-    moreOpen,
-    { menuRef: toolsMenuRef, triggerRef: toolsButtonRef, onClose: closeMore }
-  )
   const [accountOpen, setAccountOpen] = useState(false)
   const [openProjectMenuId, setOpenProjectMenuId] = useState(null)
   const [restoreSelect, setRestoreSelect] = useState('')
@@ -1316,7 +1306,6 @@ function App() {
         setAccountOpen(false)
         return
       }
-      setMoreOpen(false)
       // Ask Helper to tuck if expanded
       window.dispatchEvent(new CustomEvent('cc-helper-minimize'))
     }
@@ -1401,7 +1390,6 @@ function App() {
     setSessionComplete(true)
     setPomodoroWorkStartedAt(null)
     clearFocusSession()
-    setMoreOpen(false)
     // Remember path view so unlock returns user where they were
     preBreakViewRef.current = activeView
     // Pomodoro is Helper's job: open Break kit alongside the lock overlay
@@ -2923,7 +2911,6 @@ function App() {
   const openBreakdown = () => {
     setBreakdownRunId((n) => n + 1)
     setShowBreakdown(true)
-    setMoreOpen(false)
   }
 
   /* Commits the wizard's steps and returns how many landed, which is all the
@@ -3849,21 +3836,13 @@ function App() {
             <button
               type="button"
               className="journey-goto-row"
-              aria-expanded={moreOpen}
-              aria-haspopup="menu"
-              // Set only while the menu exists (it renders conditionally) —
-              // a static aria-controls would point at a missing id when
-              // closed.
-              aria-controls={moreOpen ? 'tools-menu' : undefined}
-              id="tools-menu-button"
-              ref={toolsButtonRef}
               onClick={() => {
-                setMoreOpen(true)
+                setActiveView('insights')
                 setNavOpen(false)
               }}
             >
-              <HeaderIcon name="tools" />
-              Tools
+              <HeaderIcon name="timer" />
+              {toolsLabelForView('insights')}
             </button>
           </div>
           <div className="journey-projects-section" aria-label="Your projects">
@@ -4009,6 +3988,7 @@ function App() {
           <div className="journey-path-section" aria-label="This project path">
             <span className="journey-path-heading">This project</span>
             {activeProject ? (
+              <>
               <button
                 type="button"
                 className={`journey-goto-row journey-desk-row${
@@ -4022,6 +4002,20 @@ function App() {
                 <HeaderIcon name="desk" />
                 Desk
               </button>
+              <button
+                type="button"
+                className={`journey-goto-row journey-desk-row${
+                  activeView === 'review' ? ' is-current' : ''
+                }`}
+                onClick={() => {
+                  setActiveView('review')
+                  setNavOpen(false)
+                }}
+              >
+                <HeaderIcon name="review" />
+                {toolsLabelForView('review')}
+              </button>
+              </>
             ) : (
               <p className="journey-path-empty">
                 Open a project to see its path.
@@ -4276,6 +4270,7 @@ function App() {
           setDeskConfirm={setDeskConfirm}
           updateDetective={updateDetective}
           setOverviewSharePanelOpen={setOverviewSharePanelOpen}
+          setDiscoveryPanelOpen={setDiscoveryPanelOpen}
         />
         </StageSignalsContext.Provider>
         </ErrorBoundary>
@@ -4356,18 +4351,20 @@ function App() {
         peekInvoiceNumber={peekInvoiceNumber}
         commitInvoiceNumber={commitInvoiceNumber}
       />
-      <DiscoveryBriefPanel
-        open={discoveryPanelOpen}
-        onClose={() => setDiscoveryPanelOpen(false)}
-        answers={activeProject?.discoveryAnswers || {}}
-        clientName={activeProject?.name || ''}
-        upload={activeProject?.discoveryUpload || null}
-        onSetUpload={setDiscoveryUpload}
-        flashToast={flashToast}
-      />
-      {/* In the transient layer: the Brief opens this from inside its stage,
-          which hides #root. */}
+      {/* In the transient layer: the Brief opens these from inside its stage,
+          which hides #root. Discovery notes used to live in the Tools overlay
+          (shell chrome). Opening them from the Brief masthead without this
+          portal would put the dialog inside the inert Workroom root. */}
       <OverlayLayer theme={theme}>
+        <DiscoveryBriefPanel
+          open={discoveryPanelOpen}
+          onClose={() => setDiscoveryPanelOpen(false)}
+          answers={activeProject?.discoveryAnswers || {}}
+          clientName={activeProject?.name || ''}
+          upload={activeProject?.discoveryUpload || null}
+          onSetUpload={setDiscoveryUpload}
+          flashToast={flashToast}
+        />
         <ProjectOverviewSharePanel
           open={overviewSharePanelOpen}
           onClose={() => setOverviewSharePanelOpen(false)}
@@ -4416,140 +4413,6 @@ function App() {
         flashToast={flashToast}
         flashMicro={flashMicro}
       />
-
-      {/* Tools — centered overlay (dialogs front-and-center). Pruned 2026-08:
-          Print lives on Assets / Export; Archive/Delete live on each project
-          row ⋯ (one door each — a long Tools list was decision fatigue).
-          Go-to first (off-path rooms), then project actions by frequency.
-
-          Not role="dialog"/aria-modal: the trigger declares
-          aria-haspopup="menu" and this is a menu. It used to claim both —
-          promising a focus trap it never implemented, over a role="menu"
-          whose arrow keys it also never implemented. */}
-      {moreOpen && (
-        <div
-          className="export-overlay tools-overlay"
-          role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) dismissTools()
-          }}
-        >
-          <div className="export-panel tools-panel">
-            <div className="export-panel-header">
-              <h3 id="tools-menu-title" style={{ margin: 0 }}>
-                Tools
-              </h3>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                aria-label="Close tools"
-                onClick={dismissTools}
-              >
-                ×
-              </button>
-            </div>
-            <div
-              ref={toolsMenuRef}
-              className="more-menu"
-              role="menu"
-              id="tools-menu"
-              aria-labelledby="tools-menu-button"
-              onKeyDown={onToolsKeyDown}
-            >
-              {/* role="menu" may only own menuitem, group and separator, so
-                  each heading names a role="group" instead of sitting loose
-                  in the menu where AT could drop or misread it. */}
-              <div
-                className="more-menu-group"
-                role="group"
-                aria-labelledby="tools-group-goto"
-              >
-                <p className="more-menu-group-label" id="tools-group-goto">
-                  Go to
-                </p>
-              {/* BRAND BOOK AND IDEATE LEFT THIS MENU BECAUSE THEY ARE STOPS.
-                  Both were reachable only from here — the Brand Book Builder
-                  from this single call site in the whole app, while Assets
-                  exported its PDF without ever offering the screen that shapes
-                  it. They are declared in JOURNEY_STEPS now, so the path is
-                  their door and a second one here would be the duplicate entry
-                  point this menu already suffers from.
-
-                  Library left too, for a different reason: it is cross-project
-                  like Home and Clients, so it belongs in the sidebar's Studio
-                  band beside them rather than in a project-scoped drawer. It is
-                  still a Tool, not a stop — see TOOLS_MENU_VIEWS. */}
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('insights')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="timer" /> Timer
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setActiveView('review')
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="review" /> Review
-              </button>
-              </div>
-              <div
-                className="more-menu-group"
-                role="group"
-                aria-labelledby="tools-group-project"
-              >
-                <p className="more-menu-group-label" id="tools-group-project">
-                  This project
-                </p>
-              {/* "Share Strategy form" was here. Removed, not relabelled:
-                  the Brief's own masthead already carries Send the brief /
-                  Share, which is the stop that owns the thing being shared,
-                  and the client inbox opens the same panel from a row. A
-                  second door in a generic menu is the duplication this pass
-                  removes — and it was still calling the stop Strategy, a name
-                  DESIGN_GRAMMAR G1 retired. */}
-              {/* EXPORT, HOURS, ARCHIVE AND DELETE WERE HERE.
-                  Moved, not removed. The three that administer a project now
-                  sit on the Desk, beside the project they act on, calling the
-                  same handlers — `archiveProject` and `handleDeleteProjectById`,
-                  so the undo toast and the "Project not found" reporting are
-                  unchanged.
-
-                  Export went to neither: it opens the pack panel that Delivery
-                  already opens, and Delivery is the stop whose job is the pack.
-                  It is deliberately NOT on the Desk — this file's counterpart
-                  rule there is "No PDF on the desk".
-
-                  What is left in this group is Discovery brief, which is still
-                  an open product question rather than a placement one. */}
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                className="more-menu-item"
-                onClick={() => {
-                  setDiscoveryPanelOpen(true)
-                  setMoreOpen(false)
-                }}
-              >
-                <HeaderIcon name="question" /> Discovery notes
-              </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {shortcutsOpen && (
         <div

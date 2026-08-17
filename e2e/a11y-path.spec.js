@@ -39,10 +39,7 @@ test.describe('Path accessibility', () => {
       '#main-content'
     )
 
-    await expect(page.getByRole('button', { name: 'Tools' })).toHaveAttribute(
-      'aria-haspopup',
-      'menu'
-    )
+    await expect(page.getByRole('button', { name: 'Tools' })).toHaveCount(0)
   })
 
   test('each path step has a page heading', async ({ page }) => {

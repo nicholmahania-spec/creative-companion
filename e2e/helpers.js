@@ -176,26 +176,18 @@ export function labelForStep(id) {
 }
 
 /**
- * Open a view that lives on the Tools menu.
+ * Open an off-path destination that used to live in the Tools overlay.
  *
- * Review only, now. Ideate and Review were both path stops, then both Tools;
- * on 2026-08-09 Ideate went back on the path as Directions (and Brand book
- * joined it), so those two are reached with `stepByIdIn` like any other stop
- * and their Tools entries are gone. Review is genuinely off-path — it acts on
- * the client relationship rather than producing a stage artifact — so this is
- * still how a spec gets to it.
+ * Review is still off-path — it acts on the client relationship rather than
+ * producing a stage artifact. Timer is a Studio destination. Neither is a
+ * JOURNEY_STEPS stop.
  */
 export async function openTool(page, name) {
-  /* Tools is shell chrome, and a stage makes the shell inert — so this has to
-     stand in the shell first or the menu opens behind a `visibility: hidden`
-     ancestor and every click on it waits out the timeout. */
+  /* Timer is a Studio row; Review is a This-project row beside Desk. Both
+     are shell chrome, so a stage makes them inert — stand in the shell
+     first. */
   await toShell(page)
-  await page.getByRole('button', { name: 'Tools' }).first().click()
-  await page
-    .locator('#tools-menu, .more-menu')
-    .getByRole('menuitem', { name })
-    .first()
-    .click()
+  await page.getByRole('button', { name }).first().click()
   await page.waitForTimeout(300)
 }
 

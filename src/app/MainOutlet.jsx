@@ -181,6 +181,7 @@ export default function MainOutlet(p) {
     setDeskConfirm,
     updateDetective,
     setOverviewSharePanelOpen,
+    setDiscoveryPanelOpen,
     setDiscoveryShare,
     mergeDiscoveryAnswers,
   } = p
@@ -610,6 +611,7 @@ export default function MainOutlet(p) {
         pathCtx={pathCtx}
         updateDetective={updateDetective}
         onOpenShare={() => setOverviewSharePanelOpen(true)}
+        onOpenDiscoveryNotes={() => setDiscoveryPanelOpen(true)}
         /* The /f/ link's controls moved out of the retired Discovery modal
            and onto the Brief — same functions, same share ids. */
         onSetDiscoveryShare={setDiscoveryShare}

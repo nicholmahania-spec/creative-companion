@@ -115,6 +115,7 @@ describe('what has to be in the layer', () => {
     ['the export / preview dialog', 'className="export-overlay no-print-hide"'],
     ['the breakdown wizard', '<TaskBreakdown'],
     ['the brief share panel', '<ProjectOverviewSharePanel'],
+    ['the discovery notes panel', '<DiscoveryBriefPanel'],
   ]
 
   it.each(MUST_BE_IN_THE_LAYER)('%s renders in the overlay layer', (_name, needle) => {

@@ -138,7 +138,7 @@ test.describe('Process walk (artifacts)', () => {
     ).toBeVisible({ timeout: 5000 })
 
     // 6 Review — pack readiness + feedback notes
-    // Review is a Tool now, not stop 6.
+    // Review is off-path, not stop 6.
     await openTool(page, /^Review$/i)
     await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible()
     /* Review reports readiness as one of two chips: "Ready · n/m" when
