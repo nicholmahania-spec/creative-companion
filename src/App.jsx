@@ -73,6 +73,7 @@ import {
   getPrevJourney,
   toolsLabelForView,
   isToolsMenuView,
+  stepRailAriaLabel,
 } from './lib/journey/journey'
 import {
   pathStepHasContent,
@@ -3610,7 +3611,7 @@ function App() {
           showing the active pill. Mobile has always had both.) */}
       {activeProject &&
         (journeyActive || activeView === 'desk' || isToolsMenuView(activeView)) && (
-        <nav className="step-rail" aria-label="Process position">
+        <nav className="step-rail" aria-label={stepRailAriaLabel(activeView)}>
           <ol className="step-rail-list">
             {pathSteps.map((step) => {
               const active = journeyActive === step.id

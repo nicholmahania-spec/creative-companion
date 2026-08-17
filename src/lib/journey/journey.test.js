@@ -10,6 +10,7 @@ import {
   portalPushableSteps,
   toolsLabelForView,
   isToolsMenuView,
+  stepRailAriaLabel,
 } from './journey'
 
 /**
@@ -133,6 +134,16 @@ describe('JOURNEY_STEPS — the seven-stop path', () => {
     expect(isToolsMenuView('assets')).toBe(true)
     expect(isToolsMenuView('home')).toBe(false)
     expect(isToolsMenuView('project')).toBe(false)
+  })
+
+  it('names the shell rail as process position only on the Desk and path stops', () => {
+    expect(stepRailAriaLabel('desk')).toBe('Process position')
+    expect(stepRailAriaLabel('define')).toBe('Process position')
+    expect(stepRailAriaLabel('spark')).toBe('Process position')
+    expect(stepRailAriaLabel('book')).toBe('Process position')
+    expect(stepRailAriaLabel('review')).toBe('Path stops')
+    expect(stepRailAriaLabel('insights')).toBe('Path stops')
+    expect(stepRailAriaLabel('assets')).toBe('Path stops')
   })
 
   /**
