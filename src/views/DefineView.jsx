@@ -15,6 +15,7 @@ import { getRequiredEmpty, DETECTIVE_CHAPTERS } from '../lib/brief/detectiveBrie
 import { relativeDeadlineLabel } from '../lib/dates'
 import StrategyWords from '../components/StrategyWords'
 import BriefClientLink from '../features/brief/BriefClientLink'
+import { hasHistoricalDiscoveryNotes } from '../lib/client/discoveryBrief'
 import '../styles/lazy-define.css'
 
 const DetectiveSheet = lazy(() => import('../features/brief/DetectiveSheet'))
@@ -46,6 +47,7 @@ export default function DefineView(props) {
     activeProject: activeProjectProp = null,
     updateDetective: updateDetectiveProp,
     onOpenShare,
+    onOpenDiscoveryNotes,
     onSetDiscoveryShare,
     onMergeDiscoveryAnswers,
     flashToast,
@@ -122,6 +124,7 @@ export default function DefineView(props) {
         : `${requiredEmpty.length} still blank`
 
   const showSend = sendStatus.kind === 'not_sent'
+  const showDiscoveryNotes = hasHistoricalDiscoveryNotes(activeProject)
 
   return (
     <Workroom
@@ -169,6 +172,15 @@ export default function DefineView(props) {
             >
               {callMode ? 'Leave call mode' : 'Call mode'}
             </button>
+            {showDiscoveryNotes && (
+              <button
+                type="button"
+                className="btn btn-ghost define-brief-notes"
+                onClick={() => onOpenDiscoveryNotes?.()}
+              >
+                Discovery notes
+              </button>
+            )}
           </div>
         </>
       }

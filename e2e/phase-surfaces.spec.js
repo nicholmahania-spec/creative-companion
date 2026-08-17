@@ -32,15 +32,13 @@ async function openStep(page, pattern) {
   await page.waitForTimeout(700)
 }
 
-/* Review is deliberately OFF the five-step path — it is reached through
-   Tools, not the rail. Worth encoding: a test that silently skipped when it
-   could not find a "Step 6" button would have hidden the fact that this
+/* Review is deliberately OFF the path — it is reached beside Desk, not
+   the rail. Worth encoding: a test that silently skipped when it could
+   not find a "Step 6" button would have hidden the fact that this
    surface was never checked at all. */
 async function openReview(page) {
   await toShell(page)
-  await page.getByRole('button', { name: /^Tools$/i }).first().click()
-  await page.waitForTimeout(300)
-  await page.getByRole('menuitem', { name: /Review/i }).first().click()
+  await page.getByRole('button', { name: /^Review$/ }).first().click()
   await page.waitForTimeout(700)
 }
 

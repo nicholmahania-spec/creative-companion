@@ -60,12 +60,9 @@ test.describe('deleting a project from a desktop', () => {
       panel.getByRole('button', { name: /Archive project/ })
     ).toBeVisible()
 
-    /* And Tools no longer carries a second copy — one home, not two. */
-    await page.locator('#tools-menu-button').click()
-    await expect(page.locator('#tools-menu')).toBeVisible()
-    await expect(
-      page.locator('#tools-menu').getByRole('menuitem', { name: /Delete project/ })
-    ).toHaveCount(0)
+    /* And the Tools overlay is gone — one home, not two. */
+    await expect(page.locator('#tools-menu-button')).toHaveCount(0)
+    await expect(page.locator('#tools-menu')).toHaveCount(0)
   })
 
   test('deletes with the mouse, and the undo puts it back', async ({ page }) => {

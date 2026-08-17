@@ -181,3 +181,10 @@ export function discoveryBriefToPlainText(answers = {}, meta = {}) {
 export function countAnswered(answers = {}) {
   return DISCOVERY_FIELDS.filter((f) => String(answers[f.id] || '').trim()).length
 }
+
+/** True when the historical notes surface has something to show. */
+export function hasHistoricalDiscoveryNotes(project) {
+  return (
+    countAnswered(project?.discoveryAnswers) > 0 || !!project?.discoveryUpload
+  )
+}

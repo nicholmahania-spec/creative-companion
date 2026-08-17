@@ -6348,9 +6348,9 @@ html[dir="rtl"] .buddy-shell.buddy-float {
    rail collapses to a single active pill and a full list is genuinely useful.
    Below 768px the drawer rule wins and the list is visible again.
 
-   Only the list. The "This project" heading and the Desk row it sits above
-   stay on desktop — the heading still labels something, and Desk is the one
-   project destination the rail does not carry. */
+   Only the list. The "This project" heading and the Desk / Review rows it
+   sits above stay on desktop — the heading still labels something, and those
+   two are the project destinations the rail does not carry. */
 @media (min-width: 768px) {
   .app-shell > .journey-sidebar .journey-bar-list {
     display: none;

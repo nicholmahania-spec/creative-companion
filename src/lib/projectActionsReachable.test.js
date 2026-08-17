@@ -91,21 +91,10 @@ describe('project actions are reachable on desktop', () => {
   })
 
   it('Tools no longer carries project administration', () => {
-    /* The point of the move: Tools is for tools. If an administration action
-       reappears there, it is a second home for something that already has
-       one — the duplication this pass removed. */
-    const start = app.indexOf('id="tools-group-project"')
-    expect(start, 'the "This project" tools group must exist').toBeGreaterThan(-1)
-    const group = app.slice(start, start + 4000)
-    for (const label of ['Archive project', 'Delete project', 'Hours &amp; invoice']) {
-      const at = group.indexOf(label)
-      /* Named in the note that records the move, never as a menu item. */
-      if (at > -1) {
-        const before = group.slice(Math.max(0, at - 400), at)
-        expect(before, `${label} must not be a live Tools item`).not.toContain(
-          'role="menuitem"'
-        )
-      }
-    }
+    /* The overlay is gone. Admin stays on the Desk. A second home would be
+       the duplication this pass already removed. */
+    expect(app).not.toContain('id="tools-menu"')
+    expect(app).not.toContain('id="tools-menu-button"')
+    expect(app).not.toContain('id="tools-group-project"')
   })
 })

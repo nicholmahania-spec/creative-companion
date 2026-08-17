@@ -4,7 +4,6 @@ import {
   openDeliverSectionWith,
   pathNav,
   skipIfCloud,
-  toShell,
   stepByIdIn,
   unlockAndOnboard,
 } from './helpers.js'
@@ -40,24 +39,6 @@ test.describe('Desk reliability', () => {
     await expect(
       page.getByRole('button', { name: 'Print', exact: true })
     ).toBeVisible()
-  })
-
-  test('Esc closes Tools menu', async ({ page }) => {
-    const gate = await unlockAndOnboard(page, { name: 'E2E Reliability' })
-    skipIfCloud(test, gate)
-    await toShell(page)
-    await page.getByRole('button', { name: 'Tools' }).click()
-    await expect(page.locator('#tools-menu, .more-menu')).toBeVisible()
-    /* What this test is about is Escape, so the menu's contents are only
-       evidence that it is open. Naming a specific row made it fail twice for
-       reasons that had nothing to do with Escape: Print left Tools for
-       Assets/Export, and then Export left too. Tools now carries Timer,
-       Review and Discovery notes. Assert that it is open and populated. */
-    await expect(
-      page.locator('#tools-menu').getByRole('menuitem').first()
-    ).toBeVisible()
-    await page.keyboard.press('Escape')
-    await expect(page.locator('#tools-menu, .more-menu')).toHaveCount(0)
   })
 
   test('Esc closes export preview overlay', async ({ page }) => {
