@@ -39,12 +39,11 @@ describe('touchpointsFor', () => {
     expect(touchpointsFor(['app'], ['packaging'])).toEqual(['app', 'packaging'])
   })
 
-  it('falls back to the old four rather than an empty page', () => {
-    // A book generated for an older project must not come out emptier than
-    // it did yesterday.
-    expect(touchpointsFor([], [])).toEqual(LEGACY_TOUCHPOINTS)
-    expect(touchpointsFor(undefined, undefined)).toEqual(LEGACY_TOUCHPOINTS)
-    expect(touchpointsFor(null, null)).toEqual(LEGACY_TOUCHPOINTS)
+  it('invents nothing when nobody named a surface', () => {
+    expect(touchpointsFor([], [])).toEqual([])
+    expect(touchpointsFor(undefined, undefined)).toEqual([])
+    expect(touchpointsFor(null, null)).toEqual([])
+    expect(touchpointsFor([], [])).not.toEqual(LEGACY_TOUCHPOINTS)
   })
 
   it('never duplicates when a surface and a deliverable agree', () => {

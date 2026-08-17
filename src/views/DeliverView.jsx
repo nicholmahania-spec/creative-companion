@@ -18,7 +18,10 @@ import { FIELD_HOMES } from '../lib/book/bookContent'
 import { isLogoOnlyScope } from '../lib/brief/detectiveBrief'
 import { clientFacingName } from '../lib/client/clientRecord'
 import { focusPathGapTarget } from '../lib/journey/journeyProgress'
-import { deliverStatusLine } from '../lib/deliver/deliverStatus'
+import {
+  deliverStatusLine,
+  workingDocumentMarkStatus,
+} from '../lib/deliver/deliverStatus'
 import {
   bookSetupSummary,
 } from '../lib/book/brandBookSetup'
@@ -128,6 +131,7 @@ export default function DeliverView({
   /* Named gap beside ship — download never blocked; hollowness must not feel ready. */
   const firstCoreGap = coreGaps[0] || null
   const statusLine = deliverStatusLine(ready, firstCoreGap, gaps.length)
+  const workingDocumentMark = workingDocumentMarkStatus(packSnap)
   const moreCoreCount = Math.max(0, coreGaps.length - 1)
 
   return (
@@ -144,6 +148,7 @@ export default function DeliverView({
           <h1 className="cc-stage-display">{labelForStepId('deliver')}</h1>
           <p className="cc-stage-meta assets-status" role="status">
             {statusLine}
+            {workingDocumentMark ? ` · ${workingDocumentMark}` : ''}
           </p>
         </>
       }
@@ -182,6 +187,11 @@ export default function DeliverView({
             Core pack looks ready — download when you want
           </p>
         )}
+        {workingDocumentMark ? (
+          <p className="assets-ship-working" role="status">
+            {workingDocumentMark}
+          </p>
+        ) : null}
 
         {/* THE REST OF THE GAPS, BESIDE THE VERDICT THAT COUNTS THEM.
             "Still thin · +3 more" names the first gap at the top; this is the

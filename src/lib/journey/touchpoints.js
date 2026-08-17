@@ -108,10 +108,12 @@ const SURFACE_TO_TOUCHPOINTS = {
 }
 
 /**
- * What the book showed before any of this existed. Used when the client named
- * nothing — an Applications page with no applications on it is worse than a
- * generic one, and a book generated for an older project must not come out
- * emptier than it did yesterday.
+ * Retired default set. Not a membership source.
+ *
+ * The book used to invent these four mocks when nobody named a surface.
+ * That presented unjudged applications as the brand in use. Empty now
+ * means empty: the Applications page is omitted until Brief surfaces,
+ * bought deliverables, or designerSurfaces derive a set.
  */
 export const LEGACY_TOUCHPOINTS = [
   'businessCard',
@@ -144,7 +146,7 @@ export function touchpointsFor(surfaces = [], deliverables = []) {
   if (deliv.includes('emailSignature')) picked.add('email')
   if (deliv.includes('printCollateral')) picked.add('print')
 
-  if (picked.size === 0) return [...LEGACY_TOUCHPOINTS]
+  if (picked.size === 0) return []
   return TOUCHPOINT_ORDER.filter((t) => picked.has(t))
 }
 

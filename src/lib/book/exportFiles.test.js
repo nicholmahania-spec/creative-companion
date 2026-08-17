@@ -554,17 +554,16 @@ describe('downloadBrandPackVectorPdf quality', () => {
     expect(text).toMatch(/PRINT/)
   })
 
-  it('falls back to the old four when the client named nothing', async () => {
-    // A book for an older project must not come out emptier than yesterday.
-    const pack = packFor({})
+  it('omits Applications when no surface was named', async () => {
+    const pack = packFor({ brandSurfaces: [], deliverablesPicked: [] })
     const text = await brandBookText(
       (await downloadBrandPackVectorPdf(pack, null, { returnBlobOnly: true }))
         .blob
     )
-    expect(text).toMatch(/BUSINESS CARD/)
-    expect(text).toMatch(/SOCIAL POST/)
-    expect(text).toMatch(/PACKAGING/)
-    expect(text).toMatch(/SIGNAGE/)
+    expect(text).not.toMatch(/PACKAGING/)
+    expect(text).not.toMatch(/SIGNAGE/)
+    expect(text).not.toMatch(/BUSINESS CARD/)
+    expect(text).not.toMatch(/direction proofs only/)
   })
 
   it('tells the client the page answers their own brief', async () => {
@@ -577,14 +576,15 @@ describe('downloadBrandPackVectorPdf quality', () => {
     )
     expect(named).toMatch(/places you said this brand lives/)
 
-    const generic = await brandBookText(
+    const unnamed = await brandBookText(
       (
         await downloadBrandPackVectorPdf(packFor({}), null, {
           returnBlobOnly: true,
         })
       ).blob
     )
-    expect(generic).toMatch(/how the brand shows up in the world/)
+    expect(unnamed).not.toMatch(/how the brand shows up in the world/)
+    expect(unnamed).not.toMatch(/places you said this brand lives/)
   })
 
   it('lays out all nine mocks without dropping or doubling any', async () => {

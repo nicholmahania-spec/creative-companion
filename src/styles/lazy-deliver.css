@@ -127,6 +127,17 @@
   color: var(--text-muted);
 }
 
+.assets-ship-working {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.assets-ship-ready + .assets-ship-working {
+  margin-top: calc(-1 * var(--space-2));
+}
+
 .assets-gaps {
   margin-top: var(--space-4);
 }
@@ -1238,6 +1249,7 @@
 }
 
 .deliver-studio .assets-ship-ready,
+.deliver-studio .assets-ship-working,
 .deliver-studio .assets-ship-gap {
   font-size: var(--fs-4);
   letter-spacing: -0.025em;

@@ -235,7 +235,11 @@ export default function PublicBrandReveal({ portalId }) {
             >
               {downloading ? 'Getting it ready…' : 'Download the PDF'}
             </button>
-            <p className="reveal-download-hint">Yours to keep — save it somewhere safe.</p>
+            <p className="reveal-download-hint">
+              This is the brand book — yours to keep. Logo files, colour
+              tokens, and any produced applications come separately from your
+              designer if they were made.
+            </p>
           </div>
         ) : null}
 

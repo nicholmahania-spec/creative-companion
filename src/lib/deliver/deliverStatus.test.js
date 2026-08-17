@@ -11,7 +11,7 @@
  * there is no second calculation to keep in step.
  */
 import { describe, expect, it } from 'vitest'
-import { deliverStatusLine } from './deliverStatus'
+import { deliverStatusLine, workingDocumentMarkStatus } from './deliverStatus'
 import { buildBrandPackSnapshot, packReadiness } from '../book/exportFiles'
 import { packagePlan } from './packagePlan'
 
@@ -156,5 +156,45 @@ describe('the rest of the line is unchanged', () => {
   it('survives a readiness result it does not recognise', () => {
     expect(deliverStatusLine(null, null, 0)).toBe('Preview the book, then download')
     expect(deliverStatusLine({}, null, 0)).toBe('Preview the book, then download')
+  })
+})
+
+describe('working-document status is additive, not a readiness gate', () => {
+  it('names the missing mark without changing Ready', () => {
+    expect(workingDocumentMarkStatus({ logoImage: '' })).toBe(
+      'Working document — mark to come'
+    )
+    expect(
+      deliverStatusLine({ allDone: true, deliverableGaps: [] }, null, 0)
+    ).toBe('Ready to ship')
+  })
+
+  it('is silent once mark artwork is stored', () => {
+    expect(
+      workingDocumentMarkStatus({ logoImage: 'data:image/svg+xml;base64,PHN2Zy8+' })
+    ).toBe('')
+  })
+
+  it('does not feed packReadiness', () => {
+    const noMark = packFor({
+      name: 'Sparrow',
+      tagline: 'Small bird, big nerve',
+      voice: 'Warm, plain, unfussy',
+      palette: ['#1B4C7E', '#FAFAF9'],
+      logoImage: '',
+      handoffNote: 'Everything is in the folder.',
+      learnings: 'Round two was the one.',
+      detective: {
+        goal: 'Open a second shop',
+        audience: 'Locals',
+        deliverablesPicked: ['colourPalette', 'typography', 'guidelines'],
+      },
+    })
+    const ready = packReadiness(noMark)
+    expect(workingDocumentMarkStatus(noMark)).toBe(
+      'Working document — mark to come'
+    )
+    expect(ready.allDone).toBe(true)
+    expect(deliverStatusLine(ready, null, 0)).toBe('Ready to ship')
   })
 })

@@ -45,12 +45,12 @@ const fullPack = () => ({
   palette: ['#1C1917', '#0F766E', '#A8A29E'],
   pins: [{ id: 'p1' }],
   imageryDo: 'Natural light',
-  brandSurfaces: ['Website'],
+  brandSurfaces: ['website'],
   story: 'Born in a shed.',
   detective: {
     audience: 'Homeowners',
     deliverablesPicked: [],
-    brandSurfaces: ['Website'],
+    brandSurfaces: ['website'],
   },
 })
 
@@ -75,17 +75,17 @@ describe('bookDocument — the plan', () => {
     expect(plan.foundations).toEqual([])
 
     /* Logo and Typography are unconditional — the builder supplies their
-       content. Applications survives too, because `touchpointsFor` falls back
-       to four default mocks when no surface is picked; that is the older
-       fixed-mock behaviour kept deliberately, not this plan letting an empty
-       page through. */
-    expect(plan.sections.map((s) => s.id)).toEqual(['logo', 'type', 'apps'])
+       content. Applications is omitted when nobody named a surface; the
+       omitted row says what it is waiting for. */
+    expect(plan.sections.map((s) => s.id)).toEqual(['logo', 'type'])
+    expect(plan.sections.map((s) => s.id)).not.toContain('apps')
 
     // Absence is reported, not silently swallowed.
     const omitted = Object.fromEntries(plan.omitted.map((o) => [o.id, o.needs]))
     expect(Object.keys(omitted)).toEqual(
-      expect.arrayContaining(['voice', 'story', 'audience', 'color', 'imagery'])
+      expect.arrayContaining(['voice', 'story', 'audience', 'color', 'imagery', 'apps'])
     )
+    expect(omitted.apps).toMatch(/surfaces picked in the brief/i)
     Object.values(omitted).forEach((needs) => expect(needs).toBeTruthy())
   })
 
@@ -95,7 +95,7 @@ describe('bookDocument — the plan', () => {
     const plan = bookPlan({
       palette: ['#111111'],
       brandSurfaces: [],
-      detective: { brandSurfaces: ['Packaging'], deliverablesPicked: [] },
+      detective: { brandSurfaces: ['packaging'], deliverablesPicked: [] },
     })
     expect(plan.sections.map((s) => s.id)).toContain('apps')
   })
