@@ -87,6 +87,24 @@ describe('resolving', () => {
     expect(resolveEvidenceRef(pins, makeRef('evidence', '8'))).toBeNull()
     expect(resolveEvidenceRef(pins, makeRef('palette', '7'))).toBeNull()
   })
+
+  it('a matching palette ref resolves the stored palette', () => {
+    expect(resolveRef(project, makeRef('palette', 'pal_x'))).toEqual({
+      id: 'pal_x',
+      kind: 'palette',
+      hexes: ['#111111'],
+    })
+  })
+
+  it('a palette ref does not resolve a typePairing that shares the id', () => {
+    const mixed = {
+      artifacts: {
+        shared: { id: 'shared', kind: 'typePairing', heading: 'Fraunces', body: 'Inter' },
+      },
+    }
+    expect(resolveRef(mixed, makeRef('palette', 'shared'))).toBeNull()
+    expect(resolveRef(mixed, makeRef('typePairing', 'shared')).heading).toBe('Fraunces')
+  })
 })
 
 describe('snapshots are content-addressed', () => {

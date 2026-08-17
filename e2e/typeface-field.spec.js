@@ -51,7 +51,7 @@ test('a half-typed face never reaches the saved project', async ({ page }) => {
   /* Typed, not filled — `fill` sets the value in one shot and would pass even
      if every keystroke still wrote through. */
   await body.click()
-  await body.press('Control+a')
+  await body.selectText()
   await body.pressSequentially('Plus Jakart', { delay: 20 })
   /* Longer than PERSIST_DEBOUNCE_MS (400ms) on purpose. A shorter wait passes
      against the write-through code this test exists to rule out — the letters
@@ -77,7 +77,7 @@ test('a name the app does not know is named, not blocked', async ({ page }) => {
 
   const heading = page.locator('#type-heading')
   await heading.click()
-  await heading.press('Control+a')
+  await heading.selectText()
   await heading.pressSequentially('Plus Jakart', { delay: 20 })
   await page.waitForTimeout(300)
 

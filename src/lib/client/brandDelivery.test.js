@@ -107,6 +107,22 @@ describe('readDeliveryEnvelope', () => {
     expect(readDeliveryEnvelope(null).pack).toBeNull()
     expect(readDeliveryEnvelope('nope').pack).toBeNull()
   })
+
+  it('passes through a published Identity snapshot when present', () => {
+    const identity = {
+      snapshotId: 'idsnap_test',
+      kind: 'identitySnapshot',
+      payload: { palette: { hexes: ['#1B4C7E'] } },
+    }
+    const env = readDeliveryEnvelope({
+      v: 1,
+      pack: { projectName: 'X' },
+      book: null,
+      identity,
+    })
+    expect(env.identity.snapshotId).toBe('idsnap_test')
+    expect(env.pack.projectName).toBe('X')
+  })
 })
 
 describe('deliveryStage', () => {
