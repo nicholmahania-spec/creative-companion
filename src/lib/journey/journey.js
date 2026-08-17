@@ -273,6 +273,20 @@ export function isToolsMenuView(view) {
   return TOOLS_MENU_VIEWS.includes(view)
 }
 
+/**
+ * Accessible name for the shell `.step-rail`.
+ *
+ * On the Desk and on a production stop the rail reports where you are, so it
+ * keeps "Process position". Library, Timer and Review are off-path: the same
+ * rail is still the map of stops, but there is no active process step, so
+ * that name would be a lie. "Path stops" uses the two settled words for the
+ * list without claiming current position. Not "Go to a stop": the sidebar
+ * already owns "Go to" for studio destinations.
+ */
+export function stepRailAriaLabel(view) {
+  return isToolsMenuView(view) ? 'Path stops' : 'Process position'
+}
+
 export function getJourneyStep(view) {
   const id = journeyIdForView(view)
   return JOURNEY_STEPS.find((s) => s.id === id) || null
