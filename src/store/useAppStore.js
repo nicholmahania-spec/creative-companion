@@ -503,6 +503,61 @@ export function isDirectionSlot(id) {
 }
 
 /**
+ * The current live palette as the canonical artifact, with `project.palette`
+ * left as the compatibility view. Content-addressed: an edit mints a new id;
+ * earlier artifacts stay in the bag for existing refs. Empty hexes are not
+ * a palette. Existing projects without an artifact are left alone until a
+ * writer runs — no backfill.
+ */
+export function withCanonicalPalette(project) {
+  if (!project) return project
+  const snap = paletteSnapshot(project)
+  if (!(snap.hexes || []).length) return project
+  const bag =
+    project.artifacts && typeof project.artifacts === 'object'
+      ? project.artifacts
+      : {}
+  const artifacts = bag[snap.id] ? bag : { ...bag, [snap.id]: snap }
+  const sameRef =
+    project.currentPaletteRef?.kind === 'palette' &&
+    project.currentPaletteRef?.id === snap.id
+  if (artifacts === project.artifacts && sameRef) return project
+  return {
+    ...project,
+    artifacts,
+    currentPaletteRef: { kind: 'palette', id: snap.id },
+  }
+}
+
+/**
+ * The current live type pairing as the canonical artifact, with
+ * `project.typeHeading` / `project.typeBody` left as the compatibility view.
+ * Identity is the existing content-addressed typePairingSnapshot (heading|body
+ * labels). An edit mints a new id; earlier artifacts stay in the bag for
+ * existing refs. Empty faces are not a pairing. Existing projects without an
+ * artifact are left alone until a writer runs — no backfill.
+ */
+export function withCanonicalTypePairing(project) {
+  if (!project) return project
+  const snap = typePairingSnapshot(project)
+  if (!(snap.heading || snap.body)) return project
+  const bag =
+    project.artifacts && typeof project.artifacts === 'object'
+      ? project.artifacts
+      : {}
+  const artifacts = bag[snap.id] ? bag : { ...bag, [snap.id]: snap }
+  const sameRef =
+    project.currentTypePairingRef?.kind === 'typePairing' &&
+    project.currentTypePairingRef?.id === snap.id
+  if (artifacts === project.artifacts && sameRef) return project
+  return {
+    ...project,
+    artifacts,
+    currentTypePairingRef: { kind: 'typePairing', id: snap.id },
+  }
+}
+
+/**
  * The three positions with whatever record sits in each — `direction: null`
  * where nothing has been written or where the designer deleted it.
  *
@@ -535,8 +590,12 @@ export function blankDirection(slotId) {
   /* NO `label`. The displayed letter is derived from position by
      `orderedDirections`; storing it made the letter identity, which is what
      the decision log then had to lie about after a deletion. */
+  /* `recordId` is minted here and nowhere else — this is the only birth
+     function. The slot `id` is recycled; this is not. Updates must not
+     remint. Persisted rows that lack one stay without one. */
   return {
     id: sl.id,
+    recordId: `dir_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`,
     title: '',
     note: '',
     chosen: false,
@@ -691,6 +750,12 @@ export function createBlankProject(
     positioning: '',
     logoDirection: '',
     directions: blankDirections(),
+    /**
+     * Published Identity snapshots, oldest first. Append-only: a re-send
+     * adds a row and never rewrites an earlier one. Absent on projects
+     * that have never published since this field existed.
+     */
+    identitySnapshots: [],
     /** Ideate diverge dump — cheap ideas before A/B/C shortlist (persisted). */
     roughIdeas: [],
     /** Ideate → Sketch external memory: chose X because Y */
@@ -1452,7 +1517,13 @@ const useAppStore = create(
             const found = directionsWithSlot(p, dirId)
             if (!found) return p
             const { dirs, idx } = found
+            const existingRecordId = dirs[idx].recordId
             dirs[idx] = { ...dirs[idx], ...patch }
+            /* A patch must not remint or invent identity. New records already
+               carry the id blankDirection minted; historical rows without one
+               stay without one. */
+            if (existingRecordId) dirs[idx].recordId = existingRecordId
+            else delete dirs[idx].recordId
             // Choosing one un-chooses others + log decision for Sketch resume
             let decisionLog = Array.isArray(p.decisionLog) ? p.decisionLog : []
             /* CHOOSING OPENS. Having decided which route the project takes,
@@ -1515,11 +1586,11 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === (projectId ?? state.currentProjectId)
-              ? {
+              ? withCanonicalPalette({
                   ...p,
                   palette: (palette || []).slice(0, 8),
                   ...identityEdit(),
-                }
+                })
               : p
           ),
         })),
@@ -1607,6 +1678,38 @@ const useAppStore = create(
         })),
 
       /**
+       * Append a published Identity snapshot. Never rewrites an earlier row.
+       *
+       * @param {object} snapshot from `buildIdentitySnapshot`
+       * @param {string|number} [projectId]
+       */
+      recordPublishedIdentity: (snapshot, projectId) => {
+        if (!snapshot?.snapshotId) return
+        set((state) => {
+          const owner = projectId ?? state.currentProjectId
+          const copy = JSON.parse(JSON.stringify(snapshot))
+          const freeze = (v) => {
+            if (v && typeof v === 'object') {
+              Object.freeze(v)
+              Object.values(v).forEach(freeze)
+            }
+            return v
+          }
+          freeze(copy)
+          return {
+            projects: state.projects.map((p) => {
+              if (p.id !== owner) return p
+              const list = Array.isArray(p.identitySnapshots)
+                ? p.identitySnapshots
+                : []
+              if (list.some((row) => row?.snapshotId === copy.snapshotId)) return p
+              return { ...p, identitySnapshots: [...list, copy] }
+            }),
+          }
+        })
+      },
+
+      /**
        * The single writer for named colour rows — writes `palette` and
        * `paletteTokens` in one `set`, with the same cap, so they can never be
        * written apart or end up different lengths.
@@ -1624,7 +1727,7 @@ const useAppStore = create(
           return {
             projects: state.projects.map((p) =>
               p.id === state.currentProjectId
-                ? {
+                ? withCanonicalPalette({
                     ...p,
                     palette: next.map((r) => r.hex),
                     paletteTokens: next.map((r) => ({
@@ -1632,7 +1735,7 @@ const useAppStore = create(
                       name: r.name,
                     })),
                     ...identityEdit(),
-                  }
+                  })
                 : p
             ),
           }
@@ -1647,7 +1750,11 @@ const useAppStore = create(
             ]
             if (index < 0 || index >= next.length) return p
             next[index] = hex
-            return { ...p, palette: next, ...identityEdit() }
+            return withCanonicalPalette({
+              ...p,
+              palette: next,
+              ...identityEdit(),
+            })
           }),
         })),
 
@@ -1660,7 +1767,11 @@ const useAppStore = create(
             ]
             if (next.length >= 8) return p
             next.push(hex)
-            return { ...p, palette: next, ...identityEdit() }
+            return withCanonicalPalette({
+              ...p,
+              palette: next,
+              ...identityEdit(),
+            })
           }),
         })),
 
@@ -1673,7 +1784,11 @@ const useAppStore = create(
             ]
             if (next.length <= 2) return p
             next.splice(index, 1)
-            return { ...p, palette: next, ...identityEdit() }
+            return withCanonicalPalette({
+              ...p,
+              palette: next,
+              ...identityEdit(),
+            })
           }),
         })),
 
@@ -2456,15 +2571,17 @@ const useAppStore = create(
       /** Partial update of brand identity template fields */
       updateBrandField: (field, value) =>
         set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === state.currentProjectId
-              ? {
-                  ...p,
-                  [field]: value,
-                  ...(IDENTITY_FIELD_SET.has(field) ? identityEdit() : null),
-                }
-              : p
-          ),
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const next = {
+              ...p,
+              [field]: value,
+              ...(IDENTITY_FIELD_SET.has(field) ? identityEdit() : null),
+            }
+            return field === 'typeHeading' || field === 'typeBody'
+              ? withCanonicalTypePairing(next)
+              : next
+          }),
         })),
 
       /**
@@ -3528,14 +3645,14 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) => {
             if (p.id !== state.currentProjectId) return p
-            return {
+            return withCanonicalPalette({
               ...p,
               colorRoles: {
                 ...(p.colorRoles || {}),
                 [key]: hex,
               },
               ...identityEdit(),
-            }
+            })
           }),
         }))
         return { ok: true }
@@ -4293,16 +4410,22 @@ const useAppStore = create(
         }
 
         set(state => ({
-          projects: state.projects.map(project =>
-            project.id === currentProjectId
-              ? {
-                  ...project,
-                  ...styleData,
-                  // Increment version when applying template
-                  designVersion: `v${parseInt(project.designVersion.replace('v', '')) + 1}`
-                }
-              : project
-          )
+          projects: state.projects.map(project => {
+            if (project.id !== currentProjectId) return project
+            let next = {
+              ...project,
+              ...styleData,
+              // Increment version when applying template
+              designVersion: `v${parseInt(project.designVersion.replace('v', '')) + 1}`
+            }
+            if ('palette' in styleData || 'colorRoles' in styleData) {
+              next = withCanonicalPalette(next)
+            }
+            if ('typeHeading' in styleData || 'typeBody' in styleData) {
+              next = withCanonicalTypePairing(next)
+            }
+            return next
+          })
         }))
 
         // Create a version when applying template
@@ -4488,6 +4611,12 @@ const useAppStore = create(
                       : {},
                   designerSurfaces: Array.isArray(p.designerSurfaces)
                     ? p.designerSurfaces
+                    : [],
+                  /* Additive. Older projects have never published an Identity
+                     snapshot; empty rather than absent. Existing rows are
+                     not invented. */
+                  identitySnapshots: Array.isArray(p.identitySnapshots)
+                    ? p.identitySnapshots
                     : [],
                   /* v7: additive. An older project has no discovery log; empty
                      rather than absent, so no reader needs a null branch. */

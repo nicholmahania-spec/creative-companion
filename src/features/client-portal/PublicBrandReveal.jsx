@@ -27,6 +27,7 @@ import {
   submitBrandDeliveryReaction,
 } from '../../lib/client/brandDelivery'
 import { downloadBrandPackVectorPdf } from '../../lib/book/exportFiles'
+import { packForPublishedIdentity } from '../../lib/artifacts/identitySnapshot'
 import '../../styles/lazy-reveal.css'
 
 const BrandBookPreview = lazy(() => import('../../components/BrandBookPreview'))
@@ -111,7 +112,10 @@ export default function PublicBrandReveal({ portalId }) {
     return () => clearTimeout(t)
   }, [curtainUp, loadState])
 
-  const pack = delivery?.pack || null
+  const pack = useMemo(
+    () => packForPublishedIdentity(delivery?.pack || null, delivery?.identity),
+    [delivery]
+  )
   const palette = useMemo(() => {
     const p = Array.isArray(pack?.palette) ? pack.palette.filter(Boolean) : []
     return p.length ? p : DEFAULT_PALETTE

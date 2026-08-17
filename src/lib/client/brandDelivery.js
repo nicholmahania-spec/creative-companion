@@ -415,11 +415,11 @@ export function deliveryStatusLine(portal) {
  * happens before the update is a check something can change underneath.
  *
  * @param {string} portalId
- * @param {{ note?: string, pack?: object, book?: object, projectLocalId?: string }} payload
+ * @param {{ note?: string, pack?: object, book?: object, projectLocalId?: string, identity?: object }} payload
  */
 export async function publishDelivery(
   portalId,
-  { note = '', pack = null, book = null, projectLocalId = '' } = {}
+  { note = '', pack = null, book = null, projectLocalId = '', identity = null } = {}
 ) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: CLOUD_REQUIRED }
@@ -438,16 +438,22 @@ export async function publishDelivery(
     }
   }
   const now = new Date().toISOString()
+  const envelope = {
+    v: 1,
+    pack: built.pack,
+    book: book || null,
+  }
+  /* Additive. Old rows have no identity key. A new send may carry a
+     published Identity snapshot; the pack remains the book projection. */
+  if (identity && typeof identity === 'object' && identity.snapshotId) {
+    envelope.identity = identity
+  }
   const { data, error } = await supabase
     .from('client_portals')
     .update({
       delivery_status: 'delivered',
       delivery_note: note || null,
-      delivery_pack: {
-        v: 1,
-        pack: built.pack,
-        book: book || null,
-      },
+      delivery_pack: envelope,
       delivered_at: now,
       updated_at: now,
     })
@@ -542,10 +548,14 @@ export function readDeliveryEnvelope(stored) {
     return { pack: null, book: null }
   }
   if (stored.pack && typeof stored.pack === 'object') {
-    return {
+    const out = {
       pack: stored.pack,
       book: stored.book || null,
     }
+    if (stored.identity && typeof stored.identity === 'object' && stored.identity.snapshotId) {
+      out.identity = stored.identity
+    }
+    return out
   }
   return { pack: stored, book: null }
 }

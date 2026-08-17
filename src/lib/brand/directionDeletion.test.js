@@ -230,6 +230,7 @@ describe('existing projects still load exactly as they did', () => {
     })
     expect(out.projects[0].directions).toHaveLength(1)
     expect(out.projects[0].directions[0].title).toBe('Alpha')
+    expect(out.projects[0].directions[0].recordId).toBeUndefined()
   })
 
   it('treats an empty array as a deletion, not as absence', () => {
@@ -241,14 +242,99 @@ describe('existing projects still load exactly as they did', () => {
   })
 
   it('mints a record for one slot without touching the others', () => {
-    expect(blankDirection('b')).toEqual({
-      id: 'b',
-      title: '',
-      note: '',
-      chosen: false,
-      refs: {},
-      evidence: [],
+    const d = blankDirection('b')
+    expect(d.id).toBe('b')
+    expect(d.title).toBe('')
+    expect(d.note).toBe('')
+    expect(d.chosen).toBe(false)
+    expect(d.refs).toEqual({})
+    expect(d.evidence).toEqual([])
+    expect(typeof d.recordId).toBe('string')
+    expect(d.recordId.length).toBeGreaterThan(0)
+  })
+})
+
+describe('a direction recordId is durable and not the slot', () => {
+  beforeEach(() => {
+    s().clearToEmpty()
+    s().createNewProject('Record id')
+  })
+
+  it('mints a recordId on add, and keeps the slot id', () => {
+    expect(s().addDirection()).toBe('a')
+    const d = dirOf('a')
+    expect(d.id).toBe('a')
+    expect(typeof d.recordId).toBe('string')
+    expect(d.recordId).toMatch(/^dir_/)
+  })
+
+  it('preserves recordId across an update', () => {
+    s().addDirection()
+    const before = dirOf('a').recordId
+    s().updateDirection('a', { title: 'Harbor', note: 'why', recordId: 'stolen' })
+    expect(dirOf('a').id).toBe('a')
+    expect(dirOf('a').recordId).toBe(before)
+    expect(dirOf('a').title).toBe('Harbor')
+  })
+
+  it('does not reuse recordId when slot a is deleted and created again', () => {
+    s().addDirection()
+    const first = dirOf('a').recordId
+    s().deleteDirection('a')
+    expect(dirOf('a')).toBeNull()
+    expect(s().addDirection()).toBe('a')
+    expect(dirOf('a').id).toBe('a')
+    expect(dirOf('a').recordId).toBeTruthy()
+    expect(dirOf('a').recordId).not.toBe(first)
+  })
+
+  it('still caps at three slots', () => {
+    expect(s().addDirection()).toBe('a')
+    expect(s().addDirection()).toBe('b')
+    expect(s().addDirection()).toBe('c')
+    expect(s().addDirection()).toBe('')
+    expect(ids(cur())).toEqual(['a', 'b', 'c'])
+    const minted = new Set((cur().directions || []).map((d) => d.recordId))
+    expect(minted.size).toBe(3)
+  })
+
+  it('leaves refs, evidence and the decision-log slot id alone', () => {
+    s().addDirection()
+    s().addLogoConcept('data:image/png;base64,AA')
+    const conceptId = cur().logoConcepts[0].id
+    s().captureDirectionFrom('a', 'mark', conceptId)
+    s().toggleDirectionEvidence('a', 'evidence:1')
+    s().updateDirection('a', { title: 'Chosen route', chosen: true })
+    const recordId = dirOf('a').recordId
+    const refs = dirOf('a').refs
+    const evidence = dirOf('a').evidence
+    expect(refs.mark).toMatch(/^markConcept:/)
+    expect(evidence).toEqual(['evidence:1'])
+    const log = cur().decisionLog.find((e) => e.kind === 'direction')
+    expect(log.directionId).toBe('a')
+    s().updateDirection('a', { note: 'refined' })
+    expect(dirOf('a').recordId).toBe(recordId)
+    expect(dirOf('a').refs).toEqual(refs)
+    expect(cur().decisionLog.find((e) => e.kind === 'direction').directionId).toBe(
+      'a'
+    )
+  })
+
+  it('does not invent a recordId on a persisted direction that never had one', () => {
+    const project = cur()
+    useAppStore.setState({
+      projects: [
+        {
+          ...project,
+          directions: [{ id: 'a', title: 'Legacy', note: '', chosen: false }],
+        },
+      ],
     })
+    s().updateDirection('a', { note: 'still the same route' })
+    expect(dirOf('a').id).toBe('a')
+    expect(dirOf('a').title).toBe('Legacy')
+    expect(dirOf('a').note).toBe('still the same route')
+    expect(dirOf('a').recordId).toBeUndefined()
   })
 })
 

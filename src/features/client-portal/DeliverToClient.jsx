@@ -26,6 +26,8 @@ import {
 } from '../../lib/client/brandDelivery'
 import { fetchPortalStudioView } from '../../lib/client/clientPortal'
 import { copyText } from '../../lib/client/copyText'
+import { buildIdentitySnapshot } from '../../lib/artifacts/identitySnapshot'
+import useAppStore from '../../store/useAppStore'
 
 export default function DeliverToClient({
   project = null,
@@ -99,10 +101,12 @@ export default function DeliverToClient({
   const send = async () => {
     setError('')
     setBusy(true)
+    const identity = project ? buildIdentitySnapshot(project) : null
     const r = await publishDelivery(portalId, {
       note,
       pack,
       book,
+      identity,
       /* Which project's book this is. `publishDelivery` scopes the write to the
          portal AND this id, so a link that belongs to another project of the
          same studio cannot receive it. */
@@ -112,6 +116,9 @@ export default function DeliverToClient({
     if (!r.ok) {
       setError(r.error)
       return
+    }
+    if (identity) {
+      useAppStore.getState().recordPublishedIdentity(identity, project.id)
     }
     setPreviewing(false)
     await refresh()

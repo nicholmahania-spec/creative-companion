@@ -79,7 +79,7 @@ describe('a direction owns its label, title, why, chosen, refs and citations —
          exist, derived at render; stored on the record they made the letter
          identity, and the decision log wrote it down and then outlived it. */
       expect(Object.keys(d).sort()).toEqual(
-        ['chosen', 'evidence', 'id', 'note', 'refs', 'title'].sort()
+        ['chosen', 'evidence', 'id', 'note', 'recordId', 'refs', 'title'].sort()
       )
     }
   })
@@ -162,10 +162,16 @@ describe('capture points at what exists; it does not duplicate it', () => {
   it('refuses to capture a pairing that has not been made yet', () => {
     s().updateBrandField('typeHeading', '')
     s().updateBrandField('typeBody', '')
+    const before = { ...(cur().artifacts || {}) }
     s().captureDirectionFrom('a', 'typePairing')
     /* An empty artifact would draw a row that reads as a decided part. */
     expect(dirOf('a').refs.typePairing).toBeUndefined()
-    expect(Object.keys(cur().artifacts || {})).toHaveLength(0)
+    expect(cur().artifacts || {}).toEqual(before)
+    expect(
+      Object.values(cur().artifacts || {}).some(
+        (a) => a?.kind === 'typePairing' && !a.heading && !a.body
+      )
+    ).toBe(false)
   })
 
   it('ignores a mark id that is not a concept', () => {

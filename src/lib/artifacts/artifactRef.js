@@ -178,8 +178,15 @@ export function resolveRef(project, ref) {
          project, so this one takes the list from the caller's state. Use
          `resolveEvidenceRef` when you have `moodItems`. */
       return null
-    default:
-      return (project.artifacts || {})[id] || null
+    default: {
+      /* Kind is part of the identity. An id-only bag lookup would let a
+         typePairing ref resolve a palette (or a declared-unstored kind) that
+         happened to share an id. */
+      const hit = (project.artifacts || {})[id] || null
+      if (!hit) return null
+      if (hit.kind !== kind) return null
+      return hit
+    }
   }
 }
 
