@@ -558,6 +558,44 @@ export function withCanonicalTypePairing(project) {
 }
 
 /**
+ * Write logoImage / logoDirection as compatibility views of the chosen
+ * concept. With no chosen concept the fields stay a legacy compatibility
+ * slot — a project that predates logoConcepts must remain readable, and
+ * this must not invent a concept to hold the write.
+ */
+export function withMarkCompatibilityWrite(project, patch = {}) {
+  if (!project) return project
+  const hasImage = Object.hasOwn(patch, 'logoImage')
+  const hasDirection = Object.hasOwn(patch, 'logoDirection')
+  if (!hasImage && !hasDirection) return project
+  const list = Array.isArray(project.logoConcepts) ? project.logoConcepts : []
+  const chosen = list.find((c) => c?.chosen)
+  if (!chosen) {
+    return {
+      ...project,
+      ...(hasImage ? { logoImage: patch.logoImage || '' } : null),
+      ...(hasDirection ? { logoDirection: patch.logoDirection || '' } : null),
+    }
+  }
+  const nextList = list.map((c) =>
+    c.id === chosen.id
+      ? {
+          ...c,
+          ...(hasImage ? { image: patch.logoImage || '' } : null),
+          ...(hasDirection ? { why: patch.logoDirection || '' } : null),
+        }
+      : c
+  )
+  const nextChosen = nextList.find((c) => c.chosen)
+  return {
+    ...project,
+    logoConcepts: nextList,
+    logoImage: nextChosen.image || '',
+    logoDirection: nextChosen.why || '',
+  }
+}
+
+/**
  * The three positions with whatever record sits in each — `direction: null`
  * where nothing has been written or where the designer deleted it.
  *
@@ -1254,7 +1292,12 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === state.currentProjectId
-              ? { ...p, logoDirection: direction, ...identityEdit() }
+              ? {
+                  ...withMarkCompatibilityWrite(p, {
+                    logoDirection: direction,
+                  }),
+                  ...identityEdit(),
+                }
               : p
           ),
         })),
@@ -2578,6 +2621,12 @@ const useAppStore = create(
               [field]: value,
               ...(IDENTITY_FIELD_SET.has(field) ? identityEdit() : null),
             }
+            if (field === 'logoImage' || field === 'logoDirection') {
+              return {
+                ...withMarkCompatibilityWrite(p, { [field]: value }),
+                ...(IDENTITY_FIELD_SET.has(field) ? identityEdit() : null),
+              }
+            }
             return field === 'typeHeading' || field === 'typeBody'
               ? withCanonicalTypePairing(next)
               : next
@@ -2813,7 +2862,11 @@ const useAppStore = create(
               : state.moodItems,
             projects: logoReps.size
               ? state.projects.map((p) =>
-                  logoReps.has(p.id) ? { ...p, logoImage: logoReps.get(p.id) } : p
+                  logoReps.has(p.id)
+                    ? withMarkCompatibilityWrite(p, {
+                        logoImage: logoReps.get(p.id),
+                      })
+                    : p
                 )
               : state.projects,
           }
@@ -3674,7 +3727,12 @@ const useAppStore = create(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === (projectId ?? state.currentProjectId)
-              ? { ...p, logoImage: dataUrl || '', ...identityEdit() }
+              ? {
+                  ...withMarkCompatibilityWrite(p, {
+                    logoImage: dataUrl || '',
+                  }),
+                  ...identityEdit(),
+                }
               : p
           ),
         })),
@@ -4423,6 +4481,16 @@ const useAppStore = create(
             }
             if ('typeHeading' in styleData || 'typeBody' in styleData) {
               next = withCanonicalTypePairing(next)
+            }
+            if ('logoImage' in styleData || 'logoDirection' in styleData) {
+              next = withMarkCompatibilityWrite(next, {
+                ...('logoImage' in styleData
+                  ? { logoImage: next.logoImage }
+                  : null),
+                ...('logoDirection' in styleData
+                  ? { logoDirection: next.logoDirection }
+                  : null),
+              })
             }
             return next
           })

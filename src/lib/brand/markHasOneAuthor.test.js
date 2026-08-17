@@ -142,21 +142,18 @@ describe('THE OLD BUG: a dropped image survives the next concept edit', () => {
     expect(current().logoDirection).toBe('survives a 12mm stamp')
   })
 
-  it('proves the old write path fails that sequence', () => {
-    /* The old implementation, reproduced exactly: the drop wrote the mirror
-       and nothing else. This test documents WHY the change was needed, and
-       fails the moment someone reinstates the direct write. */
+  it('cannot establish a competing mark by writing logoImage', () => {
     const s = () => useAppStore.getState()
     const first = s().addLogoConcept('data:image/png;base64,OLDMARK')
 
-    s().setLogoImage('data:image/png;base64,DROPPED') // the old cover drop
+    s().setLogoImage('data:image/png;base64,DROPPED')
+    expect(chosen().id).toBe(first)
+    expect(chosen().image).toBe('data:image/png;base64,DROPPED')
     expect(current().logoImage).toBe('data:image/png;base64,DROPPED')
-    // The mark the concept system believes in was never the dropped one:
-    expect(chosen().image).toBe('data:image/png;base64,OLDMARK')
 
     s().chooseLogoConcept(first)
-    // …so the drop is gone, silently. This is the defect, pinned.
-    expect(current().logoImage).toBe('data:image/png;base64,OLDMARK')
+    expect(current().logoImage).toBe('data:image/png;base64,DROPPED')
+    expect(chosen().image).toBe('data:image/png;base64,DROPPED')
   })
 
   it('the package ships the selected concept, not a stray mirror write', () => {
@@ -346,18 +343,14 @@ describe('F1b — replacing the whole concept list keeps the mirror true', () =>
     dropImage('data:image/png;base64,ONE')
     dropImage('data:image/png;base64,TWO')
 
-    // Exactly what DesignView's Remove + undo does.
     const before = current().logoConcepts.map((c) => ({ ...c }))
-    const beforeMark = current().logoImage
     s().removeLogoConcept(chosen().id)
     expect(current().logoImage).toBe('data:image/png;base64,ONE')
 
     s().setLogoConcepts(before, current().id)
-    s().setLogoImage(beforeMark, current().id)
 
     expect(current().logoConcepts).toHaveLength(2)
     expect(chosen().image).toBe('data:image/png;base64,TWO')
-    expect(current().logoImage).toBe(beforeMark)
     expect(current().logoImage).toBe(chosen().image)
   })
 
@@ -377,5 +370,69 @@ describe('F1b — replacing the whole concept list keeps the mirror true', () =>
       list.map((c) => c.image),
       'the mirror must be one of the images it was given'
     ).toContain(current().logoImage)
+  })
+})
+
+describe('logoImage and logoDirection are compatibility views of the chosen concept', () => {
+  beforeEach(() => {
+    fresh()
+  })
+
+  it('logoDirection follows the chosen concept’s why', () => {
+    const s = () => useAppStore.getState()
+    dropImage('data:image/png;base64,ONE')
+    s().updateLogoConcept(chosen().id, { why: 'survives a 12mm stamp' })
+    expect(current().logoDirection).toBe('survives a 12mm stamp')
+    dropImage('data:image/png;base64,TWO')
+    expect(current().logoDirection).toBe('')
+    s().chooseLogoConcept(current().logoConcepts[0].id)
+    expect(current().logoDirection).toBe('survives a 12mm stamp')
+    expect(current().logoImage).toBe('data:image/png;base64,ONE')
+  })
+
+  it('setLogoDirection writes the chosen concept, not a second slot', () => {
+    const s = () => useAppStore.getState()
+    dropImage('data:image/png;base64,ONE')
+    s().setLogoDirection('restored rationale')
+    expect(chosen().why).toBe('restored rationale')
+    expect(current().logoDirection).toBe('restored rationale')
+  })
+
+  it('updateBrandField cannot fork the mark', () => {
+    const s = () => useAppStore.getState()
+    dropImage('data:image/png;base64,ONE')
+    s().updateBrandField('logoImage', 'data:image/png;base64,FORK')
+    s().updateBrandField('logoDirection', 'forked why')
+    expect(chosen().image).toBe('data:image/png;base64,FORK')
+    expect(chosen().why).toBe('forked why')
+    expect(current().logoImage).toBe(chosen().image)
+    expect(current().logoDirection).toBe(chosen().why)
+  })
+
+  it('Book/pack consumers still receive the compatibility mark', () => {
+    const s = () => useAppStore.getState()
+    dropImage('data:image/png;base64,ONE')
+    s().updateLogoConcept(chosen().id, { why: 'the stamp one' })
+    const pack = buildBrandPackSnapshot({
+      project: current(),
+      tasks: [],
+      moodItems: [],
+    })
+    expect(pack.logoImage).toBe(current().logoImage)
+    expect(pack.logoImage).toBe(chosen().image)
+    expect(pack.logoDirection).toBe('the stamp one')
+    expect(pack.logoConcepts).toBeUndefined()
+  })
+
+  it('legacy projects without concepts stay readable', () => {
+    const s = () => useAppStore.getState()
+    s().setLogoImage('data:image/png;base64,LEGACY')
+    s().setLogoDirection('pre-concept sentence')
+    expect(current().logoConcepts).toEqual([])
+    expect(current().logoImage).toBe('data:image/png;base64,LEGACY')
+    expect(current().logoDirection).toBe('pre-concept sentence')
+    const pack = buildBrandPackSnapshot({ project: current() })
+    expect(pack.logoImage).toBe('data:image/png;base64,LEGACY')
+    expect(pack.logoDirection).toBe('pre-concept sentence')
   })
 })
