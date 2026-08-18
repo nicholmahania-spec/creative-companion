@@ -57,6 +57,9 @@ const routesInStore = async (page) => {
       chosen: (p.directions || []).filter((d) => d.chosen).map((d) => d.id),
       evidence: Object.fromEntries((p.directions || []).map((d) => [d.id, d.evidence || []])),
       log: (p.decisionLog || []).map((e) => ({ id: e.directionId, label: e.label })),
+      recordIds: Object.fromEntries(
+        (p.directions || []).map((d) => [d.id, d.recordId])
+      ),
     }
   })
 }
@@ -152,9 +155,10 @@ test('keyboard alone can make a route, name it and choose it', async ({ page }) 
   expect(store.chosen).toEqual(['a'])
   /* CHOOSING OPENS. Having decided, the next act is making it. */
   expect(store.active).toBe('a')
-  // And the log names the route, never the letter.
+  // And the log names the durable route, never the letter or the slot.
   expect(store.log[0].label).toBe('')
-  expect(store.log[0].id).toBe('a')
+  expect(store.log[0].id).toBe(store.recordIds.a)
+  expect(store.log[0].id).toMatch(/^dir_/)
 })
 
 test('Develop takes the route to Identity, which says which one it is', async ({

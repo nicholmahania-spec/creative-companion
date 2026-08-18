@@ -5,6 +5,8 @@ import {
   formatDecisionLine,
   decisionFromDirection,
   chosenDirection,
+  directionForLogEntry,
+  isDirectionRecordId,
 } from './decisionLog'
 
 describe('appendDecision', () => {
@@ -20,23 +22,22 @@ describe('appendDecision', () => {
     expect(next[0].title).toMatch(/Quiet teal/)
   })
 
-  it('replaces prior direction pick (one active)', () => {
+  it('replaces only the same identity, and leaves a different subject', () => {
     const a = appendDecision([], {
       kind: 'direction',
-      directionId: 'a',
-      label: 'A',
+      directionId: 'dir_old',
       title: 'Bold',
       why: 'loud',
     })
     const b = appendDecision(a, {
       kind: 'direction',
-      directionId: 'b',
-      label: 'B',
+      directionId: 'dir_new',
       title: 'Soft',
       why: 'quiet',
     })
-    expect(b).toHaveLength(1)
-    expect(b[0].label).toBe('B')
+    expect(b).toHaveLength(2)
+    expect(b.map((d) => d.directionId)).toEqual(['dir_old', 'dir_new'])
+    expect(latestDecision(b, 'direction').title).toBe('Soft')
   })
 
   it('ignores empty', () => {
@@ -76,14 +77,24 @@ describe('formatDecisionLine', () => {
 })
 
 describe('decisionFromDirection / chosenDirection', () => {
-  it('maps card fields', () => {
+  it('maps card fields to the durable recordId, not the slot', () => {
     const e = decisionFromDirection({
       id: 'c',
-      label: 'C',
+      recordId: 'dir_warm',
       title: 'Warm paper',
       note: 'editorial',
     })
     expect(e.why).toBe('editorial')
+    expect(e.directionId).toBe('dir_warm')
+    expect(isDirectionRecordId(e.directionId)).toBe(true)
+  })
+
+  it('falls back to the slot only when a historical row has no recordId', () => {
+    const e = decisionFromDirection({
+      id: 'c',
+      title: 'Warm paper',
+      note: 'editorial',
+    })
     expect(e.directionId).toBe('c')
   })
 
@@ -152,7 +163,52 @@ describe('refining a decision keeps when it was made', () => {
     const other = appendDecision(first, {
       kind: 'direction', directionId: 'b', title: 'B',
     })
-    expect(other[0].directionId).toBe('b')
-    expect(other[0].at).not.toBe(1000)
+    expect(other[other.length - 1].directionId).toBe('b')
+    expect(other[other.length - 1].at).not.toBe(1000)
+    expect(other.find((d) => d.directionId === 'a').at).toBe(1000)
+  })
+})
+
+describe('a log row names a durable subject', () => {
+  it('a recordId row resolves the live Direction with that recordId', () => {
+    const project = {
+      directions: [
+        { id: 'a', recordId: 'dir_one', title: 'First' },
+        { id: 'b', recordId: 'dir_two', title: 'Second' },
+      ],
+    }
+    const hit = directionForLogEntry(project, { directionId: 'dir_two' })
+    expect(hit.title).toBe('Second')
+    expect(hit.id).toBe('b')
+  })
+
+  it('a slot-id row does not resolve a recreated Direction that has a recordId', () => {
+    const project = {
+      directions: [{ id: 'a', recordId: 'dir_new', title: 'Fresh A' }],
+    }
+    expect(directionForLogEntry(project, { directionId: 'a' })).toBeNull()
+    expect(
+      directionForLogEntry(project, { directionId: 'dir_old' })
+    ).toBeNull()
+  })
+
+  it('a legacy slot-id row still resolves a Direction that never had a recordId', () => {
+    const project = {
+      directions: [{ id: 'a', title: 'Legacy A' }],
+    }
+    expect(directionForLogEntry(project, { directionId: 'a' }).title).toBe(
+      'Legacy A'
+    )
+  })
+
+  it('leaves a stored slot-id row unread-rewritten', () => {
+    const row = {
+      kind: 'direction',
+      directionId: 'a',
+      title: 'Old A',
+      why: 'coastal',
+    }
+    expect(formatDecisionLine(row)).toBe('Old A — because coastal')
+    expect(row.directionId).toBe('a')
   })
 })

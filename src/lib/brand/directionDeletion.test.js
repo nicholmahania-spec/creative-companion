@@ -298,7 +298,7 @@ describe('a direction recordId is durable and not the slot', () => {
     expect(minted.size).toBe(3)
   })
 
-  it('leaves refs, evidence and the decision-log slot id alone', () => {
+  it('leaves refs, evidence and the decision-log recordId alone', () => {
     s().addDirection()
     s().addLogoConcept('data:image/png;base64,AA')
     const conceptId = cur().logoConcepts[0].id
@@ -311,13 +311,69 @@ describe('a direction recordId is durable and not the slot', () => {
     expect(refs.mark).toMatch(/^markConcept:/)
     expect(evidence).toEqual(['evidence:1'])
     const log = cur().decisionLog.find((e) => e.kind === 'direction')
-    expect(log.directionId).toBe('a')
+    expect(log.directionId).toBe(recordId)
+    expect(dirOf('a').id).toBe('a')
     s().updateDirection('a', { note: 'refined' })
     expect(dirOf('a').recordId).toBe(recordId)
     expect(dirOf('a').refs).toEqual(refs)
     expect(cur().decisionLog.find((e) => e.kind === 'direction').directionId).toBe(
-      'a'
+      recordId
     )
+  })
+
+  it('delete and recreate A does not rebind the old decision to the new route', () => {
+    s().addDirection()
+    const firstId = dirOf('a').recordId
+    s().updateDirection('a', { title: 'First A', note: 'original', chosen: true })
+    expect(cur().decisionLog[0].directionId).toBe(firstId)
+
+    s().deleteDirection('a')
+    expect(s().addDirection()).toBe('a')
+    const secondId = dirOf('a').recordId
+    expect(secondId).not.toBe(firstId)
+    expect(dirOf('a').id).toBe('a')
+
+    s().updateDirection('a', { title: 'Second A', note: 'fresh', chosen: true })
+    const ids = cur().decisionLog
+      .filter((e) => e.kind === 'direction')
+      .map((e) => e.directionId)
+    expect(ids).toContain(firstId)
+    expect(ids).toContain(secondId)
+    expect(ids.filter((id) => id === firstId)).toHaveLength(1)
+    expect(cur().decisionLog.find((e) => e.directionId === firstId).title).toBe(
+      'First A'
+    )
+    expect(cur().decisionLog.find((e) => e.directionId === secondId).title).toBe(
+      'Second A'
+    )
+  })
+
+  it('a stored slot-id decision stays a slot-id and does not bind the new A', () => {
+    s().addDirection()
+    useAppStore.setState({
+      projects: [
+        {
+          ...cur(),
+          decisionLog: [
+            {
+              kind: 'direction',
+              directionId: 'a',
+              title: 'Legacy A',
+              why: 'old',
+              at: 1,
+            },
+          ],
+        },
+      ],
+    })
+    expect(cur().decisionLog[0].directionId).toBe('a')
+    s().updateDirection('a', { title: 'New A', note: 'now', chosen: true })
+    expect(cur().decisionLog.find((e) => e.directionId === 'a').title).toBe(
+      'Legacy A'
+    )
+    expect(
+      cur().decisionLog.find((e) => e.directionId === dirOf('a').recordId).title
+    ).toBe('New A')
   })
 
   it('does not invent a recordId on a persisted direction that never had one', () => {

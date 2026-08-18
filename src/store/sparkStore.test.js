@@ -74,9 +74,11 @@ describe('spark / ideate store', () => {
       .getState()
       .projects.find((x) => x.id === p.id)
     expect(proj.decisionLog?.length).toBe(1)
-    /* The id is the reference; the letter is a position on screen and is not
-       written down. See `decisionFromDirection`. */
-    expect(proj.decisionLog[0].directionId).toBe('b')
+    /* Durable recordId is the subject; the slot letter is position only. */
+    const chosen = proj.directions.find((d) => d.id === 'b')
+    expect(proj.decisionLog[0].directionId).toBe(chosen.recordId)
+    expect(proj.decisionLog[0].directionId).toMatch(/^dir_/)
+    expect(chosen.id).toBe('b')
     expect(proj.decisionLog[0].label).toBe('')
     expect(proj.decisionLog[0].why).toBe('calm not cold')
   })
