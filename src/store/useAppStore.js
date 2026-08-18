@@ -4466,6 +4466,13 @@ const useAppStore = create(
         for (const key of TEMPLATE_STYLE_KEYS) {
           if (key in template.data) styleData[key] = template.data[key]
         }
+        /* An empty / sentinel mark is a quota omission, not an instruction
+           to erase the project's chosen concept. House-style apply must not
+           become a second author of the mark. */
+        if ('logoImage' in styleData) {
+          const mark = String(styleData.logoImage ?? '').trim()
+          if (!mark || mark.startsWith('[')) delete styleData.logoImage
+        }
 
         set(state => ({
           projects: state.projects.map(project => {

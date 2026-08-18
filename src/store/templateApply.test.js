@@ -75,6 +75,60 @@ describe('applyTemplate is style-only', () => {
     expect(p.directions).toEqual(directionsBefore)
   })
 
+  it('an empty template logoImage cannot clear the chosen mark', async () => {
+    const s = useAppStore.getState()
+    const id = s.addLogoConcept('data:image/png;base64,KEEP')
+    s.chooseLogoConcept(id)
+    expect(useAppStore.getState().projects[0].logoImage).toBe(
+      'data:image/png;base64,KEEP'
+    )
+
+    useAppStore.setState((state) => ({
+      templates: [
+        ...state.templates,
+        {
+          id: 'tpl-empty-mark',
+          name: 'Empty mark house style',
+          data: {
+            typeHeading: 'Source Serif',
+            logoImage: '',
+          },
+        },
+      ],
+    }))
+
+    await useAppStore.getState().applyTemplate('tpl-empty-mark')
+    const p = useAppStore.getState().projects[0]
+    expect(p.typeHeading).toBe('Source Serif')
+    expect(p.logoImage).toBe('data:image/png;base64,KEEP')
+    expect(p.logoConcepts.find((c) => c.chosen)?.id).toBe(id)
+    expect(p.logoConcepts.find((c) => c.chosen)?.image).toBe(
+      'data:image/png;base64,KEEP'
+    )
+  })
+
+  it('a sentinel template logoImage cannot clear the chosen mark', async () => {
+    const s = useAppStore.getState()
+    const id = s.addLogoConcept('data:image/png;base64,KEEP')
+    s.chooseLogoConcept(id)
+
+    useAppStore.setState((state) => ({
+      templates: [
+        ...state.templates,
+        {
+          id: 'tpl-omitted-mark',
+          name: 'Omitted mark',
+          data: { logoImage: '[image-omitted]' },
+        },
+      ],
+    }))
+
+    await useAppStore.getState().applyTemplate('tpl-omitted-mark')
+    const p = useAppStore.getState().projects[0]
+    expect(p.logoImage).toBe('data:image/png;base64,KEEP')
+    expect(p.logoConcepts.find((c) => c.chosen)?.id).toBe(id)
+  })
+
   it('saveAsTemplate never captures the client record, tasks, or directions', () => {
     useAppStore.getState().saveAsTemplate('My house style', 'desc')
     const saved = useAppStore.getState().getTemplates().find(t => t.name === 'My house style')
