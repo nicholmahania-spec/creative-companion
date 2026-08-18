@@ -364,14 +364,14 @@ export default function DesignView({
     const ok =
       typeof window !== 'undefined'
         ? window.confirm(
-            `Restore identity to ${label}? Current mark, words, color and type will be replaced. Use Bump first if you want a save point.`
+            `Restore identity to ${label}? Words, color and type will be replaced with this save. The mark is restored only if that concept is still on the project. Brief, Research and Directions stay as they are. Use Bump first if you want a save point.`
           )
         : true
     if (!ok) return
     setRestoringVersion(true)
     try {
       const restored = await versionService.restoreVersion(selectedVersion.id)
-      if (!restored) {
+      if (!restored?.ok) {
         flashToast?.('Could not restore that version')
         return
       }
@@ -379,7 +379,11 @@ export default function DesignView({
       setDiffResult(null)
       setSelectedVersion(null)
       setShowVersionHistory(false)
-      flashToast?.(`Restored ${label}`)
+      flashToast?.(
+        restored.missingMarkConcept
+          ? `Restored ${label}. The saved mark is no longer on this project, so the current mark was left as it is.`
+          : `Restored ${label}`
+      )
     } catch (e) {
       console.error('Failed to restore version:', e)
       flashToast?.('Could not restore that version')

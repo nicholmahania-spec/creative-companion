@@ -2,6 +2,154 @@
 import useAppStore from '../store/useAppStore'
 import { buildColorSystem } from '../lib/brandSystem'
 
+/**
+ * PHASE 4A — Project Identity Version.
+ *
+ * A Project Version is an immutable recovery snapshot of Identity-owned
+ * design decisions for one project. It is not a Brief, Research, Direction,
+ * task, package, Brand Book, Presentation, or published-Identity snapshot.
+ *
+ * Restore overlays these fields onto the current project through the
+ * canonical Identity writers. It never replaces the whole project.
+ *
+ * Retention: local history is still capped at `maxVersionsPerProject` (24).
+ * Raising or removing that cap is a product decision, not part of this slice.
+ */
+
+/** Fields a newly created Project Version stores and restore may write. */
+export const PROJECT_VERSION_SNAPSHOT_KEYS = Object.freeze([
+  'tagline',
+  'positioning',
+  'voice',
+  'doUse',
+  'typeHeading',
+  'typeBody',
+  'typeWhy',
+  'typeSource',
+  'typeLicenceNote',
+  'fontFilesLicensed',
+  'logoWordmark',
+  'logoDirection',
+  'logoClearspace',
+  'logoMinSize',
+  'logoDonts',
+  'logoClientChose',
+  'chosenMarkConceptId',
+  'currentPaletteRef',
+  'currentTypePairingRef',
+  'palette',
+  'paletteTokens',
+  'colorRoles',
+  'colorRoleWhy',
+  'messagingPromise',
+  'messagingProof',
+  'messagingPersonality',
+  'imageryStyle',
+  'imageryDo',
+  'imageryDont',
+])
+
+/**
+ * Keys that older stored Versions may still carry. Restore must not crash
+ * when they are present, and must not apply them.
+ */
+export const PROJECT_VERSION_LEGACY_IGNORE_KEYS = Object.freeze([
+  'detective',
+  'directions',
+  'tasks',
+  'brief',
+  'deadline',
+  'logoImage',
+])
+
+const IDENTITY_STRING_FIELDS = Object.freeze([
+  'tagline',
+  'positioning',
+  'voice',
+  'doUse',
+  'typeWhy',
+  'typeSource',
+  'typeLicenceNote',
+  'logoWordmark',
+  'logoClearspace',
+  'logoMinSize',
+  'logoDonts',
+  'logoClientChose',
+  /* logoDirection is applied after mark choose so it cannot write onto
+     the previously chosen concept before the star moves. */
+  'messagingPromise',
+  'messagingProof',
+  'messagingPersonality',
+  'imageryStyle',
+  'imageryDo',
+  'imageryDont',
+])
+
+function copyJson(value) {
+  if (value == null || typeof value !== 'object') return value
+  return JSON.parse(JSON.stringify(value))
+}
+
+function hasOwn(data, key) {
+  return !!data && Object.hasOwn(data, key) && data[key] !== undefined
+}
+
+/** A real mark image — not empty, not the historical quota sentinel. */
+export function isUsableLegacyMarkImage(value) {
+  const s = String(value ?? '').trim()
+  return !!s && !s.startsWith('[')
+}
+
+function chosenMarkConceptIdOf(project) {
+  const hit = (project?.logoConcepts || []).find((c) => c?.chosen)
+  return hit?.id ? String(hit.id) : ''
+}
+
+/**
+ * Identity payload for a new Project Version. Deep-copied so later live
+ * edits cannot mutate the saved record.
+ */
+export function buildProjectVersionData(project) {
+  if (!project) return {}
+  const ref = (value) =>
+    value && typeof value === 'object' && value.kind && value.id
+      ? { kind: value.kind, id: value.id }
+      : null
+  return {
+    tagline: project.tagline ?? '',
+    positioning: project.positioning ?? '',
+    voice: project.voice ?? '',
+    doUse: project.doUse ?? '',
+    typeHeading: project.typeHeading ?? '',
+    typeBody: project.typeBody ?? '',
+    typeWhy: project.typeWhy ?? '',
+    typeSource: project.typeSource ?? '',
+    typeLicenceNote: project.typeLicenceNote ?? '',
+    fontFilesLicensed: !!project.fontFilesLicensed,
+    logoWordmark: project.logoWordmark ?? '',
+    logoDirection: project.logoDirection ?? '',
+    logoClearspace: project.logoClearspace ?? '',
+    logoMinSize: project.logoMinSize ?? '',
+    logoDonts: project.logoDonts ?? '',
+    logoClientChose: project.logoClientChose ?? '',
+    chosenMarkConceptId: chosenMarkConceptIdOf(project),
+    currentPaletteRef: copyJson(ref(project.currentPaletteRef)),
+    currentTypePairingRef: copyJson(ref(project.currentTypePairingRef)),
+    palette: Array.isArray(project.palette) ? copyJson(project.palette) : [],
+    paletteTokens: Array.isArray(project.paletteTokens)
+      ? copyJson(project.paletteTokens)
+      : [],
+    colorRoles: project.colorRoles ? copyJson(project.colorRoles) : null,
+    colorRoleWhy: project.colorRoleWhy ? copyJson(project.colorRoleWhy) : null,
+    messagingPromise: project.messagingPromise ?? '',
+    messagingProof: project.messagingProof ?? '',
+    messagingPersonality: project.messagingPersonality ?? '',
+    imageryStyle: project.imageryStyle ?? '',
+    imageryDo: project.imageryDo ?? '',
+    imageryDont: project.imageryDont ?? '',
+  }
+}
+
 /** Map autoVersion changeType → short kind for the History list. */
 export function versionKindFromChangeType(changeType = '') {
   const t = String(changeType || '').toLowerCase()
@@ -65,7 +213,12 @@ export function versionIdentityPreview(data) {
     title,
     lines: lines.slice(0, 3),
     palette,
-    hasMark: !!(wordmark || direction || (d.logoImage && d.logoImage !== '[image-omitted]')),
+    hasMark: !!(
+      wordmark ||
+      direction ||
+      d.chosenMarkConceptId ||
+      isUsableLegacyMarkImage(d.logoImage)
+    ),
   }
 }
 
@@ -76,7 +229,11 @@ export function versionIdentityPreview(data) {
 class VersionService {
   constructor() {
     this.storageKey = 'project-versions'
-    /** Enough for a work-day of hourly saves + bumps without bloating quota. */
+    /**
+     * Local recovery cap. Master Plan "never destroy prior versions" is a
+     * product decision for document versions; Phase 4A keeps the existing
+     * 24-row local history until that decision is made.
+     */
     this.maxVersionsPerProject = 24
     /** Min gap between hourly saves (ms). */
     this.hourlyMinGapMs = 55 * 60 * 1000
@@ -98,71 +255,13 @@ class VersionService {
 
     const kind = versionKindFromChangeType(opts.changeType)
 
-    // Create a deep copy of the relevant project data for versioning
     const versionData = {
       id: `${project.id}-v${project.designVersion}-${Date.now()}`,
       projectId: project.id,
       versionLabel: project.designVersion || 'v1',
       timestamp: new Date().toISOString(),
       kind,
-      // Store only the design-relevant parts of the project
-      data: {
-        // Brand identity
-        tagline: project.tagline,
-        /* The designer's positioning line. Snapshotted separately from
-           `brief`, which is the recomposed summary of the client's answers
-           and is not identity work anyone would want restored over. */
-        positioning: project.positioning,
-        voice: project.voice,
-        typeHeading: project.typeHeading,
-        typeBody: project.typeBody,
-        logoWordmark: project.logoWordmark,
-        logoDirection: project.logoDirection,
-        // Never store logoImage / mood image data URLs here — they fill quota.
-        logoImage: project.logoImage ? '[image-omitted]' : '',
-        logoClearspace: project.logoClearspace,
-        logoMinSize: project.logoMinSize,
-        logoDonts: project.logoDonts,
-
-        // Color system
-        palette: Array.isArray(project.palette) ? [...project.palette] : [],
-        colorRoles: project.colorRoles ? { ...project.colorRoles } : null,
-
-        // Messaging
-        messagingPromise: project.messagingPromise,
-        messagingProof: project.messagingProof,
-        messagingPersonality: project.messagingPersonality,
-
-        // Imagery
-        imageryStyle: project.imageryStyle,
-        imageryDo: project.imageryDo,
-        imageryDont: project.imageryDont,
-
-        // Full detective text (no binary attach files)
-        detective: project.detective
-          ? (() => {
-              const d = { ...project.detective }
-              Object.keys(d).forEach((k) => {
-                if (k.endsWith('Files')) delete d[k]
-              })
-              return d
-            })()
-          : null,
-
-        directions: project.directions
-          ? project.directions.map((d) => ({ ...d }))
-          : [],
-
-        // Tasks only — mood pin images live on the root store, not here
-        tasks: Array.isArray(project.tasks)
-          ? project.tasks.map((t) => ({
-              id: t.id,
-              title: t.title,
-              why: t.why,
-              completed: t.completed,
-            }))
-          : [],
-      },
+      data: buildProjectVersionData(project),
 
       // Metadata about what changed since last version (to be filled by diff)
       changeSummary: {
@@ -522,80 +621,86 @@ class VersionService {
   }
 
   /**
-   * Restore a project to a specific version
-   * @param {string} versionId - ID of the version to restore
-   * @returns {Promise<boolean>} True if successful
+   * Overlay a Project Version's Identity fields onto the current project.
+   * Does not replace the project, Brief, Directions, tasks, or published
+   * Identity snapshots. Does not create another Version.
+   *
+   * @param {string} versionId
+   * @returns {Promise<{ ok: boolean, missingMarkConcept: boolean }>}
    */
   async restoreVersion(versionId) {
+    const fail = () => ({ ok: false, missingMarkConcept: false })
     try {
       const version = await this.getVersionById(versionId)
       if (!version) {
         throw new Error('Version not found')
       }
 
-      // Track version restoration
-
-      // Get current state
       const store = useAppStore.getState()
-      const { currentProjectId, setProjectPalette, updateBrandField, updateDetective,
-              updateDirection, setLogoDirection, setLogoImage } = store
+      const {
+        currentProjectId,
+        setProjectPalette,
+        updateBrandField,
+        setLogoDirection,
+        setLogoImage,
+        setColorRole,
+        setPaletteTokens,
+        chooseLogoConcept,
+      } = store
 
-      // Verify this version belongs to current project
       if (version.projectId !== currentProjectId) {
         throw new Error('Version does not belong to current project')
       }
 
-      // Restore the data
       const data = version.data || {}
+      const project = (store.projects || []).find((p) => p.id === currentProjectId)
 
-      /* A RESTORE MAY ONLY WRITE WHAT THE SNAPSHOT HOLDS.
-         `brief` and `deadline` were restored from `data.brief` / `data.deadline`,
-         and `createVersionSnapshot` writes neither — so every restore passed
-         `undefined || ''` into the two setters and blanked both fields.
+      /* A RESTORE MAY ONLY WRITE FIELDS THE VERSION REPRESENTS.
+         Missing keys leave the live value. Empty type faces do not invent
+         Plus Jakarta Sans. Brief, deadline, detective, Directions and tasks
+         are never written — including when a legacy record still carries them. */
 
-         Neither belongs in the snapshot, so the fix is to stop restoring them
-         rather than to start storing them:
-
-         `brief` is DERIVED from `detective`, which IS snapshotted and IS
-         restored below — see `briefFromDetective` in the store. Snapshotting
-         the composed summary would put a second copy of the client's answers in
-         the version record and let a restore reinstate a brief that disagrees
-         with the answers it was composed from.
-
-         `deadline` is a SCHEDULE, not design work. These snapshots hold "the
-         design-relevant parts of the project" (see createVersionSnapshot), and
-         rolling the identity back to v1 must not move the project's due date
-         back with it. */
-      /* These setters write the chosen concept when one exists, and only
-         the compatibility fields on a legacy project with no concepts. */
-      await setLogoDirection(data.logoDirection || '')
-      /* Snapshots store '[image-omitted]' instead of the data URL — do not
-         wipe the live mark with that sentinel. */
-      if (
-        data.logoImage &&
-        data.logoImage !== '[image-omitted]' &&
-        !String(data.logoImage).startsWith('[')
-      ) {
-        await setLogoImage(data.logoImage)
+      for (const key of IDENTITY_STRING_FIELDS) {
+        if (!hasOwn(data, key)) continue
+        updateBrandField(key, data[key] ?? '')
       }
 
-      // Restore brand fields
-      await updateBrandField('tagline', data.tagline || '')
-      await updateBrandField('positioning', data.positioning || '')
-      await updateBrandField('voice', data.voice || '')
-      await updateBrandField('typeHeading', data.typeHeading || 'Plus Jakarta Sans Bold')
-      await updateBrandField('typeBody', data.typeBody || 'Plus Jakarta Sans Regular')
-      await updateBrandField('logoWordmark', data.logoWordmark || '')
-      await updateBrandField('logoClearspace', data.logoClearspace || '')
-      await updateBrandField('logoMinSize', data.logoMinSize || '')
-      await updateBrandField('logoDonts', data.logoDonts || '')
-
-      // Restore color system
-      if (data.palette) {
-        await setProjectPalette(data.palette)
+      if (hasOwn(data, 'fontFilesLicensed')) {
+        updateBrandField('fontFilesLicensed', !!data.fontFilesLicensed)
       }
-      if (data.colorRoles && typeof data.colorRoles === 'object') {
-        const setColorRole = useAppStore.getState().setColorRole
+
+      const restoreFace = (field) => {
+        if (!hasOwn(data, field)) return
+        const face = String(data[field] ?? '').trim()
+        if (!face) return
+        updateBrandField(field, face)
+      }
+      restoreFace('typeHeading')
+      restoreFace('typeBody')
+
+      if (hasOwn(data, 'palette') && Array.isArray(data.palette)) {
+        const tokens = hasOwn(data, 'paletteTokens') && Array.isArray(data.paletteTokens)
+          ? data.paletteTokens
+          : null
+        if (
+          tokens &&
+          typeof setPaletteTokens === 'function' &&
+          tokens.length >= 2 &&
+          tokens.length === data.palette.length
+        ) {
+          setPaletteTokens(
+            tokens.map((row, i) => ({
+              id: row?.id || `swatch-${i}`,
+              name: row?.name || '',
+              hex: data.palette[i],
+            }))
+          )
+        } else {
+          setProjectPalette(data.palette)
+        }
+      }
+
+      if (hasOwn(data, 'colorRoles') && data.colorRoles && typeof data.colorRoles === 'object') {
         if (typeof setColorRole === 'function') {
           Object.entries(data.colorRoles).forEach(([role, color]) => {
             if (color != null && color !== '') {
@@ -609,54 +714,44 @@ class VersionService {
         }
       }
 
-      // Restore messaging
-      await updateBrandField('messagingPromise', data.messagingPromise || '')
-      await updateBrandField('messagingProof', data.messagingProof || '')
-      await updateBrandField('messagingPersonality', data.messagingPersonality || '')
-
-      // Restore imagery guidelines
-      await updateBrandField('imageryStyle', data.imageryStyle || '')
-      await updateBrandField('imageryDo', data.imageryDo || '')
-      await updateBrandField('imageryDont', data.imageryDont || '')
-
-      // Restore detective via real store writes (not empty stubs)
-      const st = useAppStore.getState()
-      if (data.detective && typeof st.updateDetective === 'function') {
-        Object.entries(data.detective).forEach(([field, value]) => {
-          if (field.endsWith('Files')) return
-          /* The brief's copy of the deadline is skipped for the same reason
-             `deadline` is no longer restored above: the schedule is not design
-             work. Replaying it here would restore one half of the pair and
-             leave `project.deadline` — its canonical home — untouched, which is
-             the divergence the audit logged as F7. Leaving both alone keeps
-             them in step. */
-          if (field === 'projectDeadline') return
-          try {
-            st.updateDetective(field, value)
-          } catch {
-            /* skip unknown fields */
-          }
-        })
-      }
-      if (Array.isArray(data.directions) && typeof st.updateDirection === 'function') {
-        data.directions.forEach((d) => {
-          if (!d?.id) return
-          try {
-            st.updateDirection(d.id, {
-              title: d.title,
-              note: d.note,
-              chosen: d.chosen,
-            })
-          } catch {
-            /* skip */
-          }
-        })
+      if (hasOwn(data, 'colorRoleWhy') && data.colorRoleWhy && typeof data.colorRoleWhy === 'object') {
+        updateBrandField('colorRoleWhy', copyJson(data.colorRoleWhy))
       }
 
-      return true
+      let missingMarkConcept = false
+      const hasChosenId = hasOwn(data, 'chosenMarkConceptId')
+      const conceptId = hasChosenId
+        ? String(data.chosenMarkConceptId || '').trim()
+        : ''
+      const liveChosen = (project?.logoConcepts || []).find((c) => c?.chosen)
+      const applyLogoDirection = () => {
+        if (hasOwn(data, 'logoDirection')) {
+          setLogoDirection(data.logoDirection ?? '')
+        }
+      }
+      if (conceptId) {
+        const hit = (project?.logoConcepts || []).find((c) => c?.id === conceptId)
+        if (hit && typeof chooseLogoConcept === 'function') {
+          chooseLogoConcept(conceptId, currentProjectId)
+          applyLogoDirection()
+        } else {
+          missingMarkConcept = true
+        }
+      } else if (hasChosenId) {
+        /* New record, no chosen mark. Do not write direction onto a live
+           chosen concept — that would author a different mark. */
+        if (!liveChosen) applyLogoDirection()
+      } else {
+        if (isUsableLegacyMarkImage(data.logoImage)) {
+          setLogoImage(data.logoImage, currentProjectId)
+        }
+        applyLogoDirection()
+      }
+
+      return { ok: true, missingMarkConcept }
     } catch (error) {
       console.error('Error restoring version:', error)
-      return false
+      return fail()
     }
   }
 

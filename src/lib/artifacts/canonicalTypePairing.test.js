@@ -253,7 +253,7 @@ describe('canonical type pairing artifact', () => {
       .spyOn(versionService, 'getVersionById')
       .mockResolvedValue(version)
     try {
-      expect(await versionService.restoreVersion(version.id)).toBe(true)
+      expect((await versionService.restoreVersion(version.id)).ok).toBe(true)
     } finally {
       spy.mockRestore()
     }
