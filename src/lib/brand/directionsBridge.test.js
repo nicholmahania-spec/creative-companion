@@ -493,14 +493,16 @@ describe('routes are made, not pre-drawn', () => {
     withRoutes(3)
     s().updateDirection('c', { title: 'Ink and paper', chosen: true })
     const entry = cur().decisionLog.find((e) => e.kind === 'direction')
-    expect(entry.directionId).toBe('c')
+    const recordId = dir('c').recordId
+    expect(entry.directionId).toBe(recordId)
     expect(entry.label).toBe('')
 
     s().deleteDirection('b')
-    /* C is drawn as B now. The log still names C, and still reads correctly
-       because it never wrote a letter down. */
+    /* C is drawn as B now. The log still names C's record, and still reads
+       correctly because it never wrote a letter down. */
     expect(orderedDirections(cur()).find((r) => r.id === 'c').letter).toBe('B')
-    expect(cur().decisionLog[0].directionId).toBe('c')
+    expect(cur().decisionLog[0].directionId).toBe(recordId)
+    expect(dir('c').id).toBe('c')
     expect(formatDecisionLine(cur().decisionLog[0])).toBe('Ink and paper')
   })
 

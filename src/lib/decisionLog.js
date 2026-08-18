@@ -3,6 +3,8 @@
  * External working memory: “we chose B because …”
  */
 
+import { isDirectionSlotId } from './brand/directionLetters'
+
 /**
  * @typedef {{
  *   id: string|number,
@@ -15,8 +17,45 @@
  * }} DecisionEntry
  */
 
+/** True for a Direction.recordId minted by blankDirection (`dir_…`). */
+export function isDirectionRecordId(id) {
+  return /^dir_/.test(String(id || ''))
+}
+
 /**
- * Append / replace a decision (same directionId replaces prior direction pick).
+ * Which live Direction a log row names.
+ *
+ * New rows store `recordId`. A match is exact. Legacy rows store the slot
+ * (`a`|`b`|`c`). Those only resolve to a Direction that itself has no
+ * recordId — the historical pair. A newly minted Direction A must not
+ * inherit an old `directionId: 'a'`.
+ *
+ * Display (`formatDecisionLine`) reads title/why off the row and does not
+ * need this. It exists so a reader cannot silently rebind old history.
+ *
+ * @param {object} [project]
+ * @param {DecisionEntry|null} [entry]
+ * @returns {object|null}
+ */
+export function directionForLogEntry(project, entry) {
+  const id = String(entry?.directionId || '')
+  if (!id) return null
+  const dirs = Array.isArray(project?.directions) ? project.directions : []
+  const byRecord = dirs.find((d) => d?.recordId && String(d.recordId) === id)
+  if (byRecord) return byRecord
+  if (!isDirectionSlotId(id)) return null
+  const bySlot = dirs.find(
+    (d) => String(d?.id || '').toLowerCase() === id.toLowerCase()
+  )
+  if (bySlot && !bySlot.recordId) return bySlot
+  return null
+}
+
+/**
+ * Append / replace a decision (same directionId replaces that subject's prior
+ * pick). A different identity is a different subject — including a new
+ * recordId after slot A was deleted and recreated — and does not swallow
+ * the earlier row.
  * @param {DecisionEntry[]} log
  * @param {Partial<DecisionEntry>} entry
  * @param {{ max?: number }} [opts]
@@ -63,10 +102,6 @@ export function appendDecision(log = [], entry = {}, { max = 20 } = {}) {
         )
     )
   }
-  // Also collapse to one "active" direction decision (latest choose wins)
-  if (row.kind === 'direction') {
-    next = next.filter((d) => d.kind !== 'direction')
-  }
   next = [...next, row]
   if (next.length > max) next = next.slice(-max)
   return next
@@ -101,19 +136,24 @@ export function formatDecisionLine(d) {
 
 /**
  * Build a decision entry from an Ideate direction card.
- * @param {{ id?: string, label?: string, title?: string, note?: string }} dir
+ *
+ * `directionId` is the durable recordId when the card has one. Slot `id`
+ * (`a`|`b`|`c`) stays on the Direction for position; it is only written here
+ * when a historical row never received a recordId, so we do not invent one.
+ *
+ * @param {{ id?: string, recordId?: string, title?: string, note?: string }} dir
  */
 export function decisionFromDirection(dir = {}) {
+  const durable = String(dir.recordId || '').trim()
   return {
     kind: 'direction',
-    directionId: dir.id || '',
+    directionId: durable || dir.id || '',
     /* NO LETTER. `label` used to carry 'A' | 'B' | 'C' and the line read
        "Chose B: Loud grotesk". A·B·C are display labels derived from a route's
        position among the routes that currently exist, so deleting one reflows
        the rest — and a stored letter then names a route that no longer wears
-       it. `directionId` is the reference and always was; the name is what a
-       human recognises. See `isDirectionEntry` for the readers that still have
-       to cope with letters written before this. */
+       it. The name is what a human recognises. See `isDirectionEntry` for the
+       readers that still have to cope with letters written before this. */
     title: String(dir.title || '').trim(),
     why: String(dir.note || '').trim(),
     at: Date.now(),
