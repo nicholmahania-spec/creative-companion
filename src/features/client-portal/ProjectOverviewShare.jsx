@@ -27,6 +27,8 @@ import {
   postStudioMessage,
   setPortalDetectiveAnswers,
   publishReviewArtifacts,
+  openReviewRound,
+  fetchReviewHistory,
 } from '../../lib/client/clientPortal'
 import {
   approvalStaleness,
@@ -233,6 +235,45 @@ export function ProjectOverviewSharePanel({
    paper path live as plain rows at the bottom of PortalMode now — zero
    decisions when unused, one click when needed. */
 
+/**
+ * The day a client answered, as a date a person can quote back.
+ *
+ * NOT `messageDayLabel`. That one is built for chat dividers and returns
+ * "Today", "Yesterday", a weekday, or — past a week — the single word
+ * "Earlier", which is right above a message thread and useless in a record: the
+ * whole point of this log is answering "which version did they approve, and
+ * when", and "Earlier" answers half of it. `CLAUDE.md` §17's own example is a
+ * date ("Approved by: Client · Date"), so this gives a date.
+ *
+ * The year is shown only when it is not this one — a brand project spans
+ * months, not years, and "4 August 2026" on every row is noise until it isn't.
+ */
+function roundDayLabel(iso, now = new Date()) {
+  if (!iso) return ''
+  const t = Date.parse(iso)
+  if (Number.isNaN(t)) return ''
+  const d = new Date(t)
+  try {
+    return d.toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'long',
+      ...(d.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+    })
+  } catch {
+    return ''
+  }
+}
+
+/* The client answered with a Direction's durable recordId, which is the right
+   thing to store and the wrong thing to read. Resolved to the title here, at
+   the render, and left as the id when the Direction has since been deleted —
+   an id on screen is honest about a thing that is gone; inventing a name for it
+   would not be. */
+function directionTitle(project, recordId) {
+  const hit = (project?.directions || []).find((d) => d?.recordId === recordId)
+  return String(hit?.title || '').trim() || recordId
+}
+
 function PortalMode({
   project,
   portalId,
@@ -266,6 +307,11 @@ function PortalMode({
   const [loadError, setLoadError] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [busyStep, setBusyStep] = useState(null)
+  /* Every round this portal has had, newest work last. Read from the database
+     rather than derived from the project, because the client's answers live
+     there and a local copy would be a second source for a fact only they can
+     author. */
+  const [history, setHistory] = useState([])
   const [sendingForm, setSendingForm] = useState(false)
   const [sendingSurvey, setSendingSurvey] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
@@ -287,9 +333,16 @@ function PortalMode({
     if (m.ok) setMessages(m.messages)
   }, [portalId])
 
+  const loadHistory = useCallback(async () => {
+    if (!portalId) return
+    const r = await fetchReviewHistory(portalId)
+    if (r.ok) setHistory(r.rounds || [])
+  }, [portalId])
+
   useEffect(() => {
     refresh()
-  }, [refresh])
+    loadHistory()
+  }, [refresh, loadHistory])
 
   /** A message thread that only updates when you remember to press Refresh
    *  is a message thread that gets missed. */
@@ -364,11 +417,28 @@ function PortalMode({
     ])
   )
 
+  /* Derived from the history on every render, never stored — a saved
+     "approved on" string would be a second copy of a fact the response row
+     already holds, and the two would drift the first time a client changed
+     their mind. */
+  const milestone = (() => {
+    const rounds = history.filter((r) => r.step_id === 'design')
+    for (let i = rounds.length - 1; i >= 0; i -= 1) {
+      const last = rounds[i].responses[rounds[i].responses.length - 1]
+      if (last?.verdict === 'approved') {
+        const when = roundDayLabel(last.created_at)
+        return `Your client approved the identity${when ? ` on ${when}` : ''}.`
+      }
+    }
+    return ''
+  })()
+
   const toggleStep = async (stepId, stepLabel) => {
     const turningOn = !portal?.step_visibility?.[stepId]
     let artifacts = null
+    let built = null
     if (turningOn) {
-      const built = buildReviewArtifact(project, stepId)
+      built = buildReviewArtifact(project, stepId)
       if (!built.ok) {
         /* Refused, and said out loud. Silently showing an empty stop would put
            the client in front of the blank this whole change removes. */
@@ -395,6 +465,34 @@ function PortalMode({
         : p
     )
     const r = await publishReviewArtifacts(portalId, next, artifacts)
+    /* THE ROUND OPENS AFTER THE ARTIFACT IS STAMPED, and the order is the
+       failure model. Two calls cannot be one transaction from here, so one of
+       them can land alone:
+
+         stamp fails            nothing shown, nothing to answer. Clean.
+         stamp lands, round not the client sees the work and the RPC refuses
+                                their answer with `no_open_round`. Nothing is
+                                lost and pressing Show again fixes it, because
+                                opening a round for the same target reuses the
+                                existing one rather than making a second.
+
+       The reverse order would give the opposite: a round open against work
+       nobody can see. This follows the Phase 4B/5 precedent, where the snapshot
+       lands before the version for the same reason. */
+    if (r.ok && turningOn && built?.artifact) {
+      const unit = built.artifact.unit
+      const opened = await openReviewRound(
+        portalId,
+        stepId,
+        unit,
+        unit === 'ideate' ? 'presentationVersion' : 'identityArtifact',
+        built.artifact.fingerprint
+      )
+      if (!opened.ok) {
+        flashToast?.(`Shown, but “${stepLabel}” can’t take a reply yet — press it again`)
+      }
+      await loadHistory()
+    }
     setBusyStep(null)
     if (!r.ok) {
       flashToast?.(r.error || `Couldn’t change “${stepLabel}” — put back as it was`)
@@ -639,6 +737,69 @@ function PortalMode({
               )
             })}
           </div>
+
+          {/* ── The milestone ──
+
+              `docs/ADDITIONS.md` 5.6 asked for approval to read as a real
+              moment. It is one sentence, and everything it deliberately is not
+              matters more than what it is: no confetti, no score, no streak, no
+              progress bar moving. It does not unlock a stage, gate Delivery,
+              advance the Journey, or mint a Version. The project is not
+              different because of it — the designer just now knows, on the
+              screen where they would look, that the client said yes and when.
+
+              Motivation rules, PRODUCT.md §21: state it plainly, do not
+              gamify it. */}
+          {milestone ? (
+            <p className="overview-share-milestone">{milestone}</p>
+          ) : null}
+
+          {/* ── What the client has actually said, round by round ──
+
+              The record `CLAUDE.md` §17 asked for and nothing kept: "prevent
+              confusion about which version was approved… maintain version
+              history rather than simply replacing old files." The chips above
+              show the latest answer; this shows every answer, including the
+              ones a newer round replaced.
+
+              Superseded rounds stay visible rather than being cleared away. A
+              round that vanishes reads as work that was deleted, and the
+              client's words in it are the most re-read thing on this page. */}
+          {history.length > 0 && (
+            <div className="overview-share-rounds">
+              <p className="client-portal-subhead">What your client has said</p>
+              {history.map((round) => (
+                <div key={round.id} className="overview-share-round">
+                  <p className="discovery-brief-hint">
+                    {labelForStepId(round.step_id)} · round {round.round_no}
+                    {round.status === 'superseded' ? ' · replaced by a newer send' : ''}
+                  </p>
+                  {round.responses.length === 0 ? (
+                    <p className="discovery-brief-hint">No reply yet.</p>
+                  ) : (
+                    <ul className="overview-share-round-list">
+                      {round.responses.map((res) => (
+                        <li key={res.id}>
+                          <span>
+                            {res.verdict === 'approved'
+                              ? 'Approved'
+                              : 'Asked for changes'}
+                            {res.created_at ? ` · ${roundDayLabel(res.created_at)}` : ''}
+                          </span>
+                          {res.preferred_ref ? (
+                            <span className="discovery-brief-hint">
+                              Leaning toward {directionTitle(project, res.preferred_ref)}
+                            </span>
+                          ) : null}
+                          {res.note ? <p>{res.note}</p> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           {portalPushableSteps().some((s) => portal?.step_status?.[s.id]?.note) && (
             <div className="overview-share-notes">
               <p className="client-portal-subhead">Client notes</p>

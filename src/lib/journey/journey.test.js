@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { APPROVAL_CAPABLE_STEP_IDS } from '../client/reviewArtifact'
+import { APPROVAL_CAPABLE_STEP_IDS, REVIEW_UNIT_STEP_IDS } from '../client/reviewArtifact'
 import {
   JOURNEY_STEPS,
   PATH_VIEWS,
@@ -149,28 +149,50 @@ describe('JOURNEY_STEPS — the seven-stop path', () => {
   /**
    * R4, owner decision 2026-08-12. The pushable set is now exactly the stops
    * whose artifact the portal can SHOW, and the rule that decides it lives in
-   * `APPROVAL_UNITS` rather than being restated here.
+   * `REVIEW_UNITS` rather than being restated here.
    *
-   * This used to list five. The other four were pushable with nothing behind
+   * This used to list five. Four of them were pushable with nothing behind
    * them but their own label — the client pressed Approve next to the word
    * "Research" — which is what DESIGN_GRAMMAR G10.5 forbids and what this
-   * assertion previously described as correct. Shrinking the set IS the fix.
+   * assertion previously described as correct. Shrinking the set WAS the fix.
+   *
+   * `ideate` came back in Phase 6, and by the same rule rather than in spite of
+   * it: the Presentation Document Version gave Directions a frozen artifact the
+   * portal can render. The comment above this list predicted exactly that —
+   * "Directions and Brand book earn their place here when the portal can show
+   * the composition and the book". `book` still cannot, and is still out.
    */
   it('lets a stop be pushed only when its artifact can be shown', () => {
-    expect(PORTAL_PUSHABLE_STEP_IDS).toEqual(['design'])
+    expect(PORTAL_PUSHABLE_STEP_IDS).toEqual(['ideate', 'design'])
     expect(portalPushableSteps().map((s) => s.id)).toEqual([
       ...PORTAL_PUSHABLE_STEP_IDS,
     ])
-    /* Derived from the approval units, never restated — adding a unit with a
-       real artifact makes its stop pushable with no edit here. */
-    expect([...PORTAL_PUSHABLE_STEP_IDS]).toEqual([...APPROVAL_CAPABLE_STEP_IDS])
+    /* Derived from the SHOWABLE units, never restated — adding a unit with a
+       real artifact makes its stop pushable with no edit here.
+
+       Deriving from `APPROVAL_CAPABLE_STEP_IDS` instead would be wrong now and
+       silently so: it is the narrower list, and the presentation would be
+       missing from the portal it exists to reach. */
+    expect([...PORTAL_PUSHABLE_STEP_IDS]).toEqual([...REVIEW_UNIT_STEP_IDS])
   })
 
-  /* The four that lost approval capability, named so that restoring one is a
+  /* PUSHABLE IS A SUPERSET OF APPROVABLE, and keeping the difference visible is
+     the point of asserting it. A presentation of options is shown and answered;
+     it is not approved. */
+  it('keeps showable and approvable as different lists', () => {
+    expect([...APPROVAL_CAPABLE_STEP_IDS]).toEqual(['design'])
+    for (const id of APPROVAL_CAPABLE_STEP_IDS) {
+      expect(PORTAL_PUSHABLE_STEP_IDS).toContain(id)
+    }
+    expect(PORTAL_PUSHABLE_STEP_IDS).toContain('ideate')
+    expect(APPROVAL_CAPABLE_STEP_IDS).not.toContain('ideate')
+  })
+
+  /* The stops that still cannot show anything, named so that restoring one is a
      decision someone makes rather than a line that drifts back. Each needs an
-     artifact built first — see the reasons in `APPROVAL_UNITS`. */
-  it('names the stops that lost approval capability and why they cannot show', () => {
-    for (const id of ['research', 'sketch', 'deliver', 'define', 'ideate', 'book']) {
+     artifact built first — see the reasons in `REVIEW_UNITS`. */
+  it('names the stops that cannot show and why', () => {
+    for (const id of ['research', 'sketch', 'deliver', 'define', 'book']) {
       expect(PORTAL_PUSHABLE_STEP_IDS).not.toContain(id)
     }
   })

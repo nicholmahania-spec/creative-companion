@@ -126,9 +126,17 @@ describe('SQL step-id lists track journey.js', () => {
       declared.filter((id) => !PORTAL_PUSHABLE_STEP_IDS.includes(id))
     )
     /* Named explicitly as well, so the set is a decision rather than a
-       tautology: everything except Identity. */
+       tautology: everything except the two units the portal can show.
+
+       PHASE 6 MOVED `ideate` OUT OF THIS SET, and this assertion is where that
+       had to be argued rather than absorbed. The alarm the comment above
+       describes did fire on this line, and the answer it wanted was: is
+       `ideate` in the SQL allowlist? It is — 20260728021200 has listed it since
+       the allowlist was written, so making it pushable needs no migration for
+       the step id itself. `book` is still absent from both, and still the live
+       case this test exists to catch. */
     expect(new Set(withheld)).toEqual(
-      new Set(['define', 'research', 'ideate', 'sketch', 'book', 'deliver'])
+      new Set(['define', 'research', 'sketch', 'book', 'deliver'])
     )
 
     const sqlKnows = (id) => lists.every(({ ids }) => ids.includes(id))

@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { clientFacingError } from '../../lib/client/clientFacingError'
 import { portalPushableSteps } from '../../lib/journey/journey'
+import { collectsFor } from '../../lib/client/reviewArtifact'
 import ClientBriefFields from '../brief/ClientBriefFields'
 import {
   fetchClientPortal,
@@ -104,6 +105,83 @@ function ReviewArtifact({ artifact }) {
         </p>
       ) : null}
     </div>
+  )
+}
+
+/**
+ * THE FROZEN PRESENTATION, ON SCREEN.
+ *
+ * Same rule as ReviewArtifact above and it matters more here: everything
+ * rendered came out of the Presentation Document Version the studio froze at
+ * Send, by way of the artifact stamped at Show. Live Directions are not read,
+ * cannot be read, and do not reach this page — so a title the designer edits
+ * this afternoon does not silently change what the client is answering about.
+ *
+ * WHAT IS DELIBERATELY ABSENT: rejected or unselected Directions, the
+ * designer's notes and rationale, evidence, storage paths, package internals,
+ * and any control that writes. The projection is the boundary — this component
+ * could not show those things if it wanted to, because they were never put in
+ * the payload.
+ *
+ * `sourceId` travels but is never rendered. It is the Direction's durable
+ * recordId, and it has to make the round trip so the client's "this one" can be
+ * checked server-side against what was actually sent.
+ */
+function PresentationArtifact({ artifact, chosenRef, onChoose, disabled }) {
+  const items = artifact?.payload?.items || []
+  if (!items.length) return null
+  return (
+    <ul className="client-portal-directions">
+      {items.map((item, i) => {
+        /* Numbered rather than lettered. A/B/C are studio slot names and mean
+           nothing to the person reading this page. */
+        const name = item.label || `Option ${i + 1}`
+        return (
+          <li key={item.itemId} className="client-portal-direction">
+            {item.mark?.image ? (
+              <img
+                className="client-portal-artifact-mark"
+                src={item.mark.image}
+                alt={`${name} — the logo`}
+              />
+            ) : null}
+            <p className="client-portal-direction-name">{name}</p>
+            {item.palette?.hexes?.length ? (
+              <ul className="client-portal-artifact-swatches">
+                {item.palette.hexes.map((hex) => (
+                  <li key={hex}>
+                    <span
+                      className="client-portal-artifact-swatch"
+                      style={{ background: hex }}
+                      aria-hidden="true"
+                    />
+                    <span className="client-portal-artifact-hex">{hex}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {item.type?.heading || item.type?.body ? (
+              <p className="client-portal-artifact-type">
+                {[item.type.heading, item.type.body].filter(Boolean).join(' · ')}
+              </p>
+            ) : null}
+            {/* Optional, and said as a leaning rather than a decision — the
+                designer chooses, and a client who feels they have just signed
+                something will hedge instead of telling you what they think. */}
+            <label className="client-portal-direction-pick">
+              <input
+                type="radio"
+                name={`prefer-${artifact?.fingerprint || 'presentation'}`}
+                checked={chosenRef === item.sourceId}
+                disabled={disabled}
+                onChange={() => onChoose(item.sourceId)}
+              />
+              <span>I'm drawn to this one</span>
+            </label>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -277,13 +355,22 @@ export default function PublicClientPortal({ portalId }) {
   // money attached, so a mis-tap shouldn't fire on one press. Request-changes
   // stays one tap (it's reversible). (#10)
   const [armedApproveStepId, setArmedApproveStepId] = useState(null)
+  /* Which option the client leaned toward, before they press send. Kept in the
+     same shape as the note drafts and cleared the same way. */
+  const [preferDrafts, setPreferDrafts] = useState({})
 
   const respondStep = async (stepId, status) => {
     if (pendingStepId) return
     setError('')
     setPendingStepId(stepId)
     const note = noteDrafts[stepId] || ''
-    const r = await respondToPortalStep(portalId, stepId, status, note)
+    const r = await respondToPortalStep(
+      portalId,
+      stepId,
+      status,
+      note,
+      preferDrafts[stepId] || ''
+    )
     if (!r.ok) {
       setPendingStepId(null)
       setError(clientFacingError(r.error))
@@ -295,6 +382,11 @@ export default function PublicClientPortal({ portalId }) {
       const next = { ...d }
       delete next[stepId]
       writeDraft({ notes: next })
+      return next
+    })
+    setPreferDrafts((d) => {
+      const next = { ...d }
+      delete next[stepId]
       return next
     })
     await load()
@@ -400,6 +492,15 @@ export default function PublicClientPortal({ portalId }) {
           <div className="client-portal-steps">
             {visibleSteps.map((step) => {
               const status = portal.stepStatus?.[step.id]?.status || 'pending'
+              const artifact = portal.reviewArtifacts?.[step.id]
+              /* APPROVAL OR FEEDBACK — the one branch that decides what this
+                 card offers. `design` is the identity, and approving it is a
+                 commitment. `ideate` is a set of options to react to, and there
+                 is no Approve button on it because approving a shortlist is not
+                 a thing a person can meaningfully do. The RPC refuses it too;
+                 this is the half the client can see. */
+              const collects = collectsFor(step.id)
+              const canApprove = collects === 'approval'
               return (
                 <div key={step.id} className="client-portal-step">
                   <div className="client-portal-step-head">
@@ -408,58 +509,79 @@ export default function PublicClientPortal({ portalId }) {
                       {status === 'approved'
                         ? 'Approved'
                         : status === 'changes_requested'
-                          ? 'Changes requested'
+                          ? canApprove
+                            ? 'Changes requested'
+                            : 'Thanks — sent'
                           : 'Waiting on you'}
                     </span>
                   </div>
                   {/* The artifact FIRST, then the question about it. A
                       decision asked before the thing is on screen is the
                       defect this whole change exists to remove. */}
-                  <ReviewArtifact artifact={portal.reviewArtifacts?.[step.id]} />
+                  {canApprove ? (
+                    <ReviewArtifact artifact={artifact} />
+                  ) : (
+                    <PresentationArtifact
+                      artifact={artifact}
+                      chosenRef={preferDrafts[step.id] || ''}
+                      onChoose={(ref) =>
+                        setPreferDrafts((d) => ({ ...d, [step.id]: ref }))
+                      }
+                      disabled={pendingStepId === step.id}
+                    />
+                  )}
                   {status !== 'approved' ? (
                     <div className="client-portal-step-actions">
                       <textarea
                         className="field-input"
                         rows={2}
-                        placeholder="Optional note about what you'd like changed"
+                        placeholder={
+                          canApprove
+                            ? "Optional note about what you'd like changed"
+                            : 'What do you like, and what would you change?'
+                        }
                         value={noteDrafts[step.id] || ''}
                         onChange={(e) =>
                           setNoteDrafts((d) => ({ ...d, [step.id]: e.target.value }))
                         }
                       />
                       <div className="client-portal-step-buttons">
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          disabled={pendingStepId === step.id}
-                          onClick={() => {
-                            // Two-tap: first tap arms, second approves.
-                            if (armedApproveStepId === step.id) {
-                              setArmedApproveStepId(null)
-                              respondStep(step.id, 'approved')
-                            } else {
-                              setArmedApproveStepId(step.id)
+                        {canApprove ? (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={pendingStepId === step.id}
+                            onClick={() => {
+                              // Two-tap: first tap arms, second approves.
+                              if (armedApproveStepId === step.id) {
+                                setArmedApproveStepId(null)
+                                respondStep(step.id, 'approved')
+                              } else {
+                                setArmedApproveStepId(step.id)
+                              }
+                            }}
+                            onBlur={() =>
+                              setArmedApproveStepId((id) =>
+                                id === step.id ? null : id
+                              )
                             }
-                          }}
-                          onBlur={() =>
-                            setArmedApproveStepId((id) =>
-                              id === step.id ? null : id
-                            )
-                          }
-                        >
-                          {pendingStepId === step.id
-                            ? 'Saving…'
-                            : armedApproveStepId === step.id
-                              ? 'Tap again to approve'
-                              : 'Approve'}
-                        </button>
+                          >
+                            {pendingStepId === step.id
+                              ? 'Saving…'
+                              : armedApproveStepId === step.id
+                                ? 'Tap again to approve'
+                                : 'Approve'}
+                          </button>
+                        ) : null}
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className={`btn btn-sm ${canApprove ? 'btn-secondary' : 'btn-primary'}`}
                           disabled={pendingStepId === step.id}
                           onClick={() => respondStep(step.id, 'changes_requested')}
                         >
-                          Request changes
+                          {/* On a presentation this is the only button, so it
+                              says what it does there: send the reaction. */}
+                          {canApprove ? 'Request changes' : 'Send my thoughts'}
                         </button>
                       </div>
                     </div>

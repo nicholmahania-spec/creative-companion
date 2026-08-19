@@ -529,3 +529,93 @@ revoke all on function public.respond_client_portal_step(uuid, text, text, text)
 grant execute on function public.respond_client_portal_step(uuid, text, text, text) to anon, authenticated;
 revoke all on function public.submit_client_portal_form(uuid, jsonb) from public;
 grant execute on function public.submit_client_portal_form(uuid, jsonb) to anon, authenticated;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Phase 6 · Review rounds and append-only responses
+--
+-- The tables and their row-level security only. The functions — including the
+-- redefined respond_client_portal_step — live in
+-- supabase/migrations/20260819120000_review_rounds.sql and are NOT repeated
+-- here.
+--
+-- BE CLEAR ABOUT WHAT THIS FILE IS. It is the base schema, and the migrations
+-- run on top of it; it is not a complete rebuild on its own and has not been
+-- for some time. The respond_client_portal_step above is the pre-hardening
+-- 4-arg boolean version, predating the link-expiry, artifact and review-round
+-- work. Running this file alone gives a database whose approval RPC has none
+-- of those gates and returns the wrong type. Run the migrations after it.
+--
+-- Anon never touches either table. The only write path is the SECURITY DEFINER
+-- function, and the only read is the owner, through these policies.
+-- ─────────────────────────────────────────────────────────────────────────
+
+create table if not exists public.client_portal_review_rounds (
+  id uuid primary key default gen_random_uuid(),
+  portal_id uuid not null references public.client_portals(id) on delete cascade,
+  step_id text not null,
+  unit text not null,
+  target_kind text not null,
+  target_ref text not null,
+  round_no int not null,
+  sent_at timestamptz not null default now(),
+  status text not null default 'open',
+  superseded_at timestamptz
+);
+
+create unique index if not exists client_portal_review_rounds_one_open
+  on public.client_portal_review_rounds (portal_id, step_id)
+  where status = 'open';
+
+create table if not exists public.client_portal_review_responses (
+  id uuid primary key default gen_random_uuid(),
+  seq bigint generated always as identity,
+  round_id uuid not null references public.client_portal_review_rounds(id) on delete cascade,
+  verdict text not null,
+  note text not null default '',
+  preferred_ref text,
+  target_ref text not null,
+  actor text not null default 'client',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists client_portal_review_rounds_lookup
+  on public.client_portal_review_rounds (portal_id, step_id, round_no desc);
+
+create index if not exists client_portal_review_responses_by_round
+  on public.client_portal_review_responses (round_id, seq desc);
+
+alter table public.client_portal_review_rounds enable row level security;
+alter table public.client_portal_review_responses enable row level security;
+
+revoke all on public.client_portal_review_rounds from anon;
+revoke all on public.client_portal_review_responses from anon;
+revoke truncate on public.client_portal_review_rounds from authenticated;
+revoke truncate on public.client_portal_review_responses from authenticated;
+revoke insert, update, delete on public.client_portal_review_rounds from authenticated;
+revoke insert, update, delete on public.client_portal_review_responses from authenticated;
+
+drop policy if exists "Owners read own review rounds" on public.client_portal_review_rounds;
+create policy "Owners read own review rounds"
+  on public.client_portal_review_rounds
+  for select
+  using (
+    exists (
+      select 1 from public.client_portals p
+      where p.id = client_portal_review_rounds.portal_id
+        and p.owner_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Owners read own review responses" on public.client_portal_review_responses;
+create policy "Owners read own review responses"
+  on public.client_portal_review_responses
+  for select
+  using (
+    exists (
+      select 1
+      from public.client_portal_review_rounds r
+      join public.client_portals p on p.id = r.portal_id
+      where r.id = client_portal_review_responses.round_id
+        and p.owner_id = auth.uid()
+    )
+  );

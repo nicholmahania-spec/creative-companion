@@ -51,3 +51,42 @@ export function clientFacingError(error) {
   if (INTERNAL_HINTS.some((re) => re.test(msg))) return GENERIC
   return msg
 }
+
+/**
+ * WHAT A REFUSED RESPONSE SHOULD SAY TO A CLIENT.
+ *
+ * The response RPC answers with a short machine token rather than a sentence,
+ * so the wording lives here — one place, in front of one audience. Every line
+ * below follows the same three rules the rest of the client surface follows:
+ *
+ *   Say what is true, not what went wrong. "Your designer has sent a newer
+ *   version" is the fact; "stale round" is the implementation.
+ *
+ *   Give them the next move. A dead end on someone else's page reads as the
+ *   client's fault, which is why the generic fallback ends by naming one.
+ *
+ *   Never blame, never alarm. Nothing here is red, counted, or urgent — a
+ *   client who taps twice has not done anything wrong.
+ */
+const RESPONSE_REASON_COPY = new Map([
+  ['link_dead', 'This link has expired — ask your contact to send a fresh one.'],
+  ['not_shown', 'That isn’t being shared with you any more.'],
+  ['no_artifact', 'There’s nothing here to look at yet.'],
+  ['no_open_round', 'There’s nothing waiting on you here right now.'],
+  [
+    'stale_round',
+    'Your designer has sent a newer version — refresh the page to see it.',
+  ],
+  ['not_approvable', 'These are options to react to, not something to approve.'],
+  ['unknown_direction', 'That option isn’t part of what you were sent.'],
+  ['preference_not_allowed', 'You can’t pick an option on this one.'],
+  ['too_many', 'That’s a lot of changes at once — give it a minute and try again.'],
+])
+
+/* Shape problems (`bad_status`, `bad_step`, `bad_unit`, `bad_target`) are not
+   listed. A client cannot cause one through the page, so reaching one means
+   something is wrong on our side, and the honest answer is the generic
+   recovery line rather than a sentence implying they mistyped something. */
+export function reasonToClientCopy(reason) {
+  return RESPONSE_REASON_COPY.get(String(reason || '').trim()) || GENERIC
+}

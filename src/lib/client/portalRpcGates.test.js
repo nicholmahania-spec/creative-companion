@@ -118,11 +118,107 @@ describe('the extractor finds what it is meant to check', () => {
    * reachable by anyone holding the link. A response to a step with nothing
    * stamped against it is refused in the database.
    */
+  /* Phase 6 changed the return type from boolean to jsonb, so a refusal is now
+     `{ok:false, reason:...}` rather than a bare `false`. The GATES are the same
+     lines in the same order — only the shape of "no" changed, and this helper
+     is what keeps the assertions about the gate rather than about the literal.
+
+     `REFUSES` deliberately requires `false`: matching `jsonb_build_object` alone
+     would pass on a success return and quietly turn each check below vacuous.
+
+     It also requires the refusal to sit IMMEDIATELY after its condition. A
+     first draft allowed any gap, and a mutation check proved that vacuous too:
+     with a wildcard between them, flipping one gate to return success still
+     matched, because the pattern scanned on to the next refusal further down
+     the function. Every assertion below was passing for the wrong reason. */
+  const REFUSES = (cond) =>
+    new RegExp(
+      `${cond}\\s*then\\s*return\\s+jsonb_build_object\\(\\s*'ok',\\s*false`,
+      'i'
+    )
+
   it('an approval requires an artifact that was actually shown', () => {
     const body = FNS.get('respond_client_portal_step').body
     expect(body).toMatch(/shown\s*:=\s*coalesce\(\s*arts\s*,\s*'\{\}'::jsonb\s*\)\s*->\s*step_id_in/i)
-    expect(body).toMatch(/if\s+shown\s+is\s+null\s+then[\s\S]*?return\s+false/i)
-    expect(body).toMatch(/if\s+fingerprint\s*=\s*''\s+then[\s\S]*?return\s+false/i)
+    expect(body).toMatch(REFUSES(String.raw`if\s+shown\s+is\s+null`))
+    expect(body).toMatch(REFUSES(String.raw`if\s+fingerprint\s*=\s*''`))
+  })
+
+  /**
+   * PHASE 6 GATES, asserted the same way and for the same reason: each one is
+   * restated by hand in whatever migration redefines this function next.
+   */
+  it('a response needs an open round whose target is what is on screen', () => {
+    const body = FNS.get('respond_client_portal_step').body
+    /* The round is selected by the server from the portal and step — never
+       named by the caller — and only an OPEN one qualifies. */
+    expect(body).toMatch(/from\s+public\.client_portal_review_rounds[\s\S]*?status\s*=\s*'open'/i)
+    expect(body).toMatch(REFUSES(String.raw`if\s+rnd\.id\s+is\s+null`))
+    /* Work the studio has moved on from cannot be answered: the stamped
+       fingerprint must still be the one this round was opened against. */
+    expect(body).toMatch(
+      REFUSES(String.raw`rnd\.target_ref\s+is\s+distinct\s+from\s+fingerprint`)
+    )
+  })
+
+  it('the stored response carries the round-s target, not the caller-s', () => {
+    const { header, body } = FNS.get('respond_client_portal_step')
+    expect(body).toMatch(/values\s*\([\s\S]*?rnd\.target_ref/i)
+    // No target parameter exists to be spoofed through.
+    expect(header).not.toMatch(/target_ref_in/i)
+  })
+
+  /* A presentation of options is shown and answered; it is not approved. The
+     portal hides the button, and this is the half a caller cannot skip. */
+  it('a feedback-only unit cannot be approved', () => {
+    const body = FNS.get('respond_client_portal_step').body
+    expect(body).toMatch(
+      REFUSES(String.raw`unit_name\s*=\s*'ideate'\s+and\s+status_in\s*=\s*'approved'`)
+    )
+  })
+
+  /* The client's preferred Direction has to be one they were actually shown,
+     checked against the stamped artifact rather than against live Directions. */
+  it('a named direction must appear in the artifact that was shown', () => {
+    const body = FNS.get('respond_client_portal_step').body
+    /* Type-guarded, not just null-guarded. `coalesce` alone catches SQL NULL and
+       not JSON `null` or an object, both of which make `jsonb_array_elements`
+       RAISE — turning an intended refusal into a 500 on a public endpoint. */
+    expect(body).toMatch(/jsonb_typeof\(\s*shown\s*->\s*'payload'\s*->\s*'items'\s*\)\s*=\s*'array'/i)
+    expect(body).toMatch(REFUSES(String.raw`if\s+not\s+known_direction`))
+    expect(body).toMatch(REFUSES(String.raw`unit_name\s*<>\s*'ideate'`))
+  })
+
+  /* Append-only, in the one place it can be enforced. An UPDATE against the
+     responses table anywhere in the migrations would be the whole defect back:
+     a client's earlier answer overwritten by their later one. */
+  it('a response is never updated, only appended', () => {
+    const updates = ALL_SQL.match(
+      /update\s+public\.client_portal_review_responses/gi
+    )
+    expect(updates, 'a response was rewritten somewhere — the history is the record').toBeNull()
+  })
+
+  /* Opening a round is publication, and publication is the studio's. A link
+     holder may answer what they were shown and may never decide what is shown. */
+  it('only an account holder can open a review round', () => {
+    const { header, body } = FNS.get('open_client_portal_review_round')
+    expect(header.toLowerCase()).toContain('security definer')
+    expect(header.toLowerCase()).toMatch(/set\s+search_path/)
+    expect(body).toMatch(/p\.owner_id\s*=\s*auth\.uid\(\)/i)
+    /* `owns is null`, not `not owns`: the ownership read is a `select … into`
+       that returns no row for a portal this account does not own. */
+    expect(body).toMatch(REFUSES(String.raw`if\s+owns\s+is\s+null`))
+    expect(ALL_SQL).toMatch(
+      /revoke\s+all\s+on\s+function\s+public\.open_client_portal_review_round\s*\(/i
+    )
+    /* Granted to authenticated and NOT to anon — the one grant in this file
+       that must not include it. */
+    const grants = ALL_SQL.match(
+      /grant\s+execute\s+on\s+function\s+public\.open_client_portal_review_round\s*\([^)]*\)\s+to\s+([^;]*);/i
+    )
+    expect(grants).not.toBeNull()
+    expect(grants[1]).not.toMatch(/anon/i)
   })
 
   /* WHICH artifact, observed by the server rather than claimed by the caller.
