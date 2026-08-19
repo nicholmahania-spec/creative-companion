@@ -48,6 +48,11 @@ import { addDays, toISODate } from '../lib/dates'
 import { createBreakItem } from '../lib/helper/breakKit'
 import { IDENTITY_FIELDS } from '../lib/journey/identityStamp'
 import {
+  buildDocumentVersionData,
+  emptyDocumentVersions,
+  ensureBookDocumentData,
+} from '../lib/documents/documentModel'
+import {
   expandProject,
   projectType,
   toggleStep,
@@ -794,6 +799,10 @@ export function createBlankProject(
      * that have never published since this field existed.
      */
     identitySnapshots: [],
+    /* Phase 4B: one Book Document per project, plus append-only Versions.
+       Absent on older projects; migrate/hydrate default them empty. */
+    document: null,
+    documentVersions: emptyDocumentVersions(),
     /** Ideate diverge dump — cheap ideas before A/B/C shortlist (persisted). */
     roughIdeas: [],
     /** Ideate → Sketch external memory: chose X because Y */
@@ -1750,6 +1759,63 @@ const useAppStore = create(
             }),
           }
         })
+      },
+
+      /**
+       * One Book Document for this project. Does not mint a second one.
+       */
+      ensureBookDocument: (projectId) => {
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        if (!project) return { ok: false, error: 'No project' }
+        const next = ensureBookDocumentData(project)
+        if (project.document?.documentId === next.documentId) {
+          return { ok: true, document: project.document }
+        }
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === owner ? { ...p, document: next } : p
+          ),
+        }))
+        return { ok: true, document: next }
+      },
+
+      /**
+       * Append an immutable Document Version for a successful Send.
+       * Does not write Identity. Does not cap or rewrite earlier rows.
+       */
+      recordSentBookVersion: ({ projectId, identitySnapshotId } = {}) => {
+        const snapshotId = String(identitySnapshotId || '').trim()
+        if (!snapshotId) return { ok: false, error: 'identitySnapshotId is required' }
+        const ensured = get().ensureBookDocument(projectId)
+        if (!ensured.ok) return ensured
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        const built = buildDocumentVersionData(project, {
+          identitySnapshotId: snapshotId,
+          freezeEvent: 'sent',
+        })
+        if (!built.ok) return built
+        const version = JSON.parse(JSON.stringify(built.version))
+        const freeze = (v) => {
+          if (v && typeof v === 'object') {
+            Object.freeze(v)
+            Object.values(v).forEach(freeze)
+          }
+          return v
+        }
+        freeze(version)
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== owner) return p
+            const list = Array.isArray(p.documentVersions) ? p.documentVersions : []
+            if (list.some((row) => row?.documentVersionId === version.documentVersionId)) {
+              return p
+            }
+            return { ...p, documentVersions: [...list, version] }
+          }),
+        }))
+        return { ok: true, version }
       },
 
       /**
@@ -2949,6 +3015,12 @@ const useAppStore = create(
             base.roughIdeas = []
           }
           if (!base.designVersion) base.designVersion = 'v1'
+          if (!base.document || typeof base.document !== 'object') {
+            base.document = null
+          }
+          if (!Array.isArray(base.documentVersions)) {
+            base.documentVersions = []
+          }
           return base
         })
         /* TOMBSTONES UNION, THEY DO NOT REPLACE.
@@ -4692,6 +4764,11 @@ const useAppStore = create(
                      not invented. */
                   identitySnapshots: Array.isArray(p.identitySnapshots)
                     ? p.identitySnapshots
+                    : [],
+                  document:
+                    p.document && typeof p.document === 'object' ? p.document : null,
+                  documentVersions: Array.isArray(p.documentVersions)
+                    ? p.documentVersions
                     : [],
                   /* v7: additive. An older project has no discovery log; empty
                      rather than absent, so no reader needs a null branch. */

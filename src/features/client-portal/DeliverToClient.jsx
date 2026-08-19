@@ -119,6 +119,19 @@ export default function DeliverToClient({
     }
     if (identity) {
       useAppStore.getState().recordPublishedIdentity(identity, project.id)
+      /* Send already succeeded. A Version persist failure must not unpublish
+         or report the send as failed. */
+      try {
+        const recorded = useAppStore.getState().recordSentBookVersion({
+          projectId: project.id,
+          identitySnapshotId: identity.snapshotId,
+        })
+        if (!recorded?.ok) {
+          console.error('Couldn’t record the document version', recorded?.error)
+        }
+      } catch (err) {
+        console.error('Couldn’t record the document version', err)
+      }
     }
     setPreviewing(false)
     await refresh()
