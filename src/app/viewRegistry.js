@@ -25,6 +25,7 @@ export const lazyViews = {
   book: lazy(() => import('../views/BrandBookBuilderView')),
   assets: lazy(() => import('../views/AssetLibraryView')),
   review: lazy(() => import('../views/ReviewView')),
+  presentation: lazy(() => import('../views/PresentationView')),
   settings: lazy(() => import('../views/SettingsView')),
 }
 

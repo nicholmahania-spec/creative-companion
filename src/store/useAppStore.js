@@ -49,9 +49,27 @@ import { createBreakItem } from '../lib/helper/breakKit'
 import { IDENTITY_FIELDS } from '../lib/journey/identityStamp'
 import {
   buildDocumentVersionData,
+  buildPresentationVersionData,
+  emptyDocuments,
   emptyDocumentVersions,
   ensureBookDocumentData,
+  ensurePresentationDocumentData,
+  expandPresentationComposition,
+  hydrateProjectDocuments,
+  isBookDocument,
+  presentedMarksFromComposition,
+  upsertDocumentList,
 } from '../lib/documents/documentModel'
+import {
+  blankPresentationBuilder,
+  mintPresentationItemId,
+  presentationBuilderFor,
+  PRESENTATION_WORKING_KIND,
+} from '../lib/documents/presentationBuilder'
+import {
+  buildIdentitySnapshot,
+  withPresentedMarks,
+} from '../lib/artifacts/identitySnapshot'
 import {
   expandProject,
   projectType,
@@ -799,10 +817,12 @@ export function createBlankProject(
      * that have never published since this field existed.
      */
     identitySnapshots: [],
-    /* Phase 4B: one Book Document per project, plus append-only Versions.
+    /* Phase 4B/5: Book alias + documents[] collection + append-only Versions.
        Absent on older projects; migrate/hydrate default them empty. */
     document: null,
+    documents: emptyDocuments(),
     documentVersions: emptyDocumentVersions(),
+    presentationBuilder: blankPresentationBuilder(),
     /** Ideate diverge dump — cheap ideas before A/B/C shortlist (persisted). */
     roughIdeas: [],
     /** Ideate → Sketch external memory: chose X because Y */
@@ -1763,19 +1783,30 @@ const useAppStore = create(
 
       /**
        * One Book Document for this project. Does not mint a second one.
+       * Also upserts that Book into documents[] so the collection matches
+       * the 4B alias. Never writes a Presentation into project.document.
        */
       ensureBookDocument: (projectId) => {
         const owner = projectId ?? get().currentProjectId
         const project = get().projects.find((p) => p.id === owner)
         if (!project) return { ok: false, error: 'No project' }
         const next = ensureBookDocumentData(project)
-        if (project.document?.documentId === next.documentId) {
+        const list = Array.isArray(project.documents) ? project.documents : []
+        const listed = list.some(
+          (d) => d?.kind === 'book' && d.documentId === next.documentId
+        )
+        if (project.document?.documentId === next.documentId && listed) {
           return { ok: true, document: project.document }
         }
         set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === owner ? { ...p, document: next } : p
-          ),
+          projects: state.projects.map((p) => {
+            if (p.id !== owner) return p
+            return {
+              ...p,
+              document: next,
+              documents: upsertDocumentList(p.documents, next),
+            }
+          }),
         }))
         return { ok: true, document: next }
       },
@@ -1816,6 +1847,174 @@ const useAppStore = create(
           }),
         }))
         return { ok: true, version }
+      },
+
+      /**
+       * One Presentation Document in documents[]. Never replaces project.document.
+       */
+      ensurePresentationDocument: (projectId) => {
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        if (!project) return { ok: false, error: 'No project' }
+        const next = ensurePresentationDocumentData(project)
+        const list = Array.isArray(project.documents) ? project.documents : []
+        if (list.some((d) => d?.documentId === next.documentId && d.kind === 'presentation')) {
+          return { ok: true, document: next }
+        }
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== owner) return p
+            const book = isBookDocument(p.document) ? p.document : null
+            let documents = upsertDocumentList(p.documents, next)
+            if (book) documents = upsertDocumentList(documents, book)
+            return {
+              ...p,
+              document: book || p.document || null,
+              documents,
+            }
+          }),
+        }))
+        return { ok: true, document: next }
+      },
+
+      addPresentationDirection: (recordId, projectId) => {
+        const id = String(recordId || '').trim()
+        if (!id) return { ok: false, error: 'Direction recordId is required' }
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        if (!project) return { ok: false, error: 'No project' }
+        const dir = (project.directions || []).find((d) => d?.recordId === id)
+        if (!dir) return { ok: false, error: 'No direction' }
+        const builder = presentationBuilderFor(project)
+        if (builder.contents.some((row) => row.id === id)) {
+          return { ok: true, contents: builder.contents }
+        }
+        const row = {
+          itemId: mintPresentationItemId(),
+          kind: PRESENTATION_WORKING_KIND,
+          id,
+        }
+        const contents = [...builder.contents, row]
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === owner
+              ? { ...p, presentationBuilder: { v: 1, contents } }
+              : p
+          ),
+        }))
+        return { ok: true, contents }
+      },
+
+      removePresentationItem: (itemId, projectId) => {
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        if (!project) return { ok: false, error: 'No project' }
+        const builder = presentationBuilderFor(project)
+        const contents = builder.contents.filter((row) => row.itemId !== itemId)
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === owner
+              ? { ...p, presentationBuilder: { v: 1, contents } }
+              : p
+          ),
+        }))
+        return { ok: true, contents }
+      },
+
+      movePresentationItem: (itemId, delta, projectId) => {
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        if (!project) return { ok: false, error: 'No project' }
+        const builder = presentationBuilderFor(project)
+        const contents = builder.contents.slice()
+        const i = contents.findIndex((row) => row.itemId === itemId)
+        if (i < 0) return { ok: false, error: 'Unknown item' }
+        const j = i + Number(delta || 0)
+        if (j < 0 || j >= contents.length) return { ok: true, contents }
+        const [row] = contents.splice(i, 1)
+        contents.splice(j, 0, row)
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === owner
+              ? { ...p, presentationBuilder: { v: 1, contents } }
+              : p
+          ),
+        }))
+        return { ok: true, contents }
+      },
+
+      /**
+       * Append an immutable Presentation Version after a successful send-for-review.
+       * Does not write Identity, Directions, Brief, or Delivery.
+       */
+      recordSentPresentationVersion: ({ projectId, identitySnapshotId } = {}) => {
+        const snapshotId = String(identitySnapshotId || '').trim()
+        if (!snapshotId) return { ok: false, error: 'identitySnapshotId is required' }
+        const ensured = get().ensurePresentationDocument(projectId)
+        if (!ensured.ok) return ensured
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        const built = buildPresentationVersionData(project, {
+          identitySnapshotId: snapshotId,
+        })
+        if (!built.ok) return built
+        const version = JSON.parse(JSON.stringify(built.version))
+        const freeze = (v) => {
+          if (v && typeof v === 'object') {
+            Object.freeze(v)
+            Object.values(v).forEach(freeze)
+          }
+          return v
+        }
+        freeze(version)
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== owner) return p
+            const list = Array.isArray(p.documentVersions) ? p.documentVersions : []
+            if (list.some((row) => row?.documentVersionId === version.documentVersionId)) {
+              return p
+            }
+            return { ...p, documentVersions: [...list, version] }
+          }),
+        }))
+        return { ok: true, version }
+      },
+
+      /**
+       * Presentation send-for-review. Does not publish delivery.
+       */
+      sendPresentationForReview: (projectId) => {
+        const ensured = get().ensurePresentationDocument(projectId)
+        if (!ensured.ok) return ensured
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        if (!project) return { ok: false, error: 'No project' }
+        const builder = presentationBuilderFor(project)
+        if (!builder.contents.length) {
+          return { ok: false, error: 'Select at least one direction' }
+        }
+        const composition = expandPresentationComposition(project)
+        const base = buildIdentitySnapshot(project)
+        if (!base?.snapshotId) return { ok: false, error: 'Could not snapshot Identity' }
+        const snapshot = withPresentedMarks(
+          base,
+          presentedMarksFromComposition(project, composition)
+        )
+        get().recordPublishedIdentity(snapshot, owner)
+        try {
+          const recorded = get().recordSentPresentationVersion({
+            projectId: owner,
+            identitySnapshotId: snapshot.snapshotId,
+          })
+          if (!recorded?.ok) {
+            console.error('Couldn’t record the document version', recorded?.error)
+            return { ok: true, snapshot, version: null }
+          }
+          return { ok: true, snapshot, version: recorded.version }
+        } catch (err) {
+          console.error('Couldn’t record the document version', err)
+          return { ok: true, snapshot, version: null }
+        }
       },
 
       /**
@@ -3021,6 +3220,11 @@ const useAppStore = create(
           if (!Array.isArray(base.documentVersions)) {
             base.documentVersions = []
           }
+          const hydrated = hydrateProjectDocuments(base)
+          base.document = hydrated.document
+          base.documents = hydrated.documents
+          base.documentVersions = hydrated.documentVersions
+          base.presentationBuilder = hydrated.presentationBuilder
           return base
         })
         /* TOMBSTONES UNION, THEY DO NOT REPLACE.
@@ -4765,11 +4969,7 @@ const useAppStore = create(
                   identitySnapshots: Array.isArray(p.identitySnapshots)
                     ? p.identitySnapshots
                     : [],
-                  document:
-                    p.document && typeof p.document === 'object' ? p.document : null,
-                  documentVersions: Array.isArray(p.documentVersions)
-                    ? p.documentVersions
-                    : [],
+                  ...hydrateProjectDocuments(p),
                   /* v7: additive. An older project has no discovery log; empty
                      rather than absent, so no reader needs a null branch. */
                   visualDiscovery:
