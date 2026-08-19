@@ -72,6 +72,35 @@ export function buildIdentitySnapshot(project, { publishedAt } = {}) {
   })
 }
 
+/**
+ * Presentation Send only. Attaches frozen mark images for the composition.
+ * Book Send never calls this — payload.presentedMarks stays absent.
+ */
+export function withPresentedMarks(snapshot, marks) {
+  if (!isIdentitySnapshot(snapshot)) return snapshot
+  const list = Array.isArray(marks)
+    ? marks
+        .map((m) => ({
+          id: clean(m?.id),
+          image: clean(m?.image),
+        }))
+        .filter((m) => m.id && m.image)
+    : []
+  const next = copyJson(snapshot)
+  next.payload = { ...(next.payload || {}), presentedMarks: list }
+  return next
+}
+
+/** Frozen mark image. Never reads live logoConcepts. */
+export function frozenPresentedMarkImage(snapshot, markId) {
+  const id = clean(markId)
+  if (!id || !isIdentitySnapshot(snapshot)) return ''
+  const marks = snapshot.payload?.presentedMarks
+  if (!Array.isArray(marks)) return ''
+  const hit = marks.find((m) => clean(m?.id) === id)
+  return clean(hit?.image)
+}
+
 /** True for a snapshot this module would have written. */
 export function isIdentitySnapshot(value) {
   return !!(

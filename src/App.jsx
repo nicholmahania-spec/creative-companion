@@ -4015,6 +4015,19 @@ function App() {
                 <HeaderIcon name="review" />
                 {toolsLabelForView('review')}
               </button>
+              <button
+                type="button"
+                className={`journey-goto-row journey-desk-row${
+                  activeView === 'presentation' ? ' is-current' : ''
+                }`}
+                onClick={() => {
+                  setActiveView('presentation')
+                  setNavOpen(false)
+                }}
+              >
+                <HeaderIcon name="list" />
+                {toolsLabelForView('presentation')}
+              </button>
               </>
             ) : (
               <p className="journey-path-empty">

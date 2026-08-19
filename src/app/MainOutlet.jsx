@@ -37,6 +37,7 @@ const {
   book: BrandBookBuilderView,
   assets: AssetLibraryView,
   review: ReviewView,
+  presentation: PresentationView,
   settings: SettingsView,
 } = lazyViews
 
@@ -485,6 +486,18 @@ export default function MainOutlet(p) {
           />
         ) : null}
       </>
+    )
+  }
+
+  if (activeView === 'presentation') {
+    return wrap(
+      'presentation',
+      <PresentationView
+        navDir={navDir}
+        activeProject={activeProject}
+        flashToast={flashToast}
+        flashMicro={flashMicro}
+      />
     )
   }
 

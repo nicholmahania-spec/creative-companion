@@ -221,6 +221,8 @@ export function toolsLabelForView(view) {
        unreachable copies of a label declared above. */
     case 'review':
       return 'Review'
+    case 'presentation':
+      return 'Presentation'
     case 'insights':
       return 'Timer'
     case 'calendar':
@@ -252,6 +254,7 @@ export function toolsLabelForView(view) {
  */
 export const TOOLS_MENU_VIEWS = [
   'review',
+  'presentation',
   'insights',
   /* A Tool, deliberately not a path stop. Every stop carries a completion
      tick, and a library is never finished — a tick on it would be a permanent

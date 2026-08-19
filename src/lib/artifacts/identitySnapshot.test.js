@@ -1,8 +1,10 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import {
   buildIdentitySnapshot,
+  frozenPresentedMarkImage,
   isIdentitySnapshot,
   packForPublishedIdentity,
+  withPresentedMarks,
 } from './identitySnapshot'
 import useAppStore, { createBlankProject } from '../../store/useAppStore'
 import { buildBrandPackSnapshot } from '../book/exportFiles'
@@ -38,6 +40,7 @@ describe('buildIdentitySnapshot', () => {
     expect(snap.refs.some((r) => r.startsWith('palette:'))).toBe(true)
     expect(snap.refs.some((r) => r.startsWith('typePairing:'))).toBe(true)
     expect(snap.refs.some((r) => r.startsWith('markConcept:'))).toBe(true)
+    expect(snap.payload).not.toHaveProperty('presentedMarks')
   })
 
   it('gives every snapshot its own identity', () => {
@@ -145,6 +148,29 @@ describe('delivery envelope and pack stay themselves', () => {
     })
     expect(pack.identitySnapshots).toBeUndefined()
     expect(buildDeliveryPack(pack).pack.identitySnapshots).toBeUndefined()
+  })
+})
+
+describe('Presentation-only presentedMarks', () => {
+  beforeEach(fresh)
+
+  it('Book snapshot stays without presentedMarks after withPresentedMarks is unused', () => {
+    const snap = buildIdentitySnapshot(cur())
+    expect(snap.payload.presentedMarks).toBeUndefined()
+  })
+
+  it('attaches presentedMarks without changing snapshotId or chosen mark', () => {
+    const snap = buildIdentitySnapshot(cur())
+    const next = withPresentedMarks(snap, [
+      { id: snap.payload.mark.id, image: snap.payload.mark.image },
+      { id: 'other', image: 'data:image/png;base64,OTHER' },
+    ])
+    expect(next.snapshotId).toBe(snap.snapshotId)
+    expect(next.payload.mark.image).toBe(snap.payload.mark.image)
+    expect(next.payload.presentedMarks).toHaveLength(2)
+    expect(frozenPresentedMarkImage(next, 'other')).toBe('data:image/png;base64,OTHER')
+    expect(frozenPresentedMarkImage(next, 'missing')).toBe('')
+    expect(frozenPresentedMarkImage(snap, snap.payload.mark.id)).toBe('')
   })
 })
 
