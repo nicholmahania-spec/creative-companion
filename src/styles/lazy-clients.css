@@ -884,3 +884,95 @@
   color: var(--text-muted);
   margin: 0;
 }
+
+/* ── The frozen presentation a client is reacting to (Phase 6) ─────────────
+   Same discipline as the artifact block above: existing tokens only, and only
+   what the layout actually needs. Each option is a bounded card so a set of
+   three reads as three things to compare rather than one long scroll, and the
+   mark reuses `.client-portal-artifact-mark` rather than restating its
+   size bounds. */
+.client-portal-directions {
+  display: grid;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+}
+
+.client-portal-direction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.client-portal-direction-name {
+  font-weight: 600;
+  margin: 0;
+}
+
+.client-portal-direction-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  /* The whole row is the target, not the 13px dot. */
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+
+/* Two across once there is room to compare them side by side. Below that they
+   stack, which is the honest layout on a phone. */
+@media (min-width: 40rem) {
+  .client-portal-directions {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+}
+
+/* ── The studio's record of what the client has said (Phase 6) ──────────── */
+.overview-share-rounds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.overview-share-round {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-subtle);
+}
+
+.overview-share-round-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.overview-share-round-list li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.overview-share-round-list p {
+  margin: 0;
+  font-size: var(--fs-2);
+}
+
+/* One sentence, in the page's ordinary voice. Not a banner, not a badge, no
+   accent colour — a milestone that shouts is a milestone the reader learns to
+   skip past. */
+.overview-share-milestone {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-2);
+}

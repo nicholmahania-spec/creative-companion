@@ -195,7 +195,22 @@ export default function PresentationView({
           </section>
         </div>
 
-        <div className="review-edit-column">
+        {/* THE SECOND COLUMN OF THE SPLIT, and it has to say so.
+
+            This was `.review-edit-column`, which `lazy-review.css` pins to
+            `grid-column: 1; grid-row: 1` — the same cell as the column above
+            it. Two static children of one grid cell overlap exactly, so this
+            panel was painted on top of the Directions panel and swallowed its
+            Include button: the control was visible, enabled, and unclickable,
+            which is the worst of the three. A designer could not include a
+            direction, so nothing could be sent for review at all.
+
+            `.review-preview-panel` is the class the sheet already defines for
+            cell two, and it is what this panel is — the read-only view of what
+            was sent, beside the controls rather than under them. Below 860px
+            the same sheet stacks it to row 2, which is the behaviour that was
+            always intended here. */}
+        <div className="review-preview-panel">
           <section className="panel brand-section">
             <div className="brand-section-label">Sent for review</div>
             <FrozenPreview

@@ -20,6 +20,7 @@ import {
   completenessHeadline,
 } from '../lib/brain/completeness'
 import { clearLine, looseEnds } from '../lib/brain/looseEnds'
+import { latestIdentityApproval } from '../lib/client/clientInbox'
 import {
   buildBrandBrain,
   factLine,
@@ -46,9 +47,16 @@ export default function BrandCheckPanel({
     () => looseEnds({ project, tasks, clientRows }),
     [project, tasks, clientRows]
   )
+  /* The client's approval is not project state and is deliberately not copied
+     into it — it is read from the inbox rows this panel already receives, which
+     are themselves a projection of the client's own response row. */
+  const clientApproval = useMemo(
+    () => latestIdentityApproval(clientRows, project?.id),
+    [clientRows, project?.id]
+  )
   const check = useMemo(
-    () => brandCompleteness({ project, moodItems, palette }),
-    [project, moodItems, palette]
+    () => brandCompleteness({ project, moodItems, palette, clientApproval }),
+    [project, moodItems, palette, clientApproval]
   )
   const brain = useMemo(
     () => buildBrandBrain({ project, moodItems }),

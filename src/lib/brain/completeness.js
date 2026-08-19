@@ -303,16 +303,28 @@ export const COMPLETENESS_GROUPS = [
       },
       {
         id: 'approval',
-        /* An approval record, in any of the three forms this app already
-           keeps one: a closed revision round, a logged client verdict, or
-           the designer's own note of which mark the client chose. */
+        /* ONE SOURCE, AND IT IS THE CLIENT'S OWN ANSWER.
+
+           This used to accept any of three local fields, and all three were
+           wrong for the question. `logoClientChose` has had no writer since
+           2026-08-08 — its text box was removed in favour of the starred
+           concept, so a project can never fill it again. A closed
+           `revisionRound` is a BILLING fact about how many rounds were used. A
+           `feedbackLog` decision is a note the designer typed. None of them is
+           the client saying yes, so the check could report "approved" for a
+           project no client had ever seen, and could not report it for one
+           where the client had actually pressed Approve — the record of that
+           lives in the portal, which this never read.
+
+           It reads it now. `clientApproval` is passed in rather than stored:
+           the approval belongs to the client's response row in the database,
+           and keeping a local copy to make a checklist easier is how the
+           duplicate-source problem starts. Absent means "no record", which is
+           the honest reading of both "not approved" and "not loaded". */
         label: 'A record of what the client approved',
-        todo: 'Record the approval on Review',
+        todo: 'Ask your client to approve the identity',
         view: 'review',
-        ok: (c) =>
-          filled(c.project.logoClientChose) ||
-          (c.project.revisionRounds || []).some((r) => r?.closedAt) ||
-          (c.project.feedbackLog || []).some((f) => filled(f?.decision)),
+        ok: (c) => !!c.clientApproval?.approved,
       },
     ],
   },
@@ -340,13 +352,19 @@ const pct = (done, total) => (total ? Math.round((done / total) * 100) : 100)
  *   rows: array, gaps: array, done: number, total: number, pct: number,
  * }}
  */
-export function brandCompleteness({ project = null, moodItems = [], palette } = {}) {
+export function brandCompleteness({
+  project = null,
+  moodItems = [],
+  palette,
+  clientApproval = null,
+} = {}) {
   const p = project || {}
   const ctx = {
     project: p,
     detective: p.detective || {},
     moodItems: Array.isArray(moodItems) ? moodItems.filter(Boolean) : [],
     palette: Array.isArray(palette) ? palette : Array.isArray(p.palette) ? p.palette : [],
+    clientApproval,
   }
   const picked = ctx.detective.deliverablesPicked
 

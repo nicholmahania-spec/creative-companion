@@ -30,7 +30,7 @@
  * producing a stage artifact, and it has no place in the production sequence.
  */
 
-import { APPROVAL_CAPABLE_STEP_IDS } from '../client/reviewArtifact'
+import { REVIEW_UNIT_STEP_IDS } from '../client/reviewArtifact'
 
 export const JOURNEY_STEPS = [
   {
@@ -159,9 +159,15 @@ export const JOURNEY_STEPS = [
  * path cannot linger here.
  */
 /* R4, owner decision 2026-08-12: a stop may be pushed to a client only when
-   the portal can SHOW its artifact. `APPROVAL_UNITS` in
+   the portal can SHOW its artifact. `REVIEW_UNITS` in
    `lib/client/reviewArtifact.js` is where that list is decided and argued —
    this set is its complement, so the two cannot drift.
+
+   PUSHABLE IS NOT THE SAME AS APPROVABLE, and since Phase 6 the two lists
+   differ. `ideate` is shown and collects feedback; only `design` collects an
+   approval. This derives from the SHOWABLE set — `APPROVAL_CAPABLE_STEP_IDS`
+   is the narrower one and deriving from it here would have hidden the
+   presentation from the portal it was built for.
 
    The reduction is deliberate and is the fix, not a regression. Five stops
    used to be pushable with nothing behind them but their own label:
@@ -175,7 +181,7 @@ export const JOURNEY_STEPS = [
 
    Restoring one means building its artifact first. That is the point. */
 const NOT_PUSHABLE = new Set(
-  JOURNEY_STEPS.map((s) => s.id).filter((id) => !APPROVAL_CAPABLE_STEP_IDS.includes(id))
+  JOURNEY_STEPS.map((s) => s.id).filter((id) => !REVIEW_UNIT_STEP_IDS.includes(id))
 )
 export const PORTAL_PUSHABLE_STEP_IDS = Object.freeze(
   JOURNEY_STEPS.map((s) => s.id).filter((id) => !NOT_PUSHABLE.has(id))

@@ -50,13 +50,54 @@ function firstLine(text, max = 140) {
 }
 
 /**
+ * WHAT MAKES ONE CLIENT ANSWER DIFFERENT FROM ANOTHER.
+ *
+ * Computed in exactly one place because it is compared across two: the
+ * snapshot writer below and the unread check in `buildInboxRows`. They were
+ * two copies of the same expression, and a change to either alone silently
+ * marks everything unread — which is how this function came to exist.
+ *
+ * The round number is part of it since Phase 6. Without it, a client who asked
+ * for changes on round 1 and asked again on round 2 — same verdict, same
+ * wording, which is what happens when the same thing is still wrong — produced
+ * an identical fingerprint, so the second answer never showed as new.
+ * `preferredRef` is in for the same reason: changing only which option they
+ * lean toward is a real change of mind.
+ */
+export function stepAnswerFingerprint(v) {
+  return [
+    v?.status || '',
+    v?.note || '',
+    v?.roundNo || '',
+    v?.preferredRef || '',
+  ].join('::')
+}
+
+/**
+ * True when a stored snapshot value describes this same answer.
+ *
+ * Snapshots written before Phase 6 carry only `status::note`. Comparing those
+ * against the four-part fingerprint would mark every answer in every portal
+ * unread on the day this ships — a false alarm on the one surface whose whole
+ * job is telling a designer what is genuinely new. So a legacy value is
+ * accepted when it matches the part of the fingerprint that existed when it was
+ * written. It retires itself: the next snapshot save writes the full form.
+ */
+function snapshotMatches(stored, v) {
+  if (stored === undefined || stored === null) return false
+  if (stored === stepAnswerFingerprint(v)) return true
+  const legacy = `${v?.status || ''}::${v?.note || ''}`
+  return String(stored).split('::').length === 2 && stored === legacy
+}
+
+/**
  * Build the seen-snapshot for one portal. Stored verbatim in the app store
  * and compared field-by-field on the next load.
  */
 export function portalSeenSnapshot(portal, messages) {
   const steps = {}
   Object.entries(portal?.step_status || {}).forEach(([stepId, v]) => {
-    steps[stepId] = `${v?.status || ''}::${v?.note || ''}`
+    steps[stepId] = stepAnswerFingerprint(v)
   })
   const mine = (messages || []).filter((m) => m.portal_id === portal?.id)
   const lastClient = [...mine].reverse().find((m) => m.sender === 'client')
@@ -119,8 +160,7 @@ export function buildInboxRows(portals, messages, seen, projects) {
       const status = v?.status
       if (status !== 'approved' && status !== 'changes_requested') return
       const stepLabel = STEP_LABEL.get(stepId) || stepId
-      const fingerprint = `${status}::${v?.note || ''}`
-      const unread = !prev || prev.steps?.[stepId] !== fingerprint
+      const unread = !prev || !snapshotMatches(prev.steps?.[stepId], v)
 
       rows.push({
         ...base,
@@ -256,4 +296,35 @@ export function buildInboxRows(portals, messages, seen, projects) {
   })
 
   return { rows, hasUnread: rows.some((r) => r.unread) }
+}
+
+/**
+ * HAS THIS PROJECT'S CLIENT APPROVED THE IDENTITY?
+ *
+ * The one question `completeness.js` asks about approval, answered from the one
+ * place the answer lives. The chain is: the client's response row in the
+ * database → the `step_status` mirror written in that same transaction →
+ * `get_client_portal` → these inbox rows. Each link is a projection of the one
+ * before it, so this reads the canonical fact at one remove rather than
+ * consulting a second copy of it.
+ *
+ * `design` only, deliberately. `ideate` collects feedback and can never carry
+ * an approval, so a presentation the client liked is not an approved identity
+ * and must not be counted as one.
+ *
+ * Returns null when nothing has been approved — including when no portal has
+ * loaded. "We have no record of an approval" is the honest answer to give a
+ * completeness check, and it is the same answer whether the client has not
+ * approved or the studio is offline.
+ */
+export function latestIdentityApproval(rows, projectLocalId) {
+  const want = String(projectLocalId || '')
+  const hit = (Array.isArray(rows) ? rows : []).find(
+    (r) =>
+      r?.kind === 'approval' &&
+      r?.stepId === 'design' &&
+      (!want || String(r.projectLocalId) === want)
+  )
+  if (!hit) return null
+  return { approved: true, portalId: hit.portalId, clientName: hit.clientName }
 }

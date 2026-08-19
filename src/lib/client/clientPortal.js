@@ -13,6 +13,7 @@ import { supabase, isSupabaseConfigured } from '../supabase'
 import { ANSWERS_TOO_LARGE_MESSAGE, answersTooLarge } from './answerPayload'
 import { publicUrl } from '../appPaths'
 import { CLOUD_REQUIRED } from './cloudRequired.js'
+import { reasonToClientCopy } from './clientFacingError.js'
 
 /** Build the client-facing URL for a portal id. */
 export function clientPortalUrl(portalId) {
@@ -174,6 +175,93 @@ export async function publishReviewArtifacts(portalId, stepVisibility, artifacts
     return { ok: false, error: 'Couldn’t update the portal' }
   }
   return { ok: true }
+}
+
+/**
+ * Studio side: OPEN A REVIEW ROUND for what was just shown.
+ *
+ * Publication, not permission — the whole Phase 6 boundary in one function.
+ * Only an account that owns the portal may decide what is being reviewed; the
+ * client holding the link may answer it and may never open one. The RPC is
+ * granted to `authenticated` and not to `anon`, which is where that is actually
+ * enforced.
+ *
+ * Idempotent by target. Showing the same thing twice is the same round; showing
+ * something new supersedes the old round and opens the next, in one call, so
+ * there is never a moment with two open rounds or none.
+ *
+ * @param {string} portalId
+ * @param {string} stepId
+ * @param {'ideate'|'design'} unit
+ * @param {'presentationVersion'|'identityArtifact'} targetKind
+ * @param {string} targetRef  the Presentation Version id, or the fingerprint
+ */
+export async function openReviewRound(portalId, stepId, unit, targetKind, targetRef) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: CLOUD_REQUIRED }
+  }
+  const { data, error } = await supabase.rpc('open_client_portal_review_round', {
+    portal_id_in: portalId,
+    step_id_in: stepId,
+    unit_in: unit,
+    target_kind_in: targetKind,
+    target_ref_in: targetRef,
+  })
+  if (error) {
+    console.warn('Couldn’t open the review round', error)
+    return { ok: false, error: 'Couldn’t open the review round' }
+  }
+  if (!data || typeof data !== 'object' || !data.ok) {
+    return { ok: false, reason: data?.reason || '', error: 'Couldn’t open the review round' }
+  }
+  return { ok: true, roundId: data.roundId, roundNo: data.roundNo, reused: !!data.reused }
+}
+
+/**
+ * Studio side: the review history for one portal — every round, and every
+ * response inside it.
+ *
+ * Read directly rather than through an RPC because RLS already answers the
+ * question correctly: the owner sees their own portals' rounds and nobody else
+ * sees anything. A SECURITY DEFINER function here would be a second copy of a
+ * rule the database already holds.
+ *
+ * Ordered by `seq`, which is the database's own sequence. The current verdict
+ * for a round is the LAST response in it — never the only one, because a client
+ * is allowed to change their mind and both answers are kept.
+ */
+export async function fetchReviewHistory(portalId) {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { ok: false, error: CLOUD_REQUIRED }
+  }
+  const { data: rounds, error: roundErr } = await supabase
+    .from('client_portal_review_rounds')
+    .select('*')
+    .eq('portal_id', portalId)
+    .order('round_no', { ascending: true })
+  if (roundErr) {
+    console.warn('Couldn’t load the review history', roundErr)
+    return { ok: false, error: 'Couldn’t load the review history' }
+  }
+  const ids = (rounds || []).map((r) => r.id)
+  if (!ids.length) return { ok: true, rounds: [] }
+  const { data: responses, error: respErr } = await supabase
+    .from('client_portal_review_responses')
+    .select('*')
+    .in('round_id', ids)
+    .order('seq', { ascending: true })
+  if (respErr) {
+    console.warn('Couldn’t load the review history', respErr)
+    return { ok: false, error: 'Couldn’t load the review history' }
+  }
+  const byRound = new Map(ids.map((id) => [id, []]))
+  for (const row of responses || []) {
+    byRound.get(row.round_id)?.push(row)
+  }
+  return {
+    ok: true,
+    rounds: (rounds || []).map((r) => ({ ...r, responses: byRound.get(r.id) || [] })),
+  }
 }
 
 /** Studio side: refresh the fillable form snapshot pushed to the client. */
@@ -417,8 +505,32 @@ export async function postClientPortalMessage(portalId, body) {
   return { ok: true }
 }
 
-/** Client side: approve or request changes on a pushed step (no auth). */
-export async function respondToPortalStep(portalId, stepId, status, note = '') {
+/**
+ * Client side: respond to a shown step (no auth).
+ *
+ * WHY THIS RETURNS A REASON NOW. The RPC used to answer every refusal with a
+ * bare `false` and this function turned all of them into "This link isn't
+ * valid" — which was true for one of the nine cases and misleading for the
+ * other eight. A client whose designer had simply moved on to a newer version
+ * was told their link was broken, and would go looking for a new one that did
+ * not exist.
+ *
+ * The reason is a machine token. `reasonToClientCopy` owns the wording, so the
+ * sentence a stranger reads on their phone is decided in one place.
+ *
+ * @param {string} portalId
+ * @param {string} stepId
+ * @param {'approved'|'changes_requested'} status
+ * @param {string} note
+ * @param {string} preferredRef  a Direction recordId, `ideate` only
+ */
+export async function respondToPortalStep(
+  portalId,
+  stepId,
+  status,
+  note = '',
+  preferredRef = ''
+) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: CLOUD_REQUIRED }
   }
@@ -427,6 +539,7 @@ export async function respondToPortalStep(portalId, stepId, status, note = '') {
     step_id_in: stepId,
     status_in: status,
     note_in: note,
+    preferred_ref_in: preferredRef || null,
   })
   if (error) {
     // Log the driver's message, show the human one — this string is
@@ -434,8 +547,15 @@ export async function respondToPortalStep(portalId, stepId, status, note = '') {
     console.warn('Couldn’t save your response', error)
     return { ok: false, error: 'Couldn’t save your response' }
   }
-  if (!data) return { ok: false, error: 'This link isn’t valid' }
-  return { ok: true }
+  if (!data || typeof data !== 'object') {
+    return { ok: false, error: 'This link isn’t valid' }
+  }
+  if (!data.ok) {
+    return { ok: false, reason: data.reason || '', error: reasonToClientCopy(data.reason) }
+  }
+  /* `duplicate` is a success. A retried request is the same decision, and
+     telling the client their tap "didn't count" would invite a third. */
+  return { ok: true, duplicate: !!data.duplicate, roundNo: data.roundNo || 0 }
 }
 
 /** Client side: submit the fillable Project overview form (single-use, no auth). */

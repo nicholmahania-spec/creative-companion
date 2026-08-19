@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs'
 import {
   APPROVAL_CAPABLE_STEP_IDS,
   APPROVAL_UNITS,
+  REVIEW_UNIT_STEP_IDS,
   approvalStaleness,
   buildReviewArtifact,
   currentFingerprint,
@@ -63,10 +64,12 @@ describe('approval attaches to a showable artifact, or does not exist', () => {
     }
   })
 
-  /* The portal offers exactly what can be approved — no stop pushable with
-     nothing behind it, which is the state G10.5 forbids. */
-  it('the pushable set and the approval-capable set are the same list', () => {
-    expect([...PORTAL_PUSHABLE_STEP_IDS]).toEqual([...APPROVAL_CAPABLE_STEP_IDS])
+  /* The portal offers exactly what can be SHOWN — no stop pushable with
+     nothing behind it, which is the state G10.5 forbids. Approvable is the
+     narrower list inside it: `ideate` is shown and answered, never approved. */
+  it('the pushable set is the showable set, not the approvable one', () => {
+    expect([...PORTAL_PUSHABLE_STEP_IDS]).toEqual([...REVIEW_UNIT_STEP_IDS])
+    expect([...APPROVAL_CAPABLE_STEP_IDS]).toEqual(['design'])
   })
 
   it('refuses to build an artifact for a stop that cannot show one', () => {
@@ -286,11 +289,47 @@ describe('the portal shows the thing before it asks the question', () => {
     )
   })
 
-  /* Read-only: the artifact renderer must not write studio-owned design data. */
-  it('the artifact renderer holds no control that writes anything', () => {
+  /* Read-only: the artifact renderer must not write studio-owned design data.
+
+     The slice used to run to `export default`, which worked while
+     `ReviewArtifact` was the only renderer between the two. Phase 6 put
+     `PresentationArtifact` in that gap, so the slice is bounded at its real
+     subject and the new renderer gets its own assertion below — a wider net
+     that caught a legitimate control is a broken instrument, not a finding. */
+  it('the identity artifact renderer holds no control that writes anything', () => {
     const start = src.indexOf('function ReviewArtifact')
-    const end = src.indexOf('export default function PublicClientPortal')
+    const end = src.indexOf('function PresentationArtifact')
+    expect(start).toBeGreaterThan(-1)
+    expect(end).toBeGreaterThan(start)
     const body = src.slice(start, end)
     expect(body).not.toMatch(/onChange|onClick|onSubmit|<input|<button|<textarea/)
+  })
+
+  /**
+   * The presentation renderer carries exactly ONE control, and what it writes
+   * is the point.
+   *
+   * A radio that records "I'm drawn to this one" writes the CLIENT's own draft
+   * and nothing else. It must not reach studio-owned design data — the starred
+   * concept stays the designer's sole mark decision (`markHasOneAuthor`), and a
+   * client picking a favourite is feedback, not a decision.
+   *
+   * So: one input, type radio, and no writer other than the choose handler.
+   */
+  it('the presentation renderer offers a preference and nothing else', () => {
+    const start = src.indexOf('function PresentationArtifact')
+    const end = src.indexOf('export default function PublicClientPortal')
+    expect(start).toBeGreaterThan(-1)
+    expect(end).toBeGreaterThan(start)
+    const body = src.slice(start, end)
+
+    expect(body.match(/<input/g) || []).toHaveLength(1)
+    expect(body).toMatch(/type="radio"/)
+    expect(body).not.toMatch(/<button|<textarea|onSubmit|onClick/)
+    /* The only thing it may call is the callback its parent handed it. */
+    const writers = body.match(/on[A-Z]\w*=\{/g) || []
+    expect(writers).toEqual(['onChange={'])
+    /* And it must not reach for a store or a writer directly. */
+    expect(body).not.toMatch(/useAppStore|chooseLogoConcept|updateDirection/)
   })
 })

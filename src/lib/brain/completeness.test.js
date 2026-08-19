@@ -116,21 +116,52 @@ describe('checks read the project honestly', () => {
     expect(withWhy.rows.find((x) => x.id === 'research.references').ok).toBe(true)
   })
 
-  it('accepts an approval record in any of the three forms it is kept', () => {
-    const byRound = brandCompleteness({
-      project: project({ revisionRounds: [{ id: 1, closedAt: '2026-08-01' }] }),
-    })
-    expect(byRound.rows.find((x) => x.id === 'handoff.approval').ok).toBe(true)
+  /**
+   * PHASE 6 REPLACED THIS TEST, and the version it replaced is worth naming:
+   * it asserted that a closed revision round, a feedback-log note, or
+   * `logoClientChose` each counted as "a record of what the client approved".
+   *
+   * None of them is one. A closed revision round is a billing fact about how
+   * many rounds were used. A feedback-log decision is a sentence the designer
+   * typed. `logoClientChose` has had no writer since 2026-08-08, when its text
+   * box was replaced by the starred concept — a project can never fill it
+   * again. So the old check reported "approved" for projects no client had
+   * seen, and could not report it for projects where a client had actually
+   * pressed Approve, because it never read the portal where that is recorded.
+   *
+   * The three are asserted as NOT sufficient rather than simply dropped: the
+   * point is that they were wrong, and a future edit that quietly restores one
+   * as a convenience should fail here.
+   */
+  const approvalOk = (r) => r.rows.find((x) => x.id === 'handoff.approval').ok
 
-    const byLog = brandCompleteness({
-      project: project({ feedbackLog: [{ id: 1, decision: 'approved B' }] }),
-    })
-    expect(byLog.rows.find((x) => x.id === 'handoff.approval').ok).toBe(true)
+  it('counts an approval only when the client actually gave one', () => {
+    expect(
+      approvalOk(brandCompleteness({ project: project() })),
+      'nothing recorded should not read as approved'
+    ).toBe(false)
 
-    const byMark = brandCompleteness({
-      project: project({ logoClientChose: 'concept B' }),
-    })
-    expect(byMark.rows.find((x) => x.id === 'handoff.approval').ok).toBe(true)
+    expect(
+      approvalOk(
+        brandCompleteness({
+          project: project(),
+          clientApproval: { approved: true },
+        })
+      )
+    ).toBe(true)
+  })
+
+  it('does not accept the three local fields that used to stand in for it', () => {
+    for (const stand_in of [
+      { revisionRounds: [{ id: 1, closedAt: '2026-08-01' }] },
+      { feedbackLog: [{ id: 1, decision: 'approved B' }] },
+      { logoClientChose: 'concept B' },
+    ]) {
+      expect(
+        approvalOk(brandCompleteness({ project: project(stand_in) })),
+        `${Object.keys(stand_in)[0]} is not a client approval`
+      ).toBe(false)
+    }
   })
 
   it('survives a project of the wrong shape rather than throwing', () => {
