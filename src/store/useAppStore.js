@@ -559,6 +559,54 @@ export function withCanonicalPalette(project) {
 }
 
 /**
+ * THE CHOSEN MARK, NAMED — the third of Phase 0's three identity references.
+ *
+ * `currentPaletteRef` and `currentTypePairingRef` let a consumer point at a
+ * decision instead of re-deriving it. The mark had no equivalent, so every
+ * consumer ran its own `logoConcepts.find(c => c.chosen)` and any of them could
+ * disagree with the rest. This closes that asymmetry and nothing else.
+ *
+ * A POINTER, NOT A CONTENT HASH — and the difference is deliberate, not an
+ * omission. `paletteSnapshot` derives its id from the palette's own content, so
+ * an edit mints a new id and old references keep meaning what they meant. Doing
+ * that for a mark would mean hashing the ARTWORK, and the artwork legitimately
+ * exists in two forms at once: `logoConcepts[].image` holds the data URL it was
+ * uploaded from while `logoImage` may already hold a Supabase Storage URL after
+ * `applyImageUrlReplacements`. Hashing either one would force it back over the
+ * other and undo the offload — see the note in `setLogoConcepts`. So this keys
+ * on `chosen.id`, which is stable, cheap, and indifferent to where the bytes
+ * currently live. Deriving artwork identity properly is F1c, and it is deferred.
+ *
+ * NO BACKFILL, and no guessing. A project with artwork in `logoImage` and no
+ * concepts names no mark — `setLogoConcepts` already refuses to guess whether
+ * that is a mark or an old cover drop, and minting a ref off it would be the
+ * same guess wearing a canonical name. A ref is created only where a chosen
+ * concept already exists.
+ *
+ * A ref the list can no longer answer for is CLEARED rather than left dangling:
+ * a reference that resolves to null while still claiming the project has a mark
+ * is worse than no reference at all.
+ *
+ * `logoConcepts` stays canonical. `logoImage` / `logoDirection` stay derived
+ * mirrors. This function writes exactly one key.
+ */
+export function withCanonicalMark(project) {
+  if (!project) return project
+  const list = Array.isArray(project.logoConcepts) ? project.logoConcepts : []
+  const chosen = list.find((c) => c?.chosen && c?.id)
+  const current = project.currentMarkRef
+
+  if (!chosen) {
+    if (!current) return project
+    const rest = { ...project }
+    delete rest.currentMarkRef
+    return rest
+  }
+  if (current?.kind === 'markConcept' && current?.id === chosen.id) return project
+  return { ...project, currentMarkRef: { kind: 'markConcept', id: chosen.id } }
+}
+
+/**
  * The current live type pairing as the canonical artifact, with
  * `project.typeHeading` / `project.typeBody` left as the compatibility view.
  * Identity is the existing content-addressed typePairingSnapshot (heading|body
@@ -4351,12 +4399,12 @@ const useAppStore = create(
                   chosen: first,
                 },
               ]
-              return {
+              return withCanonicalMark({
                 ...p,
                 logoConcepts: next,
                 ...(first ? { logoImage: dataUrl || '' } : null),
                 ...identityEdit(),
-              }
+              })
             }),
           }
         })
@@ -4372,7 +4420,7 @@ const useAppStore = create(
               const list = Array.isArray(p.logoConcepts) ? p.logoConcepts : []
               const hit = list.find((c) => c.id === conceptId)
               if (!hit) return p
-              return {
+              return withCanonicalMark({
                 ...p,
                 logoConcepts: list.map((c) => ({
                   ...c,
@@ -4394,7 +4442,7 @@ const useAppStore = create(
                    save and the mirror can simply be true. */
                 logoDirection: hit.why || '',
                 ...identityEdit(),
-              }
+              })
             }),
           }
         }),
@@ -4421,7 +4469,7 @@ const useAppStore = create(
           return {
             projects: state.projects.map((p) =>
               p.id === owner
-                ? {
+                ? withCanonicalMark({
                     ...p,
                     logoConcepts: next,
                     logoDirection: chosen?.why || '',
@@ -4446,7 +4494,7 @@ const useAppStore = create(
                        equivalent adoption path, which is exactly why it needs
                        one. */
                     ...(chosen ? { logoImage: chosen.image || '' } : null),
-                  }
+                  })
                 : p
             ),
           }
@@ -4478,7 +4526,13 @@ const useAppStore = create(
                  currently makes. */
               const mirrorsImage =
                 target?.chosen && Object.hasOwn(patch || {}, 'image')
-              return {
+              /* Wrapped because the patch is spread onto the concept — a
+                 caller passing `chosen` moves the star, and the reference has
+                 to follow it. An edit that does not touch `chosen` keeps the
+                 same id, which is the documented difference from palette:
+                 re-imaging a mark is the same decision with new artwork, not a
+                 new decision. */
+              return withCanonicalMark({
                 ...p,
                 logoConcepts: list.map((c) =>
                   c.id === conceptId ? { ...c, ...patch } : c
@@ -4486,7 +4540,7 @@ const useAppStore = create(
                 ...(mirrorsDirection ? { logoDirection: patch.why } : null),
                 ...(mirrorsImage ? { logoImage: patch.image || '' } : null),
                 ...identityEdit(),
-              }
+              })
             }),
           }
         }),
@@ -4502,13 +4556,18 @@ const useAppStore = create(
               const removedChosen = list.some(
                 (c) => c.id === conceptId && c.chosen
               )
-              if (!removedChosen) return { ...p, logoConcepts: next, ...identityEdit() }
+              /* Wrapped too: the removed concept may not have been the chosen
+                 one, but the list it left behind still has to answer for the
+                 reference — and a list emptied of everything answers for
+                 nothing. */
+              if (!removedChosen)
+                return withCanonicalMark({ ...p, logoConcepts: next, ...identityEdit() })
               /* Removing the chosen one must not leave `logoImage` pointing at
                  an image with no concept behind it — the deliverable would
                  keep shipping a mark the workspace no longer shows. Promote
                  the first survivor, or clear. */
               const promoted = next[0] || null
-              return {
+              return withCanonicalMark({
                 ...p,
                 logoConcepts: next.map((c, i) => ({ ...c, chosen: i === 0 })),
                 logoImage: promoted?.image || '',
@@ -4518,7 +4577,7 @@ const useAppStore = create(
                    mark inherited the star. */
                 logoDirection: promoted?.why || '',
                 ...identityEdit(),
-              }
+              })
             }),
           }
         }),
