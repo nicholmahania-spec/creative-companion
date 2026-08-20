@@ -11,7 +11,12 @@
 
 import { makeRef, parseRefKey } from '../artifacts/artifactRef'
 import { paletteSnapshot, typePairingSnapshot } from '../artifacts/artifactSnapshot'
-import { bookBuilderFor } from '../book/bookBuilder'
+import {
+  bookBuilderFor,
+  bookCompositionOf,
+  legacyCompositionFrom,
+  pickBookOverrides,
+} from '../book/bookBuilder'
 import { presentationBuilderFor } from './presentationBuilder'
 
 export const DTPL_BUILTIN_BOOK = 'dtpl_builtin_book'
@@ -159,12 +164,46 @@ export function isBookDocument(value) {
 }
 
 /** One Book Document for this project. Does not mint if one already exists. */
+/**
+ * The Book Document for a project, creating and migrating it if needed.
+ *
+ * THE MIGRATION LIVES HERE, not in the persist `migrate` step, and the reason
+ * is a hole this repo has already been bitten by: `migrate` runs only for a
+ * stored payload below the current version number, so a workspace restored
+ * from an older JSON backup never passes through it. `bookBuilderFor` already
+ * reads a legacy key at read time for exactly that case. Doing the same at
+ * ensure time means every path that reaches a Book Document — opening the
+ * editor, sending — migrates it, once, whatever route the data arrived by.
+ *
+ * IDEMPOTENT, ADDITIVE, NON-DESTRUCTIVE. A Document that already carries
+ * overrides is returned untouched; `project.bookBuilder` is never deleted, so
+ * a project that migrates and is then opened by an older build still has its
+ * settings. Running this twice produces the same object.
+ */
 export function ensureBookDocumentData(project, now = new Date().toISOString()) {
-  if (isBookDocument(project?.document)) {
-    return project.document
+  const existing = isBookDocument(project?.document)
+    ? project.document
+    : documentsOf(project).find(isBookDocument) || null
+
+  if (existing) {
+    const hasOverrides = existing.overrides && typeof existing.overrides === 'object'
+    const hasComposition = Array.isArray(existing.composition)
+    if (hasOverrides && hasComposition) return existing
+    /* An identity minted by 4B, before the Document owned anything. Fill it
+       from the legacy bag rather than from defaults, or a project that had a
+       laid-out book would silently reset to a fresh one. */
+    return {
+      ...existing,
+      overrides: hasOverrides
+        ? existing.overrides
+        : pickBookOverrides(project?.bookBuilder),
+      composition: hasComposition
+        ? existing.composition
+        : legacyCompositionFrom(project?.bookBuilder),
+      updatedAt: now,
+    }
   }
-  const listed = documentsOf(project).find(isBookDocument)
-  if (listed) return listed
+
   return {
     documentId: mintDocumentId(),
     projectId: project?.id,
@@ -172,6 +211,8 @@ export function ensureBookDocumentData(project, now = new Date().toISOString()) 
     templateId: DTPL_BUILTIN_BOOK,
     createdAt: now,
     updatedAt: now,
+    overrides: pickBookOverrides(project?.bookBuilder),
+    composition: legacyCompositionFrom(project?.bookBuilder),
   }
 }
 
@@ -295,10 +336,133 @@ export function buildPresentationVersionData(
 }
 
 /**
+ * A pack for a FROZEN Book Version — the adapter, and the whole of it.
+ *
+ * PURE OVER (version, snapshot). No project argument, and that is the test
+ * rather than a convention: a function that cannot see the live project cannot
+ * accidentally read it. Everything comes from the Version's own frozen content,
+ * composition and overrides, and from the Identity Snapshot that Send required.
+ *
+ * ONE RENDERER. This produces the same pack shape `buildBrandPackSnapshot`
+ * produces, so the existing generator and `BrandBookPreview` render a Version
+ * with no second implementation — different input adapter, same pipeline.
+ *
+ * `detective` is deliberately empty. `readField` falls through to the flat
+ * value for detective-scoped fields, which is where the frozen answer already
+ * is; leaving it empty makes it impossible for a live brief to leak in.
+ */
+export function packFromBookVersion(version, snapshot) {
+  const v = version || {}
+  const overrides = v.overrides || {}
+  const identity = snapshot?.payload || {}
+  const missing = []
+
+  const mark = identity.mark || null
+  if (!mark?.image) missing.push('mark')
+  const palette = identity.palette || null
+  if (!palette?.hexes?.length) missing.push('palette')
+  const type = identity.type || null
+  if (!type?.heading && !type?.body) missing.push('typePairing')
+
+  return copyJson({
+    ...(v.content || {}),
+    /* Empty on purpose — see above. */
+    detective: {},
+    /* Identity from the snapshot the Send took, never from today's project. */
+    palette: palette?.hexes ? [...palette.hexes] : [],
+    colorRoles: palette?.roles ? { ...palette.roles } : {},
+    typeHeading: type?.heading || '',
+    typeBody: type?.body || '',
+    typeWhy: type?.why || '',
+    logoImage: mark?.image || '',
+    logoWordmark: identity.wordmark || '',
+    logoDirection: identity.logoDirection || '',
+    /* The Book's own presentation choices, as frozen. */
+    bookPageBg: overrides.pageBg || {},
+    bookTypeScale: overrides.type || {},
+    bookTypeColor: overrides.typeColor || {},
+    bookGrid: overrides.grid || {},
+    bookRunning: overrides.running || {},
+    pageSize: overrides.pageSize,
+    edgeSpace: overrides.edgeSpace,
+    printShop: overrides.printShop,
+    /* Which pages, in what order, as sent. */
+    bookComposition: Array.isArray(v.composition) ? v.composition : [],
+    /* NEVER a fallback. A reference the snapshot cannot answer for is named
+       here so the surface can say so out loud; substituting today's mark would
+       show work that was never in this send. */
+    missingRefs: missing,
+    frozen: true,
+    documentVersionId: v.documentVersionId || '',
+    exportedAt: v.createdAt || '',
+  })
+}
+
+/**
+ * THE FROZEN BOOK EXPORT PATH.
+ *
+ * Everything the existing generator needs to draw one frozen Version, and
+ * nothing else. `downloadBrandPackVectorPdf(pack, handle, { book })` and
+ * `<BrandBookPreview pack={pack} book={book} />` are the SAME two calls the
+ * working Book already makes — this only swaps the input adapter, which is
+ * what "one rendering architecture, two adapters" has to mean if it is to mean
+ * anything. A second generator for frozen books is the defect this shape
+ * exists to prevent.
+ *
+ * `book` is separate from `pack` because the generator has always taken page
+ * setup that way (`resolveBookSetup(options.book)`); it is the frozen
+ * overrides, not a live read.
+ *
+ * The project argument LOOKS like a live read and is not: `documentVersions`
+ * and `identitySnapshots` are the append-only immutable stores, so this is a
+ * lookup by id in a record that cannot change, and the render itself stays
+ * pure over (version, snapshot). Anything mutable is refused rather than
+ * resolved — see `missingRefs`.
+ */
+export function bookVersionRenderInputs(project, documentVersionId) {
+  const wanted = String(documentVersionId || '').trim()
+  if (!wanted) return { ok: false, error: 'documentVersionId is required' }
+
+  const versions = Array.isArray(project?.documentVersions) ? project.documentVersions : []
+  const version = versions.find((v) => v?.documentVersionId === wanted) || null
+  if (!version) return { ok: false, error: 'No such Version on this project' }
+  /* A Presentation Version has its own projector and its own client surface.
+     Rendering one as a book would draw the wrong document from real data,
+     which is worse than refusing. */
+  if (version.templateId !== DTPL_BUILTIN_BOOK) {
+    return { ok: false, error: 'That Version is not a Book Version' }
+  }
+
+  /* The snapshot the Send took. Absent is a MISSING STATE, not a reason to
+     read today's Identity — `packFromBookVersion` names what it could not
+     resolve and the surface says so out loud. */
+  const snapshots = Array.isArray(project?.identitySnapshots) ? project.identitySnapshots : []
+  const snapshot =
+    snapshots.find((s) => s?.snapshotId === version.identitySnapshotId) || null
+
+  const pack = packFromBookVersion(version, snapshot)
+  const overrides = version.overrides || {}
+  return {
+    ok: true,
+    version,
+    pack,
+    book: {
+      pageSize: overrides.pageSize,
+      edgeSpace: overrides.edgeSpace,
+      printShop: overrides.printShop,
+    },
+    missingRefs: pack.missingRefs,
+  }
+}
+
+/**
  * Immutable Version payload for a successful Send.
  * `identitySnapshotId` is required — the snapshot from that same Send.
  */
-export function buildDocumentVersionData(project, { identitySnapshotId, freezeEvent = FREEZE_SENT } = {}) {
+export function buildDocumentVersionData(
+  project,
+  { identitySnapshotId, freezeEvent = FREEZE_SENT, content = null } = {}
+) {
   const snapshotId = String(identitySnapshotId || '').trim()
   if (!snapshotId) {
     return { ok: false, error: 'identitySnapshotId is required' }
@@ -320,6 +484,13 @@ export function buildDocumentVersionData(project, { identitySnapshotId, freezeEv
     identitySnapshotId: snapshotId,
     overrides: overridesFromBookBuilder(project),
     contentRefs: contentRefsFromProject(project),
+    /* Which pages were sent, in what order. Without this a re-render produced
+       the natural order rather than the designer's. */
+    composition: bookCompositionOf(project),
+    /* The resolved words that were printed. Supplied by the caller, which is
+       the layer that can build a pack; passing it in keeps this module free of
+       the export pipeline. */
+    content: content && typeof content === 'object' ? copyJson(content) : {},
   })
   return { ok: true, version }
 }

@@ -9,7 +9,13 @@ import { attributesFromBrief } from '../lib/brand/strategySeed'
 import { consolidateDiscovery } from '../lib/brief/discoveryConsolidation'
 /* Page setup is seeded from prefs at creation and migration ONLY — see
    `seededBookSetup`. No other read of `prefs.book*` exists. */
-import { seededBookSetup } from '../lib/book/bookBuilder'
+import {
+  BOOK_COMPOSITION_KEYS,
+  compositionFromLegacy,
+  seededBookSetup,
+} from '../lib/book/bookBuilder'
+import { currentBrandPack } from '../lib/book/currentPack'
+import { frozenBookContentFrom } from '../lib/book/bookContent'
 import { BRAND_ROLE_KEYS } from '../lib/color'
 import { liftMeasuredRows } from './workLogSeparation'
 import { sameProjectId } from '../lib/journey/journeyProgress'
@@ -1737,16 +1743,46 @@ const useAppStore = create(
           }
         }),
 
+      /**
+       * THE ONE BOOK WRITER, now writing to the Document.
+       *
+       * Phase 7 moved ownership: the Book's presentation choices live on
+       * `document.overrides` and its page arrangement on `document.composition`.
+       * This action keeps its name and its callers — it is the only write path
+       * the editor has, and splitting it into two would give the Book a second
+       * writer, which is the thing every guard in this area exists to prevent.
+       *
+       * It routes by key: `pageOrder` / `pageLocking` are composition and go to
+       * composition; everything else is an override. `bookBuilder` is left
+       * exactly as it was — legacy data is never rewritten and never deleted,
+       * so an older build reading the same workspace still finds its settings.
+       */
       setBookBuilder: (patch) =>
         set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === state.currentProjectId
-              ? {
-                  ...p,
-                  bookBuilder: { ...(p.bookBuilder || {}), ...(patch || {}) },
-                }
-              : p
-          ),
+          projects: state.projects.map((p) => {
+            if (p.id !== state.currentProjectId) return p
+            const doc = ensureBookDocumentData(p)
+            const incoming = patch || {}
+            const overridePatch = {}
+            let touchesComposition = false
+            for (const [key, value] of Object.entries(incoming)) {
+              if (BOOK_COMPOSITION_KEYS.includes(key)) touchesComposition = true
+              else overridePatch[key] = value
+            }
+            const next = {
+              ...doc,
+              overrides: { ...(doc.overrides || {}), ...overridePatch },
+              composition: touchesComposition
+                ? compositionFromLegacy(incoming, doc.composition || [])
+                : doc.composition || [],
+              updatedAt: new Date().toISOString(),
+            }
+            return {
+              ...p,
+              document: next,
+              documents: upsertDocumentList(p.documents, next),
+            }
+          }),
         })),
 
       /**
@@ -1822,9 +1858,24 @@ const useAppStore = create(
         if (!ensured.ok) return ensured
         const owner = projectId ?? get().currentProjectId
         const project = get().projects.find((p) => p.id === owner)
+        /* THE WORDS THAT WERE PRINTED, RESOLVED ONCE, HERE.
+           The pack is where project fields become book fields, so resolving
+           through it is what makes the frozen content identical to what the
+           send actually rendered rather than a second interpretation of the
+           same project. `frozenBookContentFrom` keeps only the resolved values
+           the page plan declares — no `detective`, no project dump. */
+        const content = frozenBookContentFrom(
+          currentBrandPack({
+            project,
+            projectId: owner,
+            tasks: get().tasks,
+            moodItems: get().moodItems,
+          })
+        )
         const built = buildDocumentVersionData(project, {
           identitySnapshotId: snapshotId,
           freezeEvent: 'sent',
+          content,
         })
         if (!built.ok) return built
         const version = JSON.parse(JSON.stringify(built.version))

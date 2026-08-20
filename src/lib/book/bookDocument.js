@@ -98,6 +98,29 @@ export function bookInputs(packIn) {
 }
 
 /**
+ * Does the project answer for a brief-owned field?
+ *
+ * RESOLVED, NOT READ OFF THE BAG — the same precedence `readField` uses in
+ * `bookContent.js`, and it has to be, because these predicates decide whether
+ * a page EXISTS while `readField` decides what PRINTS on it. When the two
+ * disagree, a page holding real text is judged absent and the book quietly
+ * loses it. This file already states that rule in the `voice` comment below;
+ * this is the rest of it.
+ *
+ * What made the disagreement visible: a FROZEN Book Version renders from a
+ * pack whose `detective` is deliberately empty (the resolved answers are kept
+ * flat, so there is no second copy of the client's brief in the Version). Read
+ * only off the bag, Our Audience and Our Story vanished from every frozen book
+ * while their text sat in the Version — the reproduction the freeze exists to
+ * guarantee, silently short two pages.
+ *
+ * On a live pack this changes nothing: none of these fields are hoisted by
+ * `buildBrandPackSnapshot`, so the second operand is undefined and the first
+ * decides, exactly as before.
+ */
+const briefHas = (x, field) => has(x.d[field]) || has(x.pack[field])
+
+/**
  * The opening spread. One numbered stop (01) holding up to three pages, each
  * appearing only if the project answered for it.
  */
@@ -124,7 +147,8 @@ export const FOUNDATION_PAGES = [
     title: 'Our Story',
     sub: 'Why this brand exists, in their own words.',
     needs: 'the Story answer, or what makes it different',
-    exists: (x) => has(x.story) || has(x.pack.usp) || has(x.d.brandWords) || has(x.d.goal),
+    exists: (x) =>
+      has(x.story) || has(x.pack.usp) || briefHas(x, 'brandWords') || briefHas(x, 'goal'),
   },
   {
     id: 'audience',
@@ -132,11 +156,11 @@ export const FOUNDATION_PAGES = [
     sub: 'Who this is for, and what they need from it.',
     needs: 'the audience answers in the brief',
     exists: (x) =>
-      has(x.d.audience) ||
-      has(x.d.feel) ||
-      has(x.d.audiencePains) ||
-      has(x.d.brandWords) ||
-      has(x.d.brandAsPerson),
+      briefHas(x, 'audience') ||
+      briefHas(x, 'feel') ||
+      briefHas(x, 'audiencePains') ||
+      briefHas(x, 'brandWords') ||
+      briefHas(x, 'brandAsPerson'),
   },
 ]
 
