@@ -27,13 +27,21 @@ import {
 import { fetchPortalStudioView } from '../../lib/client/clientPortal'
 import { copyText } from '../../lib/client/copyText'
 import { buildIdentitySnapshot } from '../../lib/artifacts/identitySnapshot'
+import { deliverySourceFor } from '../../lib/documents/documentModel'
 import useAppStore from '../../store/useAppStore'
 
 export default function DeliverToClient({
   project = null,
   portalId = '',
+  /* THE LIVE PACK, AND IT IS NOT WHAT GETS SENT.
+     Since Phase 8 the client's copy comes out of the frozen Version resolved
+     in `send()`. This prop survives for exactly one job: `deliveryGaps`
+     compares what the client HOLDS against what the project has NOW, which is
+     a diff and needs both sides. The live `book` prop that used to sit beside
+     it is gone — it was the delivery's page setup, that now comes from the
+     Version's frozen overrides, and leaving a dead live one here is how it
+     gets re-wired by accident. */
   pack = null,
-  book = null,
   cloud = false,
   onOpenPortalPanel,
   flashToast,
@@ -98,18 +106,84 @@ export default function DeliverToClient({
     setPreviewing(true)
   }
 
+  /**
+   * ONE SEND, FOUR STEPS, IN THIS ORDER — AND THE ORDER IS THE WHOLE CHANGE.
+   *
+   * It used to run the other way round: publish the live project, then mint a
+   * Document Version from live state afterwards, inside a `try` whose handler
+   * was `console.error`. Three things followed from that, all of them bad. The
+   * client's copy was built from whatever the project happened to contain at
+   * that instant, so nothing could afterwards say which book they had. The
+   * Version was a second, independent freeze of the same moment that nothing
+   * read. And when the Version failed to persist — or when the project had no
+   * Identity, because the whole block sat behind `if (identity)` — the delivery
+   * stood anyway, claiming to be a frozen thing that did not exist.
+   *
+   * Now: freeze, verify, resolve, publish. Everything the client receives comes
+   * out of the Version created in step 1, resolved back by its own id. Steps 2
+   * and 3 are refusals, not warnings; there is no arm that carries on with live
+   * data. A project with no Identity cannot produce a Version and so cannot
+   * deliver — `buildDocumentVersionData` requires a snapshot id — and it is
+   * told that in a sentence rather than silently sending a book with no mark.
+   */
   const send = async () => {
     setError('')
     setBusy(true)
+
+    /* 1 · FREEZE. The one place live project state is read, deliberately:
+       freezing is the act of capturing it. After this line nothing downstream
+       looks at the project again except to find records by id. */
     const identity = project ? buildIdentitySnapshot(project) : null
+    if (!identity?.snapshotId) {
+      setBusy(false)
+      setError(
+        'Couldn’t send it — add a mark, colors or type on Identity first, so there is something to freeze'
+      )
+      return
+    }
+    useAppStore.getState().recordPublishedIdentity(identity, project.id)
+
+    let recorded
+    try {
+      recorded = useAppStore.getState().recordSentBookVersion({
+        projectId: project.id,
+        identitySnapshotId: identity.snapshotId,
+      })
+    } catch (err) {
+      recorded = { ok: false, error: err?.message || String(err) }
+    }
+
+    /* 2 · VERIFY. Never swallowed. A delivery whose Version did not persist
+       would be a promise about a document nobody can produce. */
+    if (!recorded?.ok) {
+      setBusy(false)
+      setError(recorded?.error || 'Couldn’t send it — the book version didn’t save')
+      return
+    }
+
+    /* 3 · RESOLVE THAT EXACT VERSION, by the id just minted — never the latest,
+       never the live Book. Refuses by name if the Version cannot answer for its
+       own identity. */
+    const from = deliverySourceFor(
+      useAppStore.getState().projects.find((p) => p.id === project.id),
+      recorded.version.documentVersionId
+    )
+    if (!from.ok) {
+      setBusy(false)
+      setError(from.error)
+      return
+    }
+
+    /* 4 · PUBLISH what the Version says, not what the project says. */
     const r = await publishDelivery(portalId, {
       note,
-      pack,
-      book,
+      pack: from.pack,
+      book: from.book,
       identity,
+      source: from.source,
       /* Which project's book this is. `publishDelivery` scopes the write to the
          portal AND this id, so a link that belongs to another project of the
-         same studio cannot receive it. */
+         same studio cannot receive it. Never travels to the client. */
       projectLocalId: project?.id,
     })
     setBusy(false)
@@ -117,22 +191,22 @@ export default function DeliverToClient({
       setError(r.error)
       return
     }
-    if (identity) {
-      useAppStore.getState().recordPublishedIdentity(identity, project.id)
-      /* Send already succeeded. A Version persist failure must not unpublish
-         or report the send as failed. */
-      try {
-        const recorded = useAppStore.getState().recordSentBookVersion({
-          projectId: project.id,
-          identitySnapshotId: identity.snapshotId,
-        })
-        if (!recorded?.ok) {
-          console.error('Couldn’t record the document version', recorded?.error)
-        }
-      } catch (err) {
-        console.error('Couldn’t record the document version', err)
-      }
+
+    /* Bookkeeping, after the fact and never a gate. A failure here loses a
+       history row, which is worth a console line and nothing more — the
+       delivery itself has already happened and reporting it as failed would be
+       a lie the designer would act on. */
+    try {
+      useAppStore.getState().recordDelivery({
+        projectId: project.id,
+        portalId,
+        documentVersionId: from.source.documentVersionId,
+        identitySnapshotId: from.source.identitySnapshotId,
+      })
+    } catch (err) {
+      console.error('Couldn’t record the delivery in project history', err)
     }
+
     setPreviewing(false)
     await refresh()
     flashToast?.('Sent — they have the link', { important: true })

@@ -419,7 +419,7 @@ export function deliveryStatusLine(portal) {
  */
 export async function publishDelivery(
   portalId,
-  { note = '', pack = null, book = null, projectLocalId = '', identity = null } = {}
+  { note = '', pack = null, book = null, projectLocalId = '', identity = null, source = null } = {}
 ) {
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: CLOUD_REQUIRED }
@@ -439,7 +439,12 @@ export async function publishDelivery(
   }
   const now = new Date().toISOString()
   const envelope = {
-    v: 1,
+    /* v:2 SAYS ONE THING: this delivery knows which Version it is.
+       `readDeliveryEnvelope` still reads v:1 and the bare-pack form that
+       predates envelopes, and always will — a client's link from last year has
+       to keep opening. The version number is not a gate, it is a label for
+       what the row happens to carry. */
+    v: 2,
     pack: built.pack,
     book: book || null,
   }
@@ -447,6 +452,19 @@ export async function publishDelivery(
      published Identity snapshot; the pack remains the book projection. */
   if (identity && typeof identity === 'object' && identity.snapshotId) {
     envelope.identity = identity
+  }
+  /* WHICH FROZEN THING THIS IS, AS TWO IDS AND NOTHING ELSE.
+     Projected key by key rather than spread, so a `source` object that grows a
+     field upstream cannot carry it to a client by default — the same rule
+     `CLIENT_DELIVERY_FIELDS` applies to the pack, for the same reason. Both
+     are app-minted opaque ids (`dver_…`, `idsnap_…`); neither is a database
+     key and neither is `project_local_id`, which stays a write-scope predicate
+     and never travels. */
+  if (source && typeof source === 'object') {
+    const ids = {}
+    if (source.documentVersionId) ids.documentVersionId = String(source.documentVersionId)
+    if (source.identitySnapshotId) ids.identitySnapshotId = String(source.identitySnapshotId)
+    if (Object.keys(ids).length) envelope.source = ids
   }
   const { data, error } = await supabase
     .from('client_portals')
@@ -554,6 +572,15 @@ export function readDeliveryEnvelope(stored) {
     }
     if (stored.identity && typeof stored.identity === 'object' && stored.identity.snapshotId) {
       out.identity = stored.identity
+    }
+    /* ABSENT ON EVERY v:1 ROW, AND THAT IS THE ANSWER, NOT A GAP.
+       A delivery sent before Versions were recorded has no Version to name.
+       Nothing here invents one, and nothing anywhere may go looking for the
+       "matching" Version in today's project — that would be re-rendering an
+       old delivery from current state, which is the exact thing the freeze
+       exists to prevent. Absent source reads as: sent before we recorded it. */
+    if (stored.source && typeof stored.source === 'object') {
+      out.source = stored.source
     }
     return out
   }
