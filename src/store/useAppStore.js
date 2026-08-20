@@ -1901,6 +1901,59 @@ const useAppStore = create(
       },
 
       /**
+       * APPEND ONE DELIVERY TO THE PROJECT'S RECORD OF WHAT IT HAS SENT.
+       *
+       * BOOKKEEPING, AND ONLY BOOKKEEPING. Nothing reads this to decide what to
+       * deliver, what to render, or what a client may see — `delivery_pack` on
+       * the portal row remains the one thing the client is served, and the
+       * Document Version remains the one frozen source. This exists so the
+       * studio can answer "what did we send them, and when" after the fact,
+       * which today nothing in the app can: `client_portals` holds one current
+       * delivery and `delivered_at` is overwritten by the next send.
+       *
+       * APPEND-ONLY, like the two stores it sits beside. A later delivery never
+       * rewrites an earlier row, because an earlier row is a statement about
+       * something that happened. Deduped by `deliveryId` so a retried write
+       * cannot double-count one send.
+       *
+       * IDS, NOT CONTENT. A history row names the Version and the Snapshot; it
+       * does not copy the book. Two hundred sends must not put two hundred
+       * copies of a brand into localStorage, and a row that carried content
+       * would be a second frozen source competing with the Version.
+       *
+       * NOT A PROJECT VERSION. Project Versions are capped at 24 and prune the
+       * oldest; running that retention over this list would delete the record
+       * of a delivery a client is still looking at. It lives on the project
+       * payload next to `documentVersions`, under the existing persist key.
+       */
+      recordDelivery: ({ projectId, portalId = '', documentVersionId, identitySnapshotId, deliveredAt } = {}) => {
+        const versionId = String(documentVersionId || '').trim()
+        if (!versionId) return { ok: false, error: 'documentVersionId is required' }
+        const owner = projectId ?? get().currentProjectId
+        const project = get().projects.find((p) => p.id === owner)
+        if (!project) return { ok: false, error: 'No project' }
+
+        const entry = Object.freeze({
+          v: 1,
+          deliveryId: `dlv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`,
+          documentVersionId: versionId,
+          identitySnapshotId: String(identitySnapshotId || '').trim(),
+          portalId: String(portalId || ''),
+          deliveredAt: deliveredAt || new Date().toISOString(),
+        })
+
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== owner) return p
+            const list = Array.isArray(p.deliveryHistory) ? p.deliveryHistory : []
+            if (list.some((row) => row?.deliveryId === entry.deliveryId)) return p
+            return { ...p, deliveryHistory: [...list, entry] }
+          }),
+        }))
+        return { ok: true, entry }
+      },
+
+      /**
        * One Presentation Document in documents[]. Never replaces project.document.
        */
       ensurePresentationDocument: (projectId) => {

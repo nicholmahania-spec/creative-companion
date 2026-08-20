@@ -456,6 +456,111 @@ export function bookVersionRenderInputs(project, documentVersionId) {
 }
 
 /**
+ * ── PHASE 8 · WHAT A DELIVERY IS MADE OF ──────────────────────────────────
+ *
+ * THE ONE THING DELIVERY MAY READ. Before this, the client's copy was built
+ * from `buildCurrentBrandPack()` — the LIVE project — and the Document Version
+ * was minted afterwards, from live state again, with its failure caught and
+ * logged. So the delivery and the Version were two independent freezes of the
+ * same moment, neither naming the other, and the one the client actually
+ * received was the one nothing could later identify. A delivery could exist
+ * with no Version at all.
+ *
+ * This resolves the OPPOSITE way round: name a Version, and everything the
+ * client gets comes out of it.
+ *
+ * NAMED REFUSALS, NEVER A FALLBACK. Every branch below returns a sentence a
+ * designer can act on. There is deliberately no "…or the live project" arm:
+ * the whole point of the phase is that a delivery which cannot say which
+ * Version it is has nothing to be honest about.
+ *
+ * STRICTER THAN THE RENDERER ON PURPOSE. `bookVersionRenderInputs` reports an
+ * unresolvable reference in `missingRefs` and renders the rest, which is right
+ * for a studio surface looking at history — showing what survives is more
+ * useful than showing nothing. A DELIVERY is a different act: sending a client
+ * a book with the mark missing is worse than not sending it, so the same
+ * `missingRefs` becomes a refusal here.
+ *
+ * NO APPROVAL GATE. Phase 8 locked D1=C / D2=E: Delivery records what was
+ * delivered, it does not adjudicate it. Nothing here reads a review round, a
+ * response, or `step_status`, and nothing should be added that does.
+ */
+
+/** What a missing reference is called when a designer has to fix it. */
+const MISSING_REF_LABEL = Object.freeze({
+  mark: 'the mark',
+  palette: 'the colors',
+  typePairing: 'the type',
+})
+
+/**
+ * The frozen inputs for delivering ONE named Book Version.
+ *
+ * @param {object} project  holds the immutable Version and Snapshot stores
+ * @param {string} documentVersionId  the exact Version being delivered
+ * @returns {{ok: true, version, pack, book, source} | {ok: false, error: string}}
+ */
+export function deliverySourceFor(project, documentVersionId) {
+  const wanted = String(documentVersionId || '').trim()
+  if (!wanted) {
+    return { ok: false, error: 'Couldn’t send it — no book version to send' }
+  }
+
+  const built = bookVersionRenderInputs(project, wanted)
+  if (!built.ok) {
+    /* `bookVersionRenderInputs` already refuses an unknown id and a
+       Presentation Version. Its wording is the studio's; keep it. */
+    return { ok: false, error: built.error }
+  }
+
+  const { version } = built
+  const snapshotId = String(version.identitySnapshotId || '').trim()
+  if (!snapshotId) {
+    /* Cannot happen through `recordSentBookVersion`, which requires one. A
+       hand-edited or imported payload can still get here, and delivering it
+       would send a book with no identity in it. */
+    return {
+      ok: false,
+      error: 'Couldn’t send it — that book version has no identity recorded',
+    }
+  }
+
+  /* NOT a fallback to today's Identity. The snapshot this Version froze is the
+     only identity this delivery may carry; if it is gone, the send is refused
+     rather than quietly re-pointed at whatever Identity looks like now. */
+  const missing = Array.isArray(built.missingRefs) ? built.missingRefs : []
+  if (missing.length) {
+    const named = missing.map((k) => MISSING_REF_LABEL[k] || k)
+    return {
+      ok: false,
+      error: `Couldn’t send it — that book version is missing ${joinWords(named)}`,
+    }
+  }
+
+  return {
+    ok: true,
+    version,
+    pack: built.pack,
+    book: built.book,
+    /* IDS ONLY. This travels to the client inside the delivery envelope, so it
+       carries names for things and never the things themselves — no
+       composition, no contentRefs, no palette, type or mark data, and never
+       `project_local_id`, which is the studio's own key for its own row. */
+    source: {
+      documentVersionId: version.documentVersionId,
+      identitySnapshotId: snapshotId,
+    },
+  }
+}
+
+/** "a, b and c" — for a sentence, not a list. */
+function joinWords(list) {
+  const items = (list || []).filter(Boolean)
+  if (items.length <= 1) return items[0] || ''
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+}
+
+/**
  * Immutable Version payload for a successful Send.
  * `identitySnapshotId` is required — the snapshot from that same Send.
  */

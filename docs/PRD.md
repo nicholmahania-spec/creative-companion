@@ -455,6 +455,41 @@ setup is **edited in the Brand book and reported on Delivery** (`321f5ad`) —
 one authoring home, one readout. The Brand Book Builder is wrapped onto the
 canonical Workroom stage rather than rewritten (`3b25e82`).
 
+**What the client receives is a frozen Book Version, not the live project.**
+Since Phase 8 the one Send action runs in this order and no other: freeze the
+current Book into an immutable Document Version → verify it persisted → resolve
+*that exact* Version by id → build the client's copy from it → publish → append
+a row to `project.deliveryHistory`. It used to run the other way round — publish
+the live pack, then mint a Version afterwards whose failure was caught and
+logged — so the client's book was whatever the project held at that instant,
+nothing could afterwards say which book it was, and a Version that failed to
+save left the delivery standing anyway.
+
+Consequences worth knowing before changing anything here:
+
+- `deliverySourceFor(project, documentVersionId)` is the only way Delivery gets
+  its inputs. It never selects the latest Version, never falls back to live
+  state, and refuses **by name** when the Version is unknown, records no
+  identity, or cannot resolve its mark, colors or type.
+- A project with no Identity cannot produce a Version and therefore cannot
+  deliver. Send says so in a sentence rather than sending a book with no mark.
+- **There is no approval gate.** Delivery records what was delivered; it does
+  not adjudicate it. Nothing in the delivery path reads a review round, a
+  response or `step_status`.
+- `delivery_pack` keeps exactly one writer (`publishDelivery`) and stays a
+  projection, never an authoring surface. Its envelope is now `v:2` and carries
+  `source: { documentVersionId, identitySnapshotId }` — **ids only**, never
+  composition, content, palette, type, mark data or `project_local_id`.
+- `v:1` envelopes and the bare-pack form that predates envelopes stay readable
+  forever. A legacy delivery has no Version id and none is ever invented for it,
+  and nothing re-renders an old delivery from today's project.
+- `project.deliveryHistory[]` is append-only, studio-local bookkeeping on the
+  existing persisted payload. It is not a Delivery source, is not pruned, and no
+  Project Version retention touches it.
+- Live edits after a send — Identity, Book, Directions, palette, type, mark —
+  change nothing about a delivery already published. `deliveryGaps` exists to
+  *report* that divergence, and is a diff, not a source.
+
 Delivery has one primary **Download PDF**. Secondary and advanced:
 
 | Output | Module |

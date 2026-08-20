@@ -338,8 +338,11 @@ export default function DeliverView({
         <DeliverToClient
           project={activeProject}
           portalId={activeProject?.clientPortalId || ''}
+          /* The LIVE pack, for the delivered-vs-current diff only. What the
+             client receives is built from the frozen Book Version inside
+             `send()`; `bookSetup` is deliberately no longer passed, because
+             the delivery's page setup now comes from that Version. */
           pack={packSnap}
-          book={bookSetup}
           studio={studioName}
           cloud={CLOUD}
           onOpenPortalPanel={openPortalPanel}

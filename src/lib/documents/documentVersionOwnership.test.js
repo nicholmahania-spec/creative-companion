@@ -201,20 +201,66 @@ describe('persistence round-trip', () => {
 })
 
 describe('Send wiring in DeliverToClient', () => {
-  it('records a Version only after a successful publish, using that Send’s snapshot', () => {
+  /**
+   * THIS TEST USED TO ASSERT THE OPPOSITE, AND THE REVERSAL IS THE POINT.
+   *
+   * Through Phase 4B it read "records a Version only after a successful
+   * publish" — publish first, then mint the Version. That was the honest
+   * description of the code at the time, and it was the defect Phase 8 exists
+   * to correct: the client's copy was built from live project state, the
+   * Version was a second independent freeze that nothing read, and when the
+   * Version failed to persist the delivery stood anyway.
+   *
+   * Phase 8 inverts it: freeze, verify the freeze, resolve that exact Version,
+   * and only then publish what the Version says. So the ordering assertion is
+   * inverted here rather than deleted — the ordering was always the thing worth
+   * pinning, and leaving the old direction in place would pin the defect.
+   */
+  it('freezes and verifies a Version BEFORE it publishes anything', () => {
     const src = readFileSync(
       fileURLToPath(new URL('../../features/client-portal/DeliverToClient.jsx', import.meta.url)),
       'utf8'
     )
     const send = src.slice(src.indexOf('const send = async'), src.indexOf('const takeBack'))
-    const failReturn = send.indexOf('if (!r.ok)')
     const recordIdentity = send.indexOf('recordPublishedIdentity')
     const recordVersion = send.indexOf('recordSentBookVersion')
-    expect(failReturn).toBeGreaterThan(0)
-    expect(recordIdentity).toBeGreaterThan(failReturn)
-    expect(recordVersion).toBeGreaterThan(recordIdentity)
+    const verify = send.indexOf('if (!recorded?.ok)')
+    const resolve = send.indexOf('deliverySourceFor')
+    const publish = send.indexOf('await publishDelivery')
+    const failReturn = send.indexOf('if (!r.ok)')
+
+    expect(recordIdentity).toBeGreaterThan(0)
+    expect(recordVersion, 'the Version is not frozen in Send').toBeGreaterThan(recordIdentity)
+    expect(verify, 'the freeze result is not checked').toBeGreaterThan(recordVersion)
+    expect(resolve, 'Delivery does not resolve the frozen Version').toBeGreaterThan(verify)
+    expect(publish, 'publish runs before the freeze it is supposed to send').toBeGreaterThan(
+      resolve
+    )
+    expect(failReturn).toBeGreaterThan(publish)
     expect(send).toContain('identitySnapshotId: identity.snapshotId')
-    expect(send).toContain('publishDelivery')
-    expect(send.indexOf('unpublishDelivery(portalId)')).toBeGreaterThan(recordVersion)
+
+    /* The publish is fed the RESOLVED Version, never the live props. */
+    expect(send, 'the live pack still reaches the client').toMatch(/pack: from\.pack/)
+    expect(send, 'the live book setup still reaches the client').toMatch(/book: from\.book/)
+
+    /* Undo still closes the link again, and still comes last. */
+    expect(send.indexOf('unpublishDelivery(portalId)')).toBeGreaterThan(publish)
+  })
+
+  /* A freeze failure is a refused send, not a logged one. */
+  it('does not swallow a Version persistence failure', () => {
+    const src = readFileSync(
+      fileURLToPath(new URL('../../features/client-portal/DeliverToClient.jsx', import.meta.url)),
+      'utf8'
+    )
+    const send = src.slice(src.indexOf('const send = async'), src.indexOf('const takeBack'))
+    const verify = send.slice(send.indexOf('if (!recorded?.ok)'))
+    expect(verify.slice(0, 240)).toMatch(/setError/)
+    expect(verify.slice(0, 240)).toMatch(/return/)
+    /* The old shape: console.error and carry on. */
+    expect(
+      send.slice(0, send.indexOf('await publishDelivery')),
+      'a freeze failure is only logged'
+    ).not.toMatch(/console\.error\([^)]*document version/i)
   })
 })
