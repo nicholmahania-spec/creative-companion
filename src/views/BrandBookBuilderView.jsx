@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import useAppStore from '../store/useAppStore'
+import { bookCompositionOf, compositionToLegacy } from '../lib/book/bookBuilder'
 import { labelForView, labelForStepId } from '../lib/journey/journey'
 import Workroom from '../components/Workroom'
 import {
@@ -819,8 +820,20 @@ export default function BrandBookBuilderView({
   const currentProjectId = useAppStore((s) => s.currentProjectId)
   const moodItems = useAppStore((s) => s.moodItems)
   const setBookBuilder = useAppStore((s) => s.setBookBuilder)
+  const ensureBookDocument = useAppStore((s) => s.ensureBookDocument)
 
   const project = activeProject || {}
+
+  /* THE DOCUMENT EXISTS BECAUSE THE EDITOR IS OPEN.
+     Until Phase 7 the Book Document was minted lazily at Send, inside the
+     delivery flow — so a project that had been laid out but never delivered
+     had no Document at all, and the thing the designer was editing had nowhere
+     canonical to live. Ensuring on open is also what runs the one-time
+     migration out of the legacy `bookBuilder` bag; it is idempotent, so an
+     already-migrated project is untouched. */
+  useEffect(() => {
+    if (currentProjectId) ensureBookDocument(currentProjectId)
+  }, [currentProjectId, ensureBookDocument])
   const bb = bookBuilderFor(project)
 
   /* The client IS the project's identity — this box renames the project
@@ -915,13 +928,19 @@ export default function BrandBookBuilderView({
   /* Optional lock/reorder — only set when the user acts. Empty means natural
      book order (pageElements as built). Never auto-write empty order back to
      the store on open: that wiped the canvas and could loop set→effect→set. */
+  /* PHASE 7: PAGE ARRANGEMENT IS THE DOCUMENT'S.
+     These read `document.composition` through `compositionToLegacy`, which
+     answers in the shape this view already works in — an order array and a set
+     of locked ids — while the canonical record is the composition rows. A
+     project that predates the Document still answers, because
+     `bookCompositionOf` falls back to the legacy bag. */
   const [lockedPages, setLockedPages] = useState(() => {
-    const saved = project?.bookBuilder?.pageLocking?.lockedPages
-    return new Set(Array.isArray(saved) ? saved : [])
+    const { pageLocking } = compositionToLegacy(bookCompositionOf(project))
+    return new Set(pageLocking.lockedPages)
   })
   const [pageOrder, setPageOrder] = useState(() => {
-    const saved = project?.bookBuilder?.pageOrder
-    return Array.isArray(saved) && saved.length > 0 ? saved : []
+    const { pageOrder: saved } = compositionToLegacy(bookCompositionOf(project))
+    return saved.length > 0 ? saved : []
   })
   const lockOrderHydratedFor = useRef(project?.id ?? null)
 
@@ -930,12 +949,12 @@ export default function BrandBookBuilderView({
     const id = project?.id ?? null
     if (lockOrderHydratedFor.current === id) return
     lockOrderHydratedFor.current = id
-    const saved = project?.bookBuilder
-    const savedLock = saved?.pageLocking?.lockedPages
-    const savedOrder = saved?.pageOrder
-    setLockedPages(new Set(Array.isArray(savedLock) ? savedLock : []))
-    setPageOrder(Array.isArray(savedOrder) && savedOrder.length > 0 ? savedOrder : [])
-  }, [project?.id, project?.bookBuilder])
+    const { pageOrder: savedOrder, pageLocking } = compositionToLegacy(
+      bookCompositionOf(project)
+    )
+    setLockedPages(new Set(pageLocking.lockedPages))
+    setPageOrder(savedOrder.length > 0 ? savedOrder : [])
+  }, [project?.id, project?.document, project?.bookBuilder])
 
   const persistLockOrder = (nextLock, nextOrder) => {
     if (!project?.id) return

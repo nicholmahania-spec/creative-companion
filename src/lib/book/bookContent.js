@@ -455,3 +455,58 @@ export function paginatedBookPages(packIn) {
   })
   return { pages: out, omitted }
 }
+
+/**
+ * ── PHASE 7 · WHAT A FROZEN BOOK HAS TO CARRY ─────────────────────────────
+ *
+ * A Version that stored only overrides and refs could not be re-rendered: the
+ * words on the pages came from the live project, so re-rendering last month's
+ * send printed this month's brief. That is the defect D1/D2 closed.
+ *
+ * The rule, and the reason it is not a project dump: the canonical homes still
+ * OWN these facts and are the only place they can be edited. What the Version
+ * keeps is the RESOLVED OUTPUT — the exact strings that were printed — derived
+ * once at freeze from `PAGE_FIELDS`, which is already the single declaration of
+ * what each book page prints.
+ *
+ * DERIVED, NEVER LISTED. Spelling the fields out here would be a second
+ * declaration of the book's content, and the first edit to `PAGE_FIELDS` would
+ * make the two disagree silently — a frozen book quietly missing a page's text.
+ *
+ * `detective` is deliberately NOT stored. Its fields are resolved to values and
+ * kept flat; there is no second copy of the client's answers here.
+ */
+export const BOOK_CONTENT_EXTRA_FIELDS = Object.freeze(['clientName', 'studio', 'name'])
+
+/** Every field the book prints, derived from the page plan. */
+export function bookContentFieldList() {
+  const fields = new Set(BOOK_CONTENT_EXTRA_FIELDS)
+  for (const rows of Object.values(PAGE_FIELDS)) {
+    for (const row of rows) fields.add(row.field)
+  }
+  return [...fields]
+}
+
+/**
+ * Resolve the book's printed content from a pack, flat and frozen.
+ *
+ * Resolution goes through `readField`, the same function the editor uses to
+ * show what will print — so what is frozen is what was on screen, not a second
+ * interpretation of the same fields.
+ */
+export function frozenBookContentFrom(pack) {
+  const p = pack || {}
+  const d = p.detective || {}
+  const out = {}
+  for (const rows of Object.values(PAGE_FIELDS)) {
+    for (const row of rows) {
+      const value = readField(row, { pack: p, d })
+      if (value) out[row.field] = value
+    }
+  }
+  for (const key of BOOK_CONTENT_EXTRA_FIELDS) {
+    const value = String(p[key] ?? '').trim()
+    if (value) out[key] = value
+  }
+  return JSON.parse(JSON.stringify(out))
+}

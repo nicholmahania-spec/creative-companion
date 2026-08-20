@@ -581,7 +581,9 @@ Per project, the fields that matter:
 name  active  brief  detective{}          // the brief + client record
 palette[]  directions{}  logoDirection    // identity
 tagline voice type* logo* messaging* imagery* writing* print*
-bookBuilder  paletteTokens[] colorRoles   // brand book
+document  documents[]  documentVersions[]   // brand book + presentation
+bookBuilder                                  // legacy Book state, see below
+paletteTokens[] colorRoles                   // brand book
 tasks[]  runningTodo  decisionLog[]  roughIdeas[]
 scopeRevisions* revisionRounds[] feedbackLog[]
 workLog[]   // private clock       timeLog[] hourlyRate  // billable, manual
@@ -595,6 +597,17 @@ handoffNote learnings deliverWordsChecked conceptPackage{}
 **Read through helpers, not raw fields.** `bookBuilderFor()` /
 `readPaletteTokens()` fill defaults at read time, which is why projects saved
 before those fields existed need no migration.
+
+**The Book's state lives on `project.document`, not `project.bookBuilder`.**
+Phase 7 made the Book Document canonical: `document.overrides` holds the
+Book's own presentation choices (paper, edges, type, colours, grid, running)
+and `document.composition` holds its page arrangement. `bookBuilder` is the
+legacy bag they migrated out of — it is still read for a project that has not
+opened the editor since, and it is never deleted, so an older build reading the
+same workspace still finds its settings. `ensureBookDocument` runs the
+migration on open; it is idempotent and additive. Write through
+`setBookBuilder` and read through `bookBuilderFor()` / `bookCompositionOf()` —
+one writer, one reader, and nothing else touches either home.
 
 **Schema changes ripple.** A field id, or a field's *shape* (string vs array), is
 referenced by `detectiveBrief.js`, the store, the client-facing renderer, the

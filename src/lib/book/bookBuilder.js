@@ -112,7 +112,18 @@ const SECTIONS = ['type', 'typeColor', 'pageBg', 'grid', 'running']
  */
 export function bookBuilderFor(project) {
   const blank = blankBookBuilder()
-  const saved = project?.bookBuilder
+  /* PHASE 7: THE DOCUMENT ANSWERS FIRST.
+     `project.document.overrides` is the canonical home for the Book's own
+     presentation choices; `project.bookBuilder` is the legacy bag it migrated
+     out of and still answers for a project that has not opened the editor
+     since. Canonical first, legacy second, never merged — a half-and-half read
+     would make the answer depend on which keys happened to be written when,
+     which is the two-homes defect this phase closes.
+
+     This function stays the ONE read accessor. Nine consumers go through it,
+     and re-pointing it here is what let ownership move without touching any of
+     them. */
+  const saved = bookOverridesOf(project)
   if (!saved || typeof saved !== 'object') return blank
   const out = { ...blank, ...saved }
   SECTIONS.forEach((key) => {
@@ -392,4 +403,155 @@ export function resolvedRunning(project) {
     showPageNumbers: !!r.showPageNumbers,
     alternate: !!r.alternate,
   }
+}
+
+/**
+ * ── PHASE 7 · THE BOOK DOCUMENT OWNS THE BOOK ──────────────────────────────
+ *
+ * Until now the Book's working state lived on `project.bookBuilder` and the
+ * Document was an identity with nothing in it. 4B said so in as many words and
+ * left the editor to this phase. The ownership flips here: the Document holds
+ * the book's own choices, and `bookBuilder` becomes the legacy representation
+ * that `bookBuilderFor` still reads for projects written before today.
+ *
+ * WHAT THE DOCUMENT OWNS: composition (which pages, in what order, locked or
+ * not) and presentation overrides (paper, edges, type sizes, type colours,
+ * page backgrounds, grid guides, running elements).
+ *
+ * WHAT IT DOES NOT OWN, EVER: brand facts. The typefaces are the Type bench's,
+ * the palette is the Colour bench's, the tagline and positioning are the
+ * sheet's, and the brief is the client's. The Book prints them and links to
+ * their homes; `bookOwnsNothing.test.js` is what keeps that true.
+ *
+ * WHY THESE LIVE HERE rather than in `documentModel`: that module imports this
+ * one for `bookBuilderFor`, and `documentModel` -> `bookContent` -> `journey`
+ * -> `reviewArtifact` closes back onto `documentModel`. Both cycles were real
+ * and broke `JOURNEY_STEPS` initialisation at import time. The Book's state
+ * module is a defensible home for the Book's state resolution, and it is the
+ * one that keeps the graph acyclic. The full `isBookDocument` predicate is
+ * deliberately not used: only `ensureBookDocumentData` ever writes these keys,
+ * so their presence is the check.
+ */
+
+const copyJson = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)))
+
+/** Document-wide presentation choices. Everything here is the Book's own. */
+export const BOOK_OVERRIDE_KEYS = Object.freeze([
+  'pageSize',
+  'edgeSpace',
+  'printShop',
+  'type',
+  'typeColor',
+  'pageBg',
+  'grid',
+  'running',
+])
+
+/**
+ * The legacy keys that are NOT overrides — they are composition, and they were
+ * sitting in the same bag. `pageOrder` is the one that mattered: a designer
+ * reordered pages, sent the book, and the Version recorded the paper and the
+ * type and the colours but not the order, so re-rendering that send would have
+ * produced a different book from the one the client got.
+ */
+export const BOOK_COMPOSITION_KEYS = Object.freeze(['pageOrder', 'pageLocking'])
+
+export function emptyBookComposition() {
+  return []
+}
+
+/**
+ * Composition rows, identified by `pageId`.
+ *
+ * Order is the array's order; identity is never the index. A page removed from
+ * the plan drops out on the next read rather than silently re-pointing every
+ * row after it — the same reason Phase 3 gave Directions a `recordId` instead
+ * of trusting a slot letter.
+ *
+ * An EMPTY composition means "natural order", which is what a project that has
+ * never been reordered has. That is a real state, not a missing one, and it is
+ * why nothing writes an empty order back on open.
+ */
+export function bookCompositionOf(project) {
+  const doc = project?.document
+  if (doc && Array.isArray(doc.composition)) {
+    return doc.composition.filter((r) => r && String(r.pageId || '').trim())
+  }
+  return legacyCompositionFrom(project?.bookBuilder)
+}
+
+/** The pre-Phase-7 shape: a partial order array and a set of locked ids. */
+export function legacyCompositionFrom(bb) {
+  const order = Array.isArray(bb?.pageOrder) ? bb.pageOrder : []
+  const locked = new Set(
+    Array.isArray(bb?.pageLocking?.lockedPages) ? bb.pageLocking.lockedPages : []
+  )
+  const ids = [...order, ...[...locked].filter((id) => !order.includes(id))]
+  return ids
+    .map((id) => String(id || '').trim())
+    .filter(Boolean)
+    .map((pageId) => ({
+      itemId: `bpage_${pageId}`,
+      pageId,
+      locked: locked.has(pageId),
+    }))
+}
+
+/** Composition back in the shape the existing editor and readers expect. */
+export function compositionToLegacy(composition) {
+  const rows = Array.isArray(composition) ? composition : []
+  return {
+    pageOrder: rows.map((r) => r.pageId),
+    pageLocking: { lockedPages: rows.filter((r) => r.locked).map((r) => r.pageId) },
+  }
+}
+
+/** Legacy `{pageOrder, pageLocking}` into composition rows. */
+export function compositionFromLegacy(patch, previous = []) {
+  const prevLocked = new Set(
+    (Array.isArray(previous) ? previous : []).filter((r) => r?.locked).map((r) => r.pageId)
+  )
+  const order = Array.isArray(patch?.pageOrder)
+    ? patch.pageOrder
+    : (Array.isArray(previous) ? previous : []).map((r) => r.pageId)
+  const locked = Array.isArray(patch?.pageLocking?.lockedPages)
+    ? new Set(patch.pageLocking.lockedPages)
+    : prevLocked
+  const ids = [...order, ...[...locked].filter((id) => !order.includes(id))]
+  return ids
+    .map((id) => String(id || '').trim())
+    .filter(Boolean)
+    .map((pageId) => ({ itemId: `bpage_${pageId}`, pageId, locked: locked.has(pageId) }))
+}
+
+/**
+ * The Book's presentation overrides.
+ *
+ * CANONICAL FIRST, LEGACY SECOND, and never merged. A half-and-half read would
+ * make the answer depend on which keys happened to be written when, which is
+ * exactly the two-homes defect this phase closes. Once the Document has
+ * overrides it is the only source; before that the legacy bag answers, which is
+ * what keeps an un-migrated project working.
+ */
+export function bookOverridesOf(project) {
+  const doc = project?.document
+  if (doc && doc.overrides && typeof doc.overrides === 'object') {
+    return doc.overrides
+  }
+  return project?.bookBuilder && typeof project.bookBuilder === 'object'
+    ? project.bookBuilder
+    : null
+}
+
+/** Only the override keys, so composition and stray legacy keys cannot ride along. */
+export function pickBookOverrides(source) {
+  const out = {}
+  if (!source || typeof source !== 'object') return out
+  for (const key of BOOK_OVERRIDE_KEYS) {
+    if (key in source) out[key] = copyJson(source[key])
+  }
+  /* The two pre-split keys `bookBuilderFor` still resolves. Carried so a
+     migration cannot lose a paper size chosen before the split. */
+  if (source.print && typeof source.print === 'object') out.print = copyJson(source.print)
+  return out
 }
