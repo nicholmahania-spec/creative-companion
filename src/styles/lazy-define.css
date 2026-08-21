@@ -1775,20 +1775,80 @@
   padding-bottom: 0;
 }
 
-/* THE SECOND STICKY LAYER. `.define-chapter-head` sticks to
-   `top: var(--header-h, 61px)` — an offset measured against the SHELL's
-   header, which does not exist on a stage. It therefore parked 61px below the
-   path edge, a second bar competing with the first for the same glance, and
-   with the action ledge that was already at the other edge the brief had
-   three fixed layers around one form.
+/* THE PLANE'S TOP INSET MOVES ONTO ITS CONTENT — the half of the sticky fix
+   that is easy to miss.
 
-   Static here. The chapter heading still reads as a heading; it just does not
-   follow you. The stage owns both edges now, and it owns exactly one of each. */
+   A sticky child anchors to its scrollport's PADDING edge, and `.cc-stage-plane`
+   pads itself by `clamp(var(--space-5), 4vw, var(--space-7))` — 16px at 390px.
+   So a head at `top: 0` pins 16px below where the plane's content area starts,
+   leaving a band above it that scrolling content stays visible through. Measured
+   on a phone: the previous question sat clipped above the pinned head, reading
+   as a rendering fault rather than as a heading.
+
+   The inset is not removed, it is RELOCATED: the plane stops paying it and the
+   plane's first child pays it instead. Nothing moves on screen — the masthead
+   still starts where it did — but the scrollport now begins where its border is,
+   so the head pins flush and content passes cleanly underneath.
+
+   `> :first-child` rather than `.define-brief`: `Workroom` renders
+   `.cc-stage-masthead` before `children`, so on this stop the first child is the
+   masthead, and paying the inset on the brief alone would drag the masthead up
+   by 16px. Margin rather than padding so the masthead's own grid is untouched;
+   it cannot collapse out because `overflow: auto` makes the plane a BFC.
+
+   THE TWO VALUES MUST MOVE TOGETHER. This mirrors `.cc-stage-plane`'s own
+   `padding-top` in `workroom.css`. It is stated here rather than tokenised
+   there because the shared stage is deliberately out of scope for this repair —
+   if that padding ever changes, this line changes with it. */
+.cc-stage--define .cc-stage-plane {
+  padding-top: 0;
+}
+
+.cc-stage--define .cc-stage-plane > :first-child {
+  margin-top: clamp(var(--space-5), 4vw, var(--space-7));
+}
+
+/* THE CHAPTER HEAD STICKS TO THE PLANE, NOT TO A HEADER THAT ISN'T THERE.
+
+   The base rule sticks it to `top: var(--header-h, 61px)` — an offset measured
+   against the SHELL's header. On a stage that header is still in the DOM but it
+   sits behind `.cc-stage`, which is `position: fixed`; sticking 61px below the
+   path edge parked a second bar in the middle of the form, competing with the
+   first for the same glance. That was the right thing to object to.
+
+   The fix that followed was `position: static`, and it cost more than it saved.
+   `.define-chapter-rail` renders on neither surface at 390px — the brief passes
+   `showChapterRail={false}` and DetectiveSheet gates it on `!isMobile` — so the
+   chapter head is the ONLY thing on a phone that says which chapter you are
+   answering. The brief measures 5563px at that width. Static, the head sat 489px
+   above the viewport by the third question, and for roughly five of six and a
+   half screenfuls nothing on screen named the chapter at all.
+
+   So it sticks again, and the only thing this rule changes is WHERE. `top: 0` is
+   the plane's own top edge: `.cc-stage` is fixed with `overflow: hidden` and
+   `.cc-stage-plane` is the sole scroller, so a sticky child's containing block is
+   the plane, and 0 is flush with the content it is heading — no second bar, no
+   offset against chrome that belongs to another shell.
+
+   Everything else is inherited deliberately. `position: sticky`, `z-index: 5` and
+   `background: var(--bg-canvas)` all come from the base rule, and the background
+   is already correct here because `.cc-stage` re-points `--bg-canvas` to
+   `--stage-ground` for everything rendered inside it. Restating any of them would
+   be a second declaration to keep in step.
+
+   Asserted on geometry in `define-regressions.spec.js`, never on the cascade: an
+   ancestor's `overflow-x: hidden` silently turns a sticky child static, and four
+   declarations in `shell.css` were dead exactly that way. */
 .cc-stage--define .define-chapter-head {
-  position: static;
-  top: auto;
-  z-index: auto;
-  background: transparent;
+  top: 0;
+  /* THE HEAD'S OWN BOTTOM GAP HAS TO BE PAINTED, NOT EMPTY.
+     The base rule spends `var(--space-2)` on padding and another on margin. A
+     margin is transparent, so once the head pins, the outgoing question's
+     descenders scroll through that 8px strip and read as a clipped line stuck
+     under the heading — measured on a phone with a screenshot of the strip
+     alone. Same total spacing, all of it inside the background box. */
+  margin-bottom: 0;
+  padding-bottom: calc(var(--space-2) * 2);
 }
 
 /* The brief is a form, and a form at 1344px is unreadable. The questions
