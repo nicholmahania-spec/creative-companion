@@ -199,7 +199,14 @@ test.describe('Define page regressions', () => {
       before.chaptersRight
     )
 
-    await page.evaluate(() => window.scrollTo(0, 900))
+    /* The plane, not the window. `.cc-stage` is fixed and `.cc-stage-plane` is
+       the only scroller, so `window.scrollTo` moved nothing and every geometry
+       assertion below was reading an unscrolled page. */
+    await page.evaluate(() => {
+      const plane = document.querySelector('.cc-stage-plane')
+      if (plane) plane.scrollTop = 900
+      else window.scrollTo(0, 900)
+    })
     await page.waitForTimeout(300)
     const after = await page.evaluate(() => {
       const r = document.querySelector('.define-chapter-rail').getBoundingClientRect()
@@ -234,7 +241,11 @@ test.describe('Define page regressions', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await openDefine(page)
 
-    // Park in the middle of a chapter, far below its own heading.
+    /* Park in the middle of a chapter, far below its own heading.
+
+       `scrollIntoView` scrolls whatever actually scrolls, which on the stage
+       is `.cc-stage-plane` and never the window — see the note on `scrolled`
+       below. */
     await page.evaluate(() =>
       document
         .getElementById('detective-field-spectrumHighEndAffordable')
@@ -250,20 +261,39 @@ test.describe('Define page regressions', () => {
         .getElementById('detective-field-spectrumHighEndAffordable')
         .closest('.define-chapter')
       const head = owner.querySelector('.define-chapter-head').getBoundingClientRect()
-      const headerH =
-        document.querySelector('.header')?.getBoundingClientRect().height ?? 0
+      /* THE STAGE IS THE FRAME OF REFERENCE, NOT THE SHELL.
+         `.cc-stage` is `position: fixed` and `.cc-stage-plane` is its sole
+         scroller, so the head sticks to the PLANE's top edge — 0 — and the
+         shell's `.header` is irrelevant even though it is still in the DOM
+         behind the stage. Measuring against `.header` here asserted the head
+         was pinned 61px down a bar the stage does not use. */
+      const plane = document.querySelector('.cc-stage-plane')
+      /* The PADDING box, not the border box. A sticky child anchors to its
+         scrollport's padding edge, so `top: 0` rests flush with the plane's
+         content — the plane pads itself by 4vw at this width, and measuring
+         the border box instead reported the head as 16px out of place when it
+         was exactly where it belongs. */
+      const pinTop = plane
+        ? Math.round(
+            plane.getBoundingClientRect().top +
+              parseFloat(getComputedStyle(plane).paddingTop || '0')
+          )
+        : 0
       return {
         title: owner.querySelector('.define-chapter-title').textContent.trim(),
         headTop: Math.round(head.top),
         headBottom: Math.round(head.bottom),
         fieldTop: Math.round(field.top),
-        headerH: Math.round(headerH),
+        pinTop,
         viewportH: window.innerHeight,
-        scrollY: Math.round(window.scrollY),
+        /* NOT `window.scrollY`. The window never scrolls on a stage — it is
+           structurally pinned at 0 — so the old assertion could not pass at
+           any scroll position. What moved is the plane. */
+        scrolled: plane ? Math.round(plane.scrollTop) : Math.round(window.scrollY),
       }
     })
 
-    expect(state.scrollY, 'the page actually scrolled').toBeGreaterThan(600)
+    expect(state.scrolled, 'the brief actually scrolled').toBeGreaterThan(600)
     expect(
       state.fieldTop,
       'the field is well below its own chapter heading in the document'
@@ -275,12 +305,12 @@ test.describe('Define page regressions', () => {
     ).toBeGreaterThan(0)
     expect(
       state.headTop,
-      'the chapter heading is pinned below the app header, not floating over it'
-    ).toBeGreaterThanOrEqual(state.headerH - 2)
+      'the chapter heading is pinned at the plane’s top edge, not floating above it'
+    ).toBeGreaterThanOrEqual(state.pinTop - 2)
     expect(
       state.headTop,
       'the chapter heading is pinned near the top, not merely still on screen'
-    ).toBeLessThan(state.headerH + 8)
+    ).toBeLessThan(state.pinTop + 8)
   })
 
   test('focus mask never dims answers below the legibility floor', async ({ page }) => {
