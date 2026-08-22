@@ -68,6 +68,14 @@ export function assertBox(box, where = 'box') {
     if (!box.origin || !isNum(box.origin.x) || !isNum(box.origin.y)) {
       throw new Error(`${at}: text box needs a resolved origin {x,y}`)
     }
+    /* Letter-spacing, in em, as the DESIGN asks for it. A renderer may narrow
+       it to what its own output can carry — a PDF reader stops telling
+       tracking from a space somewhere above .1em and extracts the line letter
+       by letter — but that ceiling belongs to the renderer that has it, not to
+       the design and not to every other surface. Optional; absent means none. */
+    if (box.style?.tracking !== undefined && !isNum(box.style.tracking)) {
+      throw new Error(`${at}: tracking must be a number in em`)
+    }
   }
   return box
 }

@@ -65,6 +65,7 @@ import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
 import { composeRegion } from './layout/compose'
 import { composeSectionOpen } from './layout/templates/sectionOpen'
+import { composeContentOpen } from './layout/templates/contentOpen'
 import { appAssetFor, APP_ASSET_STATES } from './bookAssets'
 import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
 import { embedBrandFace, characterSetRows } from './brandFonts'
@@ -536,6 +537,14 @@ export async function downloadBrandPackVectorPdf(
         }
         if (b.type === 'text') {
           setFace(b.style.face, b.style.size, b.style.color)
+          /* THE CAP IS THIS RENDERER'S, NOT THE DESIGN'S. The template asks
+             for its tracking in em; `track` narrows it to what a PDF text
+             layer survives, which is a fact about PDF extraction and belongs
+             nowhere near a template that other surfaces also read. */
+          if (b.style.tracking) {
+            tracked(b.lines.join(' '), b.origin.x, b.origin.y, b.style.size * track(b.style.tracking))
+            continue
+          }
           pdf.text(b.lines.map(pdfSafeText), b.origin.x, b.origin.y)
           continue
         }
@@ -561,20 +570,24 @@ export async function downloadBrandPackVectorPdf(
     const contentPage = (kickerText, title, sub = '') => {
       startSheet(CREAM, title)
       sheetFoots.push({ page: pageIndex, dark: false })
-      y = margin
-      kicker(kickerText, margin, y + KICKER_PT * 0.82, KICKER_CREAM)
-      y += KICKER_PT * 0.82 + px(10)
-      const H1 = px(32)
-      setFace('heading', H1, ON_CREAM)
-      pdf.text(pdfSafeText(title), margin, y + H1 * 0.78)
-      y += H1 * 0.78 + px(6)
-      box(margin, y + px(8), px(56), px(3), GOLD)
-      y += px(8) + px(3)
-      if (sub) {
-        y += px(20)
-        y += para(sub, margin, y, contentW * 0.72, { size: px(15), rgb: MUTE_CREAM })
-      }
-      y += px(24)
+      /* PHASE 10B — COMPOSED, NOT POSITIONED HERE. Thirteen call sites open a
+         page through this; below the eyebrow it is the same heading block the
+         section opener draws, so neither states it twice. */
+      const region = composeRegion(
+        composeContentOpen,
+        { kicker: kickerText, title },
+        { sub },
+        {
+          kicker: { color: KICKER_CREAM },
+          title: { color: ON_CREAM },
+          rule: { fill: GOLD },
+          sub: { color: MUTE_CREAM },
+        },
+        { pageW, margin, bleed, contentW, startY: margin, px },
+        measureLines
+      )
+      drawRegion(region)
+      y = region.advanceTo
     }
 
     /**

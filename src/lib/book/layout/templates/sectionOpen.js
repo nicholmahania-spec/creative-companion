@@ -32,6 +32,7 @@
  */
 
 import { makeRegion } from '../positioned'
+import { CAP_BASELINE, headingBlock } from './headingBlock'
 
 /** The design, in CSS pixels at 96dpi. See the header for why not points. */
 const SPEC = Object.freeze({
@@ -46,25 +47,12 @@ const SPEC = Object.freeze({
   bandTitleSize: 30,
   bandTitleGap: 16,
   contentTop: 30,
+  /* Declared, not inherited. The content opener sets its heading at 32; this
+     one is deliberately a step smaller because the band above it already
+     carries the section's name at 30. `headingBlock` requires the value rather
+     than defaulting it, so the difference is on the record. */
   titleSize: 30,
-  titleGap: 6,
-  ruleTop: 8,
-  ruleW: 56,
-  ruleH: 3,
-  subGap: 20,
-  subSize: 15,
-  subWidthRatio: 0.72,
-  tailGap: 24,
 })
-
-/* jsPDF places a single line of text on its BASELINE, and the design sets each
-   one by a fraction of its own size. Named rather than repeated so the two
-   ratios cannot drift apart from the values they replaced. */
-const CAP_BASELINE = 0.78
-const BODY_BASELINE = 0.82
-/** The leading the consumed height is reckoned in. */
-const SUB_LINE_HEIGHT = 1.5
-
 /**
  * Compose the region.
  *
@@ -119,52 +107,18 @@ export function composeSectionOpen(sectionSpec, content, style, geometry, measur
     z: 1,
   })
 
-  /* Content starts below the band. */
-  let y = startY + bandH + bleed + px(SPEC.contentTop)
-  const h1 = px(SPEC.titleSize)
-  boxes.push({
-    id: 'pageTitle',
-    type: 'text',
-    lines: [title],
-    origin: { x: margin, y: y + h1 * CAP_BASELINE },
-    rect: { x: margin, y, w: contentW, h: h1 },
-    style: { face: 'heading', size: h1, color: style.title.color },
-    z: 1,
-  })
-  y += h1 * CAP_BASELINE + px(SPEC.titleGap)
+  /* Content starts below the band, and from here the page is the same
+     heading every opener draws — so it is composed once, not twice. */
+  const head = headingBlock(
+    { title, sub: content?.sub },
+    style,
+    { ...geometry, startY: startY + bandH + bleed + px(SPEC.contentTop) },
+    measure,
+    { titleSize: SPEC.titleSize }
+  )
+  boxes.push(...head.boxes)
 
-  boxes.push({
-    id: 'rule',
-    type: 'rect',
-    rect: { x: margin, y: y + px(SPEC.ruleTop), w: px(SPEC.ruleW), h: px(SPEC.ruleH) },
-    style: { fill: style.rule.fill },
-    z: 1,
-  })
-  y += px(SPEC.ruleTop) + px(SPEC.ruleH)
-
-  const sub = String(content?.sub ?? '')
-  if (sub) {
-    y += px(SPEC.subGap)
-    const subSize = px(SPEC.subSize)
-    const width = contentW * SPEC.subWidthRatio
-    /* The injected measurement boundary. The lines are decided here; the
-       renderer draws the lines it is given. */
-    const lines = measure(sub, { face: 'body', size: subSize, width })
-    boxes.push({
-      id: 'sub',
-      type: 'text',
-      lines,
-      origin: { x: margin, y: y + subSize * BODY_BASELINE },
-      rect: { x: margin, y, w: width, h: lines.length * subSize * SUB_LINE_HEIGHT },
-      style: { face: 'body', size: subSize, color: style.sub.color },
-      z: 1,
-    })
-    y += lines.length * subSize * SUB_LINE_HEIGHT
-  }
-
-  y += px(SPEC.tailGap)
-
-  return makeRegion({ id: 'section-open', boxes, advanceTo: y })
+  return makeRegion({ id: 'section-open', boxes, advanceTo: head.advanceTo })
 }
 
 export default composeSectionOpen
