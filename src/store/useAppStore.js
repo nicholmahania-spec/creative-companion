@@ -16,6 +16,7 @@ import {
 } from '../lib/book/bookBuilder'
 import { currentBrandPack } from '../lib/book/currentPack'
 import { frozenBookContentFrom } from '../lib/book/bookContent'
+import { frozenAppsFrom } from '../lib/book/bookAssets'
 import { BRAND_ROLE_KEYS } from '../lib/color'
 import { liftMeasuredRows } from './workLogSeparation'
 import { sameProjectId } from '../lib/journey/journeyProgress'
@@ -1920,10 +1921,23 @@ const useAppStore = create(
             moodItems: get().moodItems,
           })
         )
+        /* THE PRODUCED ARTWORK THE BOOK SHOWS, COPIED AT THE SAME MOMENT.
+           Resolved from the same pack the content came from, so the Version's
+           words and its artwork describe one instant rather than two. */
+        const frozenApps = frozenAppsFrom(
+          currentBrandPack({
+            project,
+            projectId: owner,
+            tasks: get().tasks,
+            moodItems: get().moodItems,
+          })
+        )
         const built = buildDocumentVersionData(project, {
           identitySnapshotId: snapshotId,
           freezeEvent: 'sent',
           content,
+          appAssets: frozenApps.assets,
+          appPlacement: { touchpoints: frozenApps.touchpoints, apps: frozenApps.apps },
         })
         if (!built.ok) return built
         const version = JSON.parse(JSON.stringify(built.version))

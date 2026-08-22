@@ -1,6 +1,6 @@
 import { normalizeHex } from '../color'
 import { decisionLineFromPack } from '../brandSystem'
-import { touchpointsFor } from '../journey/touchpoints'
+import { packTouchpoints } from '../journey/touchpoints'
 
 /**
  * The brand book's plan — its pages, their order, their numbering, and the
@@ -48,11 +48,7 @@ export function bookInputs(packIn) {
 
   const colors = (pack.palette || []).map((c) => normalizeHex(c) || c).filter(Boolean)
   const pins = Array.isArray(pack.pins) ? pack.pins : []
-  /* The hoisted copy wins, but `buildBrandPackSnapshot` only fills it when
-     the brief holds surfaces — an older project answered into `detective`
-     alone, so dropping that fallback would empty its Applications section. */
-  const surfaces = pack.brandSurfaces?.length ? pack.brandSurfaces : d.brandSurfaces
-  const touchpoints = touchpointsFor(surfaces, d.deliverablesPicked)
+  const touchpoints = packTouchpoints(pack)
   const touchpointApps =
     pack.touchpointApps && typeof pack.touchpointApps === 'object'
       ? pack.touchpointApps

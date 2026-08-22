@@ -388,6 +388,18 @@ export function packFromBookVersion(version, snapshot) {
     printShop: overrides.printShop,
     /* Which pages, in what order, as sent. */
     bookComposition: Array.isArray(v.composition) ? v.composition : [],
+    /* THE SAME KEY THE LIVE PACK USES, holding the Version's own copies.
+       `appAssetFor` resolves `packageAssets` without caring which it has, so
+       one resolver serves the working book and the frozen one — and a frozen
+       render has no path back to the live shelf, because this list is all it
+       can see. A Version frozen before Phase 9 has none and renders exactly as
+       it did. */
+    packageAssets: Array.isArray(v.appAssets) ? v.appAssets : [],
+    /* Same keys the live pack uses, so one resolver serves both. */
+    touchpoints: Array.isArray(v.appPlacement?.touchpoints) ? [...v.appPlacement.touchpoints] : [],
+    touchpointApps: v.appPlacement?.apps && typeof v.appPlacement.apps === 'object'
+      ? v.appPlacement.apps
+      : {},
     /* NEVER a fallback. A reference the snapshot cannot answer for is named
        here so the surface can say so out loud; substituting today's mark would
        show work that was never in this send. */
@@ -566,7 +578,7 @@ function joinWords(list) {
  */
 export function buildDocumentVersionData(
   project,
-  { identitySnapshotId, freezeEvent = FREEZE_SENT, content = null } = {}
+  { identitySnapshotId, freezeEvent = FREEZE_SENT, content = null, appAssets = null, appPlacement = null } = {}
 ) {
   const snapshotId = String(identitySnapshotId || '').trim()
   if (!snapshotId) {
@@ -596,6 +608,20 @@ export function buildDocumentVersionData(
        the layer that can build a pack; passing it in keeps this module free of
        the export pipeline. */
     content: content && typeof content === 'object' ? copyJson(content) : {},
+    /* THE PRODUCED ARTWORK THIS BOOK SHOWS, BY VALUE.
+       A reference into `packageAssets` would let a re-produce tomorrow change
+       a book delivered yesterday, so the bytes are copied here — the same
+       thing `buildIdentitySnapshot` does for the mark. Only what the book
+       REFERENCES and only what the rights gate clears; `frozenAppAssetsFrom`
+       applies both filters, so a withheld file never enters the Version and
+       therefore never reaches the client. */
+    appAssets: Array.isArray(appAssets) ? copyJson(appAssets) : [],
+    /* Which surface each of those assets was placed on, and which surfaces the
+       book had. A frozen pack's `detective` is empty on purpose, so without
+       this the Version cannot rebuild its own Applications pages. */
+    appPlacement: appPlacement && typeof appPlacement === 'object'
+      ? { touchpoints: copyJson(appPlacement.touchpoints || []), apps: copyJson(appPlacement.apps || {}) }
+      : { touchpoints: [], apps: {} },
   })
   return { ok: true, version }
 }

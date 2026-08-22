@@ -26,6 +26,8 @@ import {
   touchpointLabel,
 } from '../lib/journey/touchpoints'
 import TouchpointMockThumb from '../components/TouchpointMockThumb'
+import { appAssetFor, APP_ASSET_STATES } from '../lib/book/bookAssets'
+import { canDistribute } from '../lib/deliver/packagePlan'
 import '../styles/brand-book-builder.css'
 /* Application mock geometry (shared with Touchpoints) */
 import '../styles/lazy-sketch.css'
@@ -634,13 +636,32 @@ function AppsPage({ kit, style, pageIndex = 0, id, touchpoints = [], project }) 
         Applications
       </p>
       <div className="bbb-apps-grid">
-        {list.map((tpId) => (
+        {list.map((tpId) => {
+          /* THE CANVAS SHOWS WHAT THE PDF WILL DRAW. `appAssetFor` is the same
+             resolver `brandBookPdf` uses, so a page cannot look one way here
+             and print another — which is the whole invariant of this phase.
+             `TouchpointMockThumb` is left untouched: it is shared with
+             Touchpoints and this is a Book decision. */
+          const art = appAssetFor(project, tpId)
+          return (
           <div key={tpId} className="bbb-apps-card">
+            {art.state === APP_ASSET_STATES.ready ? (
+              <img
+                className="bbb-apps-card__art"
+                src={art.dataUrl}
+                alt={art.name || touchpointLabel(tpId)}
+              />
+            ) : art.state === APP_ASSET_STATES.held ? (
+              <span className="bbb-apps-card__held">
+                Artwork not shown — {art.reason}.
+              </span>
+            ) : (
             <TouchpointMockThumb
               id={tpId}
               project={project}
               palette={palette}
             />
+            )}
             <span
               className="bbb-apps-card__label"
               style={{
@@ -652,7 +673,8 @@ function AppsPage({ kit, style, pageIndex = 0, id, touchpoints = [], project }) 
               {touchpointLabel(tpId)}
             </span>
           </div>
-        ))}
+          )
+        })}
       </div>
       <RunningFooter {...running} pageIndex={pageIndex} />
       <PageNum {...running} pageIndex={pageIndex} />
@@ -821,6 +843,9 @@ export default function BrandBookBuilderView({
   const moodItems = useAppStore((s) => s.moodItems)
   const setBookBuilder = useAppStore((s) => s.setBookBuilder)
   const ensureBookDocument = useAppStore((s) => s.ensureBookDocument)
+  /* The Touchpoints writer, reused. The Book does not get its own path into
+     `touchpointApps` — one field, one writer. */
+  const updateBrandField = useAppStore((s) => s.updateBrandField)
 
   const project = activeProject || {}
 
@@ -835,6 +860,31 @@ export default function BrandBookBuilderView({
     if (currentProjectId) ensureBookDocument(currentProjectId)
   }, [currentProjectId, ensureBookDocument])
   const bb = bookBuilderFor(project)
+
+  /* Only what Delivery would ship. `canDistribute` is imported rather than
+     restated — one rights rule, one implementation. */
+  const shippableAssets = (project.packageAssets || []).filter(
+    (a) => a && canDistribute(a) && String(a.dataUrl || '').trim()
+  )
+  const appPickerRows = (Array.isArray(project.brandSurfaces) && project.brandSurfaces.length
+    ? touchpointsFor(project.brandSurfaces, project.detective?.deliverablesPicked)
+    : touchpointsFor(project.detective?.brandSurfaces, project.detective?.deliverablesPicked)
+  ).map((id) => ({
+    id,
+    label: touchpointLabel(id),
+    selected: project.touchpointApps?.[id]?.asset?.id || '',
+  }))
+
+  /* Writes through the field Touchpoints already owns, keeping `note` and
+     `done` intact — the surface record gains a reference, it is not replaced. */
+  const setAppAsset = (touchpointId, assetId) => {
+    const apps = { ...(project.touchpointApps || {}) }
+    const prev = { ...(apps[touchpointId] || {}) }
+    if (assetId) prev.asset = { kind: 'produced', id: assetId }
+    else delete prev.asset
+    apps[touchpointId] = prev
+    updateBrandField('touchpointApps', apps)
+  }
 
   /* The client IS the project's identity — this box renames the project
      itself rather than keeping a second, competing name for the same thing. */
@@ -1744,6 +1794,45 @@ export default function BrandBookBuilderView({
             so open by default it was the tallest item in the rail and a second
             copy of what the document already shows. It stays for reordering
             and locking, one click away. */}
+        {/* THE ONE THING PHASE 9 ADDS TO THE RAIL.
+            A surface can carry the artwork the designer actually produced, so
+            the book stops drawing a typeset stand-in for work that exists. A
+            select, not a canvas: the designer says WHICH artwork belongs on
+            WHICH surface, and the book composes it. Choosing where it sits on
+            the page is a later phase.
+
+            Only files the package would ship are offered — the same
+            `canDistribute` gate Delivery uses — because an option the book
+            would refuse to print is not an option. */}
+        <Section title="Application artwork">
+          {appPickerRows.length === 0 ? (
+            <p className="panel-hint">
+              Produced artwork you file on Touchpoints can be shown here. Nothing
+              is filed for this project yet.
+            </p>
+          ) : (
+            appPickerRows.map((row) => (
+              <div className="bbb-field" key={row.id}>
+                <label className="bbb-microhead" htmlFor={`bbb-app-${row.id}`}>
+                  {row.label}
+                </label>
+                <select
+                  id={`bbb-app-${row.id}`}
+                  value={row.selected}
+                  onChange={(e) => setAppAsset(row.id, e.target.value)}
+                >
+                  <option value="">No artwork yet</option>
+                  {shippableAssets.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name || 'Untitled file'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))
+          )}
+        </Section>
+
         <Section title="In this book">
           <ul className="bbb-pagelist">
             {effectiveOrder.map((id, index) => {
