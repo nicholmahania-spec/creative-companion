@@ -187,3 +187,23 @@ export function allBrandSurfaces(project) {
     : []
   return [...brief, ...mine.filter((id) => id && !brief.includes(id))]
 }
+
+/**
+ * The surfaces a book has, from either kind of pack.
+ *
+ * A live pack carries the brief's SURFACES and `touchpointsFor` maps them to
+ * touchpoints. A frozen pack carries the touchpoint list the Version was built
+ * from and an empty `detective` on purpose, so deriving is neither possible
+ * nor wanted there — what was frozen is the answer.
+ *
+ * The hoisted `brandSurfaces` wins, but `buildBrandPackSnapshot` only fills it
+ * when the brief holds surfaces — an older project answered into `detective`
+ * alone, so dropping that fallback would empty its Applications section.
+ */
+export function packTouchpoints(pack) {
+  if (Array.isArray(pack?.touchpoints) && pack.touchpoints.length) return [...pack.touchpoints]
+  return touchpointsFor(
+    pack?.brandSurfaces?.length ? pack.brandSurfaces : pack?.detective?.brandSurfaces,
+    pack?.detective?.deliverablesPicked
+  )
+}

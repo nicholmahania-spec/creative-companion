@@ -28,6 +28,8 @@ import {
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import '../styles/lazy-deliver.css'
 
+import { bookVersionRenderInputs, DTPL_BUILTIN_BOOK } from '../lib/documents/documentModel'
+
 const BrandBookPreview = lazy(
   () => import('../components/BrandBookPreview')
 )
@@ -90,6 +92,39 @@ export default function DeliverView({
   const removeContact = useAppStore((s) => s.removeContact)
 
   const packSnap = buildCurrentBrandPack()
+
+  /* PROOF = SHIP.
+     This panel previewed `packSnap` — LIVE project state — while
+     `DeliverToClient` published the frozen Version resolved by
+     `deliverySourceFor`. Two adjacent stops of the same app drew two different
+     books, and the one the designer checked was not the one the client
+     received. Phase 8 made delivery version-bound; this closes the surface
+     that still read around it.
+
+     `bookVersionRenderInputs` is Phase 7's frozen adapter — pure over
+     (project, versionId), already tested, and refusing rather than
+     substituting. A Version it cannot open falls back to the working document
+     WITH A LABEL SAYING SO, never to a live render dressed as a frozen one. */
+  const bookVersions = (activeProject?.documentVersions || []).filter(
+    (v) => v?.templateId === DTPL_BUILTIN_BOOK
+  )
+  const latestBookVersion = bookVersions.length ? bookVersions[bookVersions.length - 1] : null
+  const frozenProof = latestBookVersion
+    ? bookVersionRenderInputs(activeProject, latestBookVersion.documentVersionId)
+    : null
+  const proof = frozenProof?.ok
+    ? {
+        pack: frozenProof.pack,
+        book: frozenProof.book,
+        label: 'The book your client has — frozen when you sent it.',
+      }
+    : {
+        pack: packSnap,
+        book: bookSetup,
+        label: latestBookVersion
+          ? 'Your working book — the sent version could not be opened.'
+          : 'Your working book — nothing has been sent yet.',
+      }
   const ready = packReadiness(packSnap)
   const gaps = ready.checks.filter((c) => !c.ok)
   /* Core gaps drive the status line; handoff/learnings are ship polish and
@@ -358,11 +393,18 @@ export default function DeliverView({
         role="region"
         aria-label="Pack preview"
       >
+        {/* WHICH BOOK THIS IS, SAID OUT LOUD.
+            Before a send there is no frozen Version and this is the working
+            document. After one, it is the book the client actually holds —
+            the only thing worth proofing next to a Send button, and why the
+            panel names it rather than leaving the designer to assume.
+            `deliveryGaps` already reports where today's project has moved on. */}
+        <p className="panel-hint">{proof.label}</p>
         <div className="assets-preview-frame deliver-pack-preview">
           <Suspense fallback={<div className="panel-hint">Loading preview…</div>}>
             <BrandBookPreview
-              pack={packSnap}
-              book={bookSetup}
+              pack={proof.pack}
+              book={proof.book}
               studio={studioName}
             />
           </Suspense>

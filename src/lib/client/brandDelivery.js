@@ -19,6 +19,7 @@
  */
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { publicUrl } from '../appPaths'
+import { frozenAppAssetsFrom } from '../book/bookAssets'
 import { decisionLineFromPack } from '../brandSystem'
 import { CLOUD_REQUIRED } from './cloudRequired.js'
 
@@ -210,7 +211,19 @@ export const PRIVATE_PACK_FIELDS = [
      its Handoff appendix under client-facing labels. Nothing prints this one.
      It was carried to the client and displayed to no one. */
   'feedbackNotes',
-  /* THE FILES THEMSELVES, and the reason this list is worth reading twice.
+  /* `packageAssets` USED TO BE ON THIS LIST, and the reason it left is the
+     whole of Phase 9. The old note is kept below because its reasoning is still
+     correct about the WHOLE list — what changed is that the client's book now
+     shows the designer's produced artwork, so a filtered PROJECTION of that
+     list has to cross the boundary while the list itself still must not.
+
+     `buildDeliveryPack` now takes only the assets the book actually references
+     AND that the package's own rights gate clears, through
+     `frozenAppAssetsFrom`. Everything the note below objected to still holds:
+     the shelf does not travel, and a `thirdParty` or unset-rights file is no
+     more shippable in the book than it was in the zip.
+
+     ── the original note, still true of the unfiltered list ──
 
      `buildBrandPackSnapshot` carries `packageAssets` so the PACKAGE PLANNER
      can read the designer's uploads off the pack — that is a local, designer-
@@ -231,7 +244,6 @@ export const PRIVATE_PACK_FIELDS = [
      `packageAssets`, so the client's copy is the same document the designer
      previewed, and the legitimate files still reach the client the way they
      always did — through the zip the designer builds and hands over. */
-  'packageAssets',
 ]
 
 /** Bytes. Past this the row is silly to store and slow to open on a phone. */
@@ -242,6 +254,7 @@ export const DELIVERY_PACK_LIMIT = 3_000_000
    spellings of "the moodboard images" would read as two different problems. */
 const DROPPED_PINS = 'the moodboard images'
 const DROPPED_LOGO = 'the logo artwork'
+const DROPPED_APP_ART = 'the application artwork'
 
 const bytes = (value) => {
   try {
@@ -293,7 +306,18 @@ export function buildDeliveryPack(pack) {
   const decision = decisionLineFromPack(pack)
   if (decision) out.decisionLine = decision
 
+  /* THE PRODUCED ARTWORK THE BOOK SHOWS — and only that.
+     Projected rather than copied: `frozenAppAssetsFrom` returns the assets the
+     book REFERENCES that the package's rights gate CLEARS, so a shelf of forty
+     files becomes the two the client's book actually prints. Re-filtered here
+     rather than trusted from the caller, so even a live pack handed to this
+     function cannot leak the rest. */
+  const appAssets = frozenAppAssetsFrom(pack)
+  if (appAssets.length) out.packageAssets = appAssets
+
   const dropped = []
+  /* Shed the heaviest thing that is not the work itself first. The artwork is
+     the point of the page it sits on, so it goes last and says so. */
   if (bytes(out) > DELIVERY_PACK_LIMIT && (out.pins || []).length) {
     out.pins = []
     dropped.push(DROPPED_PINS)
@@ -301,6 +325,13 @@ export function buildDeliveryPack(pack) {
   if (bytes(out) > DELIVERY_PACK_LIMIT && out.logoImage) {
     out.logoImage = ''
     dropped.push(DROPPED_LOGO)
+  }
+  /* Last, and never silently: an application page whose artwork was shed says
+     so through the same gap mechanism the pins and the mark already use, and
+     the page itself falls back to its held state rather than to a mock. */
+  if (bytes(out) > DELIVERY_PACK_LIMIT && (out.packageAssets || []).length) {
+    out.packageAssets = []
+    dropped.push(DROPPED_APP_ART)
   }
   return { pack: out, dropped, tooLarge: bytes(out) > DELIVERY_PACK_LIMIT }
 }

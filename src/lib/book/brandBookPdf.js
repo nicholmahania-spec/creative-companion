@@ -54,7 +54,7 @@ import {
 } from '../brandSystem'
 import { filledDetectiveChapters } from '../brief/detectiveBrief'
 import { hasStoredMark } from '../deliver/markSource'
-import { touchpointsFor, touchpointsBlurb, touchpointLabel, TOUCHPOINT_SPECS } from '../journey/touchpoints'
+import { touchpointsBlurb, touchpointLabel, TOUCHPOINT_SPECS, packTouchpoints } from '../journey/touchpoints'
 import {
   slugifyFilename,
   downloadBlob,
@@ -63,6 +63,7 @@ import {
 } from './exportFiles'
 import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
+import { appAssetFor, APP_ASSET_STATES } from './bookAssets'
 import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
 import { embedBrandFace, characterSetRows } from './brandFonts'
 
@@ -376,7 +377,9 @@ export async function downloadBrandPackVectorPdf(
        is the rule everywhere else in this file. */
     const story = clean(pack?.story) || clean(d.story)
     const surfaces = pack?.brandSurfaces?.length ? pack.brandSurfaces : d.brandSurfaces
-    const touchpoints = touchpointsFor(surfaces, d.deliverablesPicked)
+    /* `packTouchpoints` derives this from the brief for a live pack and reads
+       the frozen list for a Version, whose brief is empty on purpose. */
+    const touchpoints = packTouchpoints(pack)
     const contactLine = [clean(pack?.orgEmail), clean(pack?.orgWebsite)]
       .filter((v) => v && !/\.example\b|example\.com|brand\.example|you@example/i.test(v))
       .join('  ·  ')
@@ -1785,6 +1788,12 @@ export async function downloadBrandPackVectorPdf(
         [WHITE, textOn('#ffffff', inkHex), KICKER_CREAM],
       ]
 
+      /* The disclaimer below is a claim about the page, so it is counted
+         rather than assumed: a page showing the designer's own production
+         artwork must not call it a direction proof. */
+      let realWork = 0
+      let held = 0
+
       const perPage = 4
       for (let i = 0; i < touchpoints.length; i += perPage) {
         if (i > 0) contentPage(`${s.num} — ${s.name}`, s.page, 'Continued.')
@@ -1795,8 +1804,71 @@ export async function downloadBrandPackVectorPdf(
           const [bg, fg, kick] = fields[j % fields.length]
           const cx = margin + (j % 2) * (cellW + gap)
           const cy = y + Math.floor(j / 2) * (cellH + gap)
+          const art = appAssetFor(pack, t)
+
+          /* REAL WORK WINS THE CELL. When the designer has filed the artwork
+             for this surface, the cell IS that artwork — drawn to fit, not
+             cropped, on the cell's own ground so a transparent PNG still reads.
+             The typeset mock below is what the book falls back to when there is
+             nothing to show, never a decoration laid over something real. */
+          if (art.state === APP_ASSET_STATES.ready) {
+            const fmt = imageFormatFromDataUrl(art.dataUrl)
+            if (fmt) {
+              box(cx, cy, cellW, cellH, bg)
+              kicker(touchpointLabel(t), cx + px(20), cy + px(20) + KICKER_PT * 0.82, kick)
+              const pad = px(28)
+              const availW = cellW - pad * 2
+              const availH = cellH - pad * 2 - px(18)
+              /* jsPDF reads the intrinsic size out of the file itself, so the
+                 artwork is fitted rather than stretched. A file it cannot
+                 measure falls back to a landscape card ratio instead of
+                 distorting the designer's work to fill the cell. */
+              let ratio = 1.6
+              try {
+                const props = pdf.getImageProperties(art.dataUrl)
+                if (props?.width && props?.height) ratio = props.width / props.height
+              } catch {
+                /* keep the fallback ratio */
+              }
+              let w = availW
+              let h = w / (ratio || 1.6)
+              if (h > availH) {
+                h = availH
+                w = h * (ratio || 1.6)
+              }
+              const ix = cx + (cellW - w) / 2
+              const iy = cy + px(18) + (cellH - px(18) - h) / 2
+              try {
+                pdf.addImage(art.dataUrl, fmt, ix, iy, w, h)
+                realWork += 1
+                return
+              } catch {
+                /* An unreadable file is a held state, not a reason to draw a
+                   mock in its place — fall through to the held branch. */
+              }
+            }
+          }
+
           box(cx, cy, cellW, cellH, bg)
           kicker(touchpointLabel(t), cx + px(20), cy + px(20) + KICKER_PT * 0.82, kick)
+
+          /* HELD SAYS SO, ON THE PAGE. The designer chose artwork for this
+             surface and the book cannot print it — because it was deleted, has
+             no file, or its usage rights hold it back the same way the package
+             holds it back. Printing the typeset mock instead would hide a
+             decision the client should be able to see. */
+          if (art.state === APP_ASSET_STATES.held) {
+            setFace('body', px(11), fg)
+            para(
+              `Artwork not shown — ${art.reason}.`,
+              cx + px(20),
+              cy + px(20) + px(26),
+              cellW - px(40),
+              { size: px(11), lh: 1.45, rgb: fg }
+            )
+            held += 1
+            return
+          }
           /* A card carries contact details, so the card mock does too — but
              only real ones. Inventing "hello@brand.example" would put a dead
              address in front of a client on the one page that looks most like
@@ -1832,11 +1904,24 @@ export async function downloadBrandPackVectorPdf(
           }
         })
         y += cellH * rows + gap * (rows - 1) + px(16)
-        para('Mocks are direction proofs only - not production die-lines.', margin, y, contentW, {
-          size: px(13),
-          lh: 1.5,
-          rgb: MUTE_CREAM,
-        })
+        /* Only where nothing real is shown. The old line printed
+           unconditionally, so a page carrying the designer's actual business
+           card told the client it was a direction proof. */
+        if (!realWork) {
+          para('Mocks are direction proofs only - not production die-lines.', margin, y, contentW, {
+            size: px(13),
+            lh: 1.5,
+            rgb: MUTE_CREAM,
+          })
+        } else if (held) {
+          para(
+            'Some artwork is named above but not shown — see the note in its place.',
+            margin,
+            y,
+            contentW,
+            { size: px(13), lh: 1.5, rgb: MUTE_CREAM }
+          )
+        }
       }
     }
 
