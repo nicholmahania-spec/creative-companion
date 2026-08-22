@@ -63,6 +63,8 @@ import {
 } from './exportFiles'
 import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
+import { composeRegion } from './layout/compose'
+import { composeSectionOpen } from './layout/templates/sectionOpen'
 import { appAssetFor, APP_ASSET_STATES } from './bookAssets'
 import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
 import { embedBrandFace, characterSetRows } from './brandFonts'
@@ -500,6 +502,47 @@ export async function downloadBrandPackVectorPdf(
       pdf.text(lines, x, yy + size * 0.82)
       return lines.length * size * lh
     }
+    /* ── the composition boundary ──────────────────────────────────────
+       Two functions, and between them they are the whole of what this file
+       is allowed to do for a composed region: measure text, and draw boxes. */
+
+    /**
+     * The injected measurement contract, `measure(text, {face,size,width})`.
+     *
+     * Sets the face FIRST and then splits, in that order, because
+     * `splitTextToSize` measures against whatever font is currently set and
+     * `setFace` is where the reader's own type scale is applied. Measuring
+     * before setting would break lines for a size the page never uses — which
+     * is the same reason `para` has always done these two in this order.
+     */
+    const measureLines = (text, { face = 'body', size = px(15), width }) => {
+      setFace(face, size)
+      return wrap(text, width)
+    }
+
+    /**
+     * Draw a composed region. Converts and paints; decides nothing.
+     *
+     * The default branch throws. A renderer that skipped a box it did not
+     * recognise would produce a page missing an element with nothing on screen
+     * or in the file to say so, and a book that silently loses things is the
+     * failure this whole boundary exists to make impossible.
+     */
+    const drawRegion = (region) => {
+      for (const b of [...region.boxes].sort((l, r) => l.z - r.z)) {
+        if (b.type === 'rect') {
+          box(b.rect.x, b.rect.y, b.rect.w, b.rect.h, b.style.fill)
+          continue
+        }
+        if (b.type === 'text') {
+          setFace(b.style.face, b.style.size, b.style.color)
+          pdf.text(b.lines.map(pdfSafeText), b.origin.x, b.origin.y)
+          continue
+        }
+        throw new Error(`brandBookPdf: cannot draw box type "${b.type}"`)
+      }
+    }
+
     const paraH = (text, w, size = px(15), lh = 1.5, face = 'body') => {
       setFace(face, size)
       return wrap(text, w).length * size * lh
@@ -551,37 +594,33 @@ export async function downloadBrandPackVectorPdf(
     const sectionOpen = (num, titleLines, dark, title, sub = '') => {
       startSheet(CREAM, title)
       sheetFoots.push({ page: pageIndex, dark: false })
-      const bandBg = dark ? INK : GOLD
-      const bandFg = dark ? ON_INK : ON_GOLD
-      const bandAccent = dark ? GOLD : INK
-      const bandH = px(104)
-      // Full-bleed to the top edge, including the bleed area.
-      box(0, 0, pageW, bandH + bleed, bandBg)
-      /* Clear of the running header, which is drawn last and lands at
-         `bleed + px(26)` flush left — 8px from this number at 10px type, so
-         the two overprinted each other on every section page. The band is
-         104px tall and this pushes its content to ~85px, so there is room to
-         move rather than needing to move the header into the bleed. */
-      let by = bleed + px(running.show && running.text ? 46 : 34)
-      setFace('display', px(14), bandAccent)
-      pdf.text(pdfSafeText(`${num} /`), margin, by)
-      const BT = px(30)
-      by += px(16) + BT * 0.78
-      setFace('display', BT, bandFg)
-      pdf.text(pdfSafeText(titleLines.join(' ')), margin, by)
-      // Content starts below the band.
-      y = bandH + bleed + px(30)
-      const H1 = px(30)
-      setFace('heading', H1, ON_CREAM)
-      pdf.text(pdfSafeText(title), margin, y + H1 * 0.78)
-      y += H1 * 0.78 + px(6)
-      box(margin, y + px(8), px(56), px(3), GOLD)
-      y += px(8) + px(3)
-      if (sub) {
-        y += px(20)
-        y += para(sub, margin, y, contentW * 0.72, { size: px(15), rgb: MUTE_CREAM })
-      }
-      y += px(24)
+      /* PHASE 10A — THIS PAGE IS COMPOSED, NOT DRAWN FROM HERE.
+         Everything the region contains and every position it sits at is
+         decided by the template; this function resolves the paint, hands over
+         the geometry, draws what comes back, and adopts the cursor. It no
+         longer knows the band is 104px tall or that the rule follows the
+         title, which is the point: the same region will drive the on-screen
+         book in 10B without either surface restating the other. */
+      const region = composeRegion(
+        composeSectionOpen,
+        { num, titleLines, title },
+        { sub },
+        {
+          band: {
+            bg: dark ? INK : GOLD,
+            fg: dark ? ON_INK : ON_GOLD,
+            accent: dark ? GOLD : INK,
+          },
+          title: { color: ON_CREAM },
+          rule: { fill: GOLD },
+          sub: { color: MUTE_CREAM },
+          hasRunningHeader: !!(running.show && running.text),
+        },
+        { pageW, margin, bleed, contentW, startY: 0, px },
+        measureLines
+      )
+      drawRegion(region)
+      y = region.advanceTo
     }
 
     /**
