@@ -255,6 +255,73 @@ export function createMeasureHarness({ pdf, faces, typeScale = {}, typeColor = {
 }
 
 /**
+ * An authored grid cell, resolved to physical geometry.
+ *
+ * THE GRID STOPS BEING A DRAWING. `bookGrid` has carried columns, rows, gutter
+ * and margin since the Builder had a grid panel, and until now it only drew
+ * hairlines — `gridGuidesAll` returns early unless the designer asks to see
+ * them, and nothing was ever positioned by them. This is the function that
+ * makes those numbers mean something.
+ *
+ * WHICH MARGIN. Columns and the gutter come from `bookGrid`; the LEFT EDGE and
+ * the measure come from the page's real content box, not from the guide's own
+ * margin percentage. Those two disagree today — the guide overlay insets by
+ * `bookGrid.margin`% of the sheet while the content insets by the edge-space
+ * points the PDF actually types to — and the content box is the one that
+ * matters, because a full-span cell has to land exactly where the heading
+ * already is. Resolving against the guide instead would move every existing
+ * page by a few points and call it a placement.
+ *
+ * So `{ col: 1, colSpan: <all columns> }` returns precisely `{ x: margin,
+ * w: contentW }`, which is the identity this whole phase rests on: a page with
+ * no authored placement must compose byte-for-byte as it did before.
+ *
+ * @param {{col:number, colSpan:number}} cell
+ * @param {object} bookGrid  { columns, gutter } — gutter is a % of the measure
+ * @param {{margin:number, contentW:number}} geometry
+ * @returns {{x:number, w:number}} points
+ */
+export function resolveGridCell(cell, bookGrid, geometry) {
+  const { margin, contentW } = geometry || {}
+  if (!Number.isFinite(margin) || !Number.isFinite(contentW)) {
+    throw new Error('resolveGridCell: geometry needs a finite margin and contentW')
+  }
+  const columns = clampInt(bookGrid?.columns, 1, 24, 12)
+  /* Same bounds the Builder's own control enforces, so a value that reached
+     storage from an older build cannot produce a negative column width. */
+  const gutterPct = clampNum(bookGrid?.gutter, 0, 20, 3)
+
+  const col = clampInt(cell?.col, 1, columns, 1)
+  const maxSpan = columns - col + 1
+  const colSpan = clampInt(cell?.colSpan, 1, maxSpan, maxSpan)
+
+  const gutter = (gutterPct / 100) * contentW
+  const colW = columns > 0 ? (contentW - gutter * (columns - 1)) / columns : contentW
+
+  return {
+    x: margin + (col - 1) * (colW + gutter),
+    w: colSpan * colW + (colSpan - 1) * gutter,
+  }
+}
+
+/** The cell a page with no authored placement composes at: the full measure. */
+export function fullMeasureCell(bookGrid) {
+  const columns = clampInt(bookGrid?.columns, 1, 24, 12)
+  return { col: 1, colSpan: columns }
+}
+
+const clampInt = (v, lo, hi, fallback) => {
+  const n = Math.round(Number(v))
+  if (!Number.isFinite(n)) return fallback
+  return Math.min(hi, Math.max(lo, n))
+}
+const clampNum = (v, lo, hi, fallback) => {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return fallback
+  return Math.min(hi, Math.max(lo, n))
+}
+
+/**
  * The PDF's ruler.
  *
  * Sets the face FIRST and then splits, in that order, because

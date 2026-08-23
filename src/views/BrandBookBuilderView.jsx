@@ -1,17 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react'
 import useAppStore from '../store/useAppStore'
-import { bookCompositionOf, compositionToLegacy } from '../lib/book/bookBuilder'
-import { labelForView, labelForStepId } from '../lib/journey/journey'
-import Workroom from '../components/Workroom'
 import {
-  bookBuilderFor,
-  readPaletteTokens,
-  resolvePageBg,
+  EDGE_ORDER,
   EDGE_STOPS,
+  HEADING_ELEMENT_ID,
+  bookBuilderFor,
+  bookCompositionOf,
+  compositionToLegacy,
+  elementCellFor,
   marginPercentForEdge,
   projectBookSetup,
-  EDGE_ORDER,
+  readPaletteTokens,
+  resolvePageBg,
 } from '../lib/book/bookBuilder'
+import { labelForView, labelForStepId } from '../lib/journey/journey'
+import Workroom from '../components/Workroom'
 import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES, fieldHome, FIELD_HOMES } from '../lib/book/bookContent'
 import { currentBrandPack } from '../lib/book/currentPack'
 import { downloadBrandPackVectorPdf } from '../lib/book/exportFiles'
@@ -374,6 +377,10 @@ function ComposedSectionPage({ pack, bookSetup, section, fontFamily, render }) {
     bookSetup,
     pack?.palette, pack?.colorRoles, pack?.bookPageBg,
     pack?.bookTypeScale, pack?.bookTypeColor, pack?.bookRunning,
+    /* The authored placement. Without it the page keeps the geometry it was
+       first composed with and the rail looks broken — the value persists but
+       the drawing never catches up. */
+    pack?.bookComposition,
   ])
 
   useEffect(() => {
@@ -1111,6 +1118,35 @@ export default function BrandBookBuilderView({
       return next
     })
   }
+  /* ── PHASE 10C · the authored placement ─────────────────────────────────
+     Read from the composition, written back to it, and nothing in between.
+     No pixels, no points, no local copy of the geometry — the compositor owns
+     resolving this cell and the rail owns choosing it. */
+  const gridColumns = Math.min(24, Math.max(1, Math.round(Number(grid.columns) || 12)))
+  const columnChoices = Array.from({ length: gridColumns }, (_, i) => i + 1)
+  const savedHeadingCell = elementCellFor(
+    bookCompositionOf(project),
+    'color',
+    HEADING_ELEMENT_ID
+  )
+  /* Unplaced reads as the full measure, which is exactly what it composes as
+     — so the control shows the truth rather than an empty box. */
+  const headingCell = {
+    col: savedHeadingCell?.col ?? 1,
+    colSpan: savedHeadingCell?.colSpan ?? gridColumns,
+  }
+  const headingLocked = lockedPages.has('color')
+  const setHeadingCell = (patch) => {
+    if (headingLocked) return
+    const col = Math.min(gridColumns, Math.max(1, patch.col ?? headingCell.col))
+    const maxSpan = gridColumns - col + 1
+    const colSpan = Math.min(maxSpan, Math.max(1, patch.colSpan ?? headingCell.colSpan))
+    setBookBuilder({
+      pageElements: { color: [{ id: HEADING_ELEMENT_ID, cell: { col, colSpan } }] },
+    })
+  }
+
+
 
   const movePageUp = (pageId, fallbackOrder = []) => {
     setPageOrder((prev) => {
@@ -1856,6 +1892,58 @@ export default function BrandBookBuilderView({
             <input id="bbb-showGrid" type="checkbox" checked={grid.show} onChange={(e) => setGrid((g) => ({ ...g, show: e.target.checked }))} />
             <label htmlFor="bbb-showGrid">Show grid guides</label>
           </div>
+        </Section>
+
+        {/* PHASE 10C — THE FIRST THING A DESIGNER CAN PLACE.
+            Two selects, not a drag. The page list a few sections down rejects
+            drag-to-reorder on WCAG 2.2 SC 2.5.7 grounds and says so; the first
+            placement control in the product should not quietly contradict it.
+            Drag can come later ON TOP of this — it cannot be the only way in.
+
+            The value written is a grid CELL, never a coordinate. The compositor
+            resolves it, and the PDF reads the same record, which is the whole
+            of what this phase is proving. */}
+        <Section title="Position">
+          <p className="panel-hint">
+            Where the Color section&rsquo;s heading sits on the grid. The band
+            above it stays full width.
+          </p>
+          <div className="bbb-field">
+            <label htmlFor="bbb-headingCol">Column</label>
+            <select
+              id="bbb-headingCol"
+              value={headingCell.col}
+              disabled={headingLocked}
+              onChange={(e) => setHeadingCell({ col: Number(e.target.value) })}
+            >
+              {columnChoices.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+          <div className="bbb-field">
+            <label htmlFor="bbb-headingSpan">Width</label>
+            <select
+              id="bbb-headingSpan"
+              value={headingCell.colSpan}
+              disabled={headingLocked}
+              onChange={(e) => setHeadingCell({ colSpan: Number(e.target.value) })}
+            >
+              {columnChoices
+                .filter((n) => n <= gridColumns - headingCell.col + 1)
+                .map((n) => (
+                  <option key={n} value={n}>
+                    {n === 1 ? '1 column' : `${n} columns`}
+                  </option>
+                ))}
+            </select>
+          </div>
+          {headingLocked ? (
+            <p className="panel-hint">
+              This page is locked. Unlock it in &ldquo;In this book&rdquo; to
+              move the heading.
+            </p>
+          ) : null}
         </Section>
 
         <Section title="Running elements">

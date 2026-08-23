@@ -67,6 +67,7 @@ import {
   mixRgb,
 } from './layout/renderContext'
 import { composeSectionOpen } from './layout/templates/sectionOpen'
+import { elementCellFor, HEADING_ELEMENT_ID } from './bookBuilder'
 import { composeContentOpen } from './layout/templates/contentOpen'
 import { appAssetFor, APP_ASSET_STATES } from './bookAssets'
 import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
@@ -458,7 +459,7 @@ export async function downloadBrandPackVectorPdf(
           rule: { fill: GOLD },
           sub: { color: MUTE_CREAM },
         },
-        { pageW, margin, bleed, contentW, startY: margin, px },
+        { pageW, margin, bleed, contentW, startY: margin, px, bookGrid },
         measureLines
       )
       drawRegion(region)
@@ -479,7 +480,7 @@ export async function downloadBrandPackVectorPdf(
      * The band carries the section identity, so the content title sits below
      * it with no separate kicker.
      */
-    const sectionOpen = (num, titleLines, dark, title, sub = '') => {
+    const sectionOpen = (num, titleLines, dark, title, sub = '', pageId = '') => {
       startSheet(CREAM, title)
       sheetFoots.push({ page: pageIndex, dark: false })
       /* PHASE 10A — THIS PAGE IS COMPOSED, NOT DRAWN FROM HERE.
@@ -492,7 +493,11 @@ export async function downloadBrandPackVectorPdf(
       const region = composeRegion(
         composeSectionOpen,
         { num, titleLines, title },
-        { sub },
+        /* THE SAME AUTHORED PLACEMENT THE BUILDER DREW. Read from the
+           composition the pack now carries, so the file and the screen resolve
+           one record rather than two. Null on a page nobody placed, which
+           composes at full measure exactly as before. */
+        { sub, headingCell: elementCellFor(pack?.bookComposition, pageId, HEADING_ELEMENT_ID) },
         {
           band: {
             bg: dark ? INK : GOLD,
@@ -504,7 +509,7 @@ export async function downloadBrandPackVectorPdf(
           sub: { color: MUTE_CREAM },
           hasRunningHeader: !!(running.show && running.text),
         },
-        { pageW, margin, bleed, contentW, startY: 0, px },
+        { pageW, margin, bleed, contentW, startY: 0, px, bookGrid },
         measureLines
       )
       drawRegion(region)
@@ -1042,7 +1047,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawLogoSection = (s) => {
-      sectionOpen(s.num, s.divider, true, s.page)
+      sectionOpen(s.num, s.divider, true, s.page, '', s.id)
 
       /* The direction the logo was drawn to, in the designer's own words.
          It sits above the lockups because it is the reason they look the way
@@ -1328,7 +1333,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawColorSection = (s) => {
-      sectionOpen(s.num, s.divider, false, s.page)
+      sectionOpen(s.num, s.divider, false, s.page, '', s.id)
 
       /* Swatch grid — the palette, named and specified.
          WRAPS rather than truncating. This was `colors.slice(0, 4)`, so a
@@ -1463,7 +1468,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawTypeSection = (s) => {
-      sectionOpen(s.num, s.divider, true, s.page)
+      sectionOpen(s.num, s.divider, true, s.page, '', s.id)
 
       const headingName = clean(pack?.typeHeading) || 'Heading face'
       const bodyName = clean(pack?.typeBody) || 'Body face'
@@ -1637,7 +1642,7 @@ export async function downloadBrandPackVectorPdf(
     }
 
     const drawImagerySection = (s) => {
-      sectionOpen(s.num, s.divider, false, s.page)
+      sectionOpen(s.num, s.divider, false, s.page, '', s.id)
       const cont = () => contentPage(`${s.num} — ${s.name}`, s.page, 'Continued.')
 
       ;[
@@ -1703,7 +1708,7 @@ export async function downloadBrandPackVectorPdf(
     /** What each mock is called and what field it sits on. */
     const drawAppsSection = (s) => {
       const blurb = clean(touchpointsBlurb(surfaces, d.deliverablesPicked))
-      sectionOpen(s.num, s.divider, true, s.page, blurb)
+      sectionOpen(s.num, s.divider, true, s.page, blurb, s.id)
 
       const gap = px(2)
       const cellW = (contentW - gap) / 2

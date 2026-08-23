@@ -26,7 +26,9 @@
  */
 
 import { composePage, composeRegion } from './compose'
+import { elementCellFor, HEADING_ELEMENT_ID } from '../bookBuilder'
 import { composeSectionOpen } from './templates/sectionOpen'
+
 import {
   buildBookGeometry,
   buildBookStyle,
@@ -74,13 +76,19 @@ export function composeSectionOpenPage(pack, section, context, { index = 0 } = {
   if (!section) throw new Error('composeSectionOpenPage: a section is required')
   const { geometry, harness } = context
   const style = buildBookStyle(pack)
+  /* THE DESIGNER'S OWN PLACEMENT, READ FROM THE COMPOSITION.
+     The pack carries the Book's composition rows the same way it carries its
+     grid and its type scale, so the browser and the PDF read one record. A
+     page with no authored cell yields null and the template composes at full
+     measure — the geometry every existing book already has. */
+  const headingCell = elementCellFor(pack?.bookComposition, section.id, HEADING_ELEMENT_ID)
   const running = pack?.bookRunning || {}
   const dark = !!section.dark
 
   const region = composeRegion(
     composeSectionOpen,
     { num: section.num, titleLines: section.divider, title: section.page },
-    { sub: section.sub || '' },
+    { sub: section.sub || '', headingCell },
     {
       band: {
         bg: dark ? style.INK : style.GOLD,
@@ -99,6 +107,7 @@ export function composeSectionOpenPage(pack, section, context, { index = 0 } = {
       contentW: geometry.contentW,
       startY: 0,
       px: geometry.px,
+      bookGrid: pack?.bookGrid,
     },
     harness.measure
   )

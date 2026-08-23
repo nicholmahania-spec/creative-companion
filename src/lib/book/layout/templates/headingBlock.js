@@ -31,6 +31,22 @@ export const HEADING_SPEC = Object.freeze({
   tailGap: 24,
 })
 
+import { fullMeasureCell, resolveGridCell } from '../renderContext'
+
+/**
+ * WHERE THE HEADING SITS, PHASE 10C.
+ *
+ * The heading is the first element a designer can place. Its box is resolved
+ * from an authored grid cell — and from one ALWAYS, not only when a placement
+ * exists, because a cell of the full column count resolves to exactly the
+ * margin and measure the heading used before. There is no legacy branch to
+ * drift: an unplaced page and a page placed at full width are the same
+ * arithmetic, which is what makes "existing books are untouched" provable
+ * rather than asserted.
+ *
+ * Only the heading moves. The band above it is full-bleed by design and stays
+ * where the section opening puts it.
+ */
 /** jsPDF sets a line on its baseline; the design places each by its own size. */
 export const CAP_BASELINE = 0.78
 export const BODY_BASELINE = 0.82
@@ -46,7 +62,7 @@ export const SUB_LINE_HEIGHT = 1.5
  * @returns {{ boxes: object[], advanceTo: number }}
  */
 export function headingBlock(content, style, geometry, measure, spec) {
-  const { margin, contentW, startY = 0, px } = geometry || {}
+  const { margin, contentW, startY = 0, px, bookGrid } = geometry || {}
   if (typeof px !== 'function') throw new Error('headingBlock: geometry.px is required')
   if (typeof measure !== 'function') throw new Error('headingBlock: measure is required')
   if (!Number.isFinite(spec?.titleSize)) {
@@ -56,13 +72,18 @@ export function headingBlock(content, style, geometry, measure, spec) {
   const boxes = []
   let y = startY
 
+  /* The authored cell, or the whole measure. Both go through the same
+     resolver, so the unplaced case is not a special case. */
+  const cell = spec.cell || fullMeasureCell(bookGrid)
+  const { x, w } = resolveGridCell(cell, bookGrid, { margin, contentW })
+
   const h1 = px(spec.titleSize)
   boxes.push({
     id: 'pageTitle',
     type: 'text',
     lines: [String(content?.title ?? '')],
-    origin: { x: margin, y: y + h1 * CAP_BASELINE },
-    rect: { x: margin, y, w: contentW, h: h1 },
+    origin: { x, y: y + h1 * CAP_BASELINE },
+    rect: { x, y, w, h: h1 },
     style: { face: 'heading', size: h1, color: style.title.color },
     z: 1,
   })
@@ -72,7 +93,7 @@ export function headingBlock(content, style, geometry, measure, spec) {
     id: 'rule',
     type: 'rect',
     rect: {
-      x: margin,
+      x,
       y: y + px(HEADING_SPEC.ruleTop),
       w: px(HEADING_SPEC.ruleW),
       h: px(HEADING_SPEC.ruleH),
@@ -86,7 +107,10 @@ export function headingBlock(content, style, geometry, measure, spec) {
   if (sub) {
     y += px(HEADING_SPEC.subGap)
     const subSize = px(HEADING_SPEC.subSize)
-    const width = contentW * HEADING_SPEC.subWidthRatio
+    /* The sub is a share of the heading's own measure, so it narrows with it
+       rather than reaching past a placed heading. At full span this is the
+       same number it always was. */
+    const width = w * HEADING_SPEC.subWidthRatio
     /* The injected measurement boundary. Lines are decided here; the renderer
        draws the lines it is handed. */
     const lines = measure(sub, { face: 'body', size: subSize, width })
@@ -94,8 +118,8 @@ export function headingBlock(content, style, geometry, measure, spec) {
       id: 'sub',
       type: 'text',
       lines,
-      origin: { x: margin, y: y + subSize * BODY_BASELINE },
-      rect: { x: margin, y, w: width, h: lines.length * subSize * SUB_LINE_HEIGHT },
+      origin: { x, y: y + subSize * BODY_BASELINE },
+      rect: { x, y, w: width, h: lines.length * subSize * SUB_LINE_HEIGHT },
       style: { face: 'body', size: subSize, color: style.sub.color },
       z: 1,
     })

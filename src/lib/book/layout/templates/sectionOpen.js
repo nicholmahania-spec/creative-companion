@@ -114,7 +114,7 @@ export function composeSectionOpen(sectionSpec, content, style, geometry, measur
     style,
     { ...geometry, startY: startY + bandH + bleed + px(SPEC.contentTop) },
     measure,
-    { titleSize: SPEC.titleSize }
+    { titleSize: SPEC.titleSize, cell: content?.headingCell || null }
   )
   boxes.push(...head.boxes)
 

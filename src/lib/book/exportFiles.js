@@ -14,6 +14,7 @@ import {
   resolvedRunning,
   resolvedTypeColors,
   resolvedTypeScale,
+  bookCompositionOf,
 } from './bookBuilder'
 import { toISODate } from '../dates'
 import { clientFacingName } from '../client/clientRecord'
@@ -382,6 +383,16 @@ export function buildBrandPackSnapshot({
     bookTypeColor: resolvedTypeColors(p),
     bookGrid: resolvedGrid(p),
     bookRunning: resolvedRunning(p),
+    /* PHASE 10C — THE DESIGNER'S LAYOUT DECISIONS, CARRIED LIKE THE REST.
+       Composition rows were recorded into every Version and read by nobody at
+       render time: the PDF received `{pageSize, edgeSpace, printShop}` and
+       nothing else, so an authored placement could not reach the file. It
+       travels here beside the grid it resolves against.
+
+       10C reads ELEMENT PLACEMENT from it and nothing more. Page order is in
+       these rows too and the PDF still ignores it — a confirmed, pre-existing
+       bug, deliberately not fixed here. */
+    bookComposition: bookCompositionOf(p),
     exportedAt: new Date().toISOString(),
     /* Whose name goes on the client's copy. This replaced `app`, which
        carried the platform's name into every export — PRODUCT.md §20 is
