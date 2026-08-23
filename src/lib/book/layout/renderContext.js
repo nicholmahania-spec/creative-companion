@@ -196,6 +196,65 @@ export function buildBookGeometry(bookSetup) {
 }
 
 /**
+ * Text as a PDF text layer can carry it.
+ *
+ * Applied inside `wrap`, so line breaks are computed on the SAME string the
+ * page will draw. A renderer that measured the raw text and drew the
+ * sanitised one would break lines in the wrong places.
+ */
+export function pdfSafeText(input) {
+  return String(input ?? '')
+    .replace(/ | /g, ' ')
+    .replace(/[‘’‚′]/g, "'")
+    .replace(/[“”„″‶]/g, '"')
+    .replace(/[–—−]/g, '-')
+    .replace(/…/g, '...')
+    .replace(/[≥≧]/g, '>=')
+    .replace(/[≤≦]/g, '<=')
+    .replace(/[≈≃≅]/g, '~')
+    .replace(/[★☆✦✩✪]/g, '*')
+    .replace(/[•‣∙]/g, '-')
+    .replace(/[→⇒➔]/g, '->')
+    .replace(/[←⇐]/g, '<-')
+    .replace(/[×✕✖]/g, 'x')
+    .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, '')
+}
+
+/** Face name → the type-scale role the reader's own scale multiplies. */
+export const FACE_ROLE = Object.freeze({
+  display: 'headline',
+  heading: 'subhead',
+  body: 'body',
+  bodyStrong: 'body',
+  bodyItalic: 'body',
+})
+
+/**
+ * The ruler itself, built once and handed to whoever needs to measure.
+ *
+ * `faces` is passed in rather than loaded here: registering and embedding
+ * fonts is asynchronous and belongs to whoever owns the jsPDF document. What
+ * is shared is the ALGORITHM — which face, at which size, scaled by the
+ * reader's own type scale, and where the line breaks fall.
+ */
+export function createMeasureHarness({ pdf, faces, typeScale = {}, typeColor = {}, px }) {
+  const setFace = (face, size, rgb) => {
+    const [family, style] = faces[face]
+    pdf.setFont(family, style)
+    const role = FACE_ROLE[face]
+    const ratio = role ? Number(typeScale[role]) : null
+    pdf.setFontSize(
+      Number.isFinite(ratio) && ratio > 0 ? size * ratio : size
+    )
+    const chosen = role ? hexToRgb(typeColor[role]) : null
+    const use = chosen || rgb
+    if (use) pdf.setTextColor(use[0], use[1], use[2])
+  }
+  const wrap = (text, w) => pdf.splitTextToSize(pdfSafeText(text), w)
+  return { setFace, wrap, px, measure: makePdfMeasure({ setFace, wrap, px }) }
+}
+
+/**
  * The PDF's ruler.
  *
  * Sets the face FIRST and then splits, in that order, because

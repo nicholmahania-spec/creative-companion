@@ -61,6 +61,8 @@ import { bookPlan } from './bookDocument'
 import { composeRegion } from './layout/compose'
 import {
   buildBookStyle,
+  createMeasureHarness,
+  pdfSafeText,
   hexToRgb,
   mixRgb,
 } from './layout/renderContext'
@@ -71,24 +73,6 @@ import { registerBookFonts, FACE, FALLBACK_FACE } from './bookFonts'
 import { embedBrandFace, characterSetRows } from './brandFonts'
 
 // ── Shared PDF text / image helpers (WinAnsi-safe + raster only) ─────────
-
-function pdfSafeText(input) {
-  return String(input ?? '')
-    .replace(/ | /g, ' ')
-    .replace(/[‘’‚′]/g, "'")
-    .replace(/[“”„″‶]/g, '"')
-    .replace(/[–—−]/g, '-')
-    .replace(/…/g, '...')
-    .replace(/[≥≧]/g, '>=')
-    .replace(/[≤≦]/g, '<=')
-    .replace(/[≈≃≅]/g, '~')
-    .replace(/[★☆✦✩✪]/g, '*')
-    .replace(/[•‣∙]/g, '-')
-    .replace(/[→⇒➔]/g, '->')
-    .replace(/[←⇐]/g, '<-')
-    .replace(/[×✕✖]/g, 'x')
-    .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, '')
-}
 
 function imageFormatFromDataUrl(url) {
   const s = String(url || '')
@@ -340,25 +324,21 @@ export async function downloadBrandPackVectorPdf(
     const bookGrid = pack?.bookGrid || {}
     const typeScale = pack?.bookTypeScale || {}
     const typeColor = pack?.bookTypeColor || {}
-    const FACE_ROLE = {
-      display: 'headline',
-      heading: 'subhead',
-      body: 'body',
-      bodyStrong: 'body',
-      bodyItalic: 'body',
-    }
-    const setFace = (face, size, rgb) => {
-      const [family, style] = faces[face]
-      pdf.setFont(family, style)
-      const role = FACE_ROLE[face]
-      const ratio = role ? Number(typeScale[role]) : null
-      pdf.setFontSize(
-        Number.isFinite(ratio) && ratio > 0 ? size * ratio : size
-      )
-      const chosen = role ? hexToRgb(typeColor[role]) : null
-      const use = chosen || rgb
-      if (use) pdf.setTextColor(use[0], use[1], use[2])
-    }
+    /* ── the measurement harness ────────────────────────────────────────
+       ONE `setFace`, ONE `wrap`, ONE measurement algorithm, shared. The
+       compositor decides where a line ends; this is the ruler it decides
+       with, and the React path takes the same one rather than measuring the
+       DOM — a DOM ruler and a PDF ruler disagree about where a line ends, so
+       the same content would compose to two geometries. Font loading stays
+       here because it is async and PDF-specific; the harness receives the
+       resolved faces. */
+    const { setFace, wrap, measure: measureLines } = createMeasureHarness({
+      pdf,
+      faces,
+      typeScale,
+      typeColor,
+      px,
+    })
     const box = (x, yy, w, h, rgb) => {
       pdf.setFillColor(rgb[0], rgb[1], rgb[2])
       pdf.rect(x, yy, w, h, 'F')
@@ -381,7 +361,6 @@ export async function downloadBrandPackVectorPdf(
       pdf.text(pdfSafeText(text), x, yy, opts)
       pdf.setCharSpace(0)
     }
-    const wrap = (text, w) => pdf.splitTextToSize(pdfSafeText(text), w)
 
     /**
      * The most letter-spacing the PDF's text layer survives.
@@ -412,22 +391,10 @@ export async function downloadBrandPackVectorPdf(
       return lines.length * size * lh
     }
     /* ── the composition boundary ──────────────────────────────────────
-       Two functions, and between them they are the whole of what this file
-       is allowed to do for a composed region: measure text, and draw boxes. */
-
-    /**
-     * The injected measurement contract, `measure(text, {face,size,width})`.
-     *
-     * Sets the face FIRST and then splits, in that order, because
-     * `splitTextToSize` measures against whatever font is currently set and
-     * `setFace` is where the reader's own type scale is applied. Measuring
-     * before setting would break lines for a size the page never uses — which
-     * is the same reason `para` has always done these two in this order.
-     */
-    const measureLines = (text, { face = 'body', size = px(15), width }) => {
-      setFace(face, size)
-      return wrap(text, width)
-    }
+       One function now, and it is the whole of what this file is allowed to
+       do for a composed region: draw the boxes it is handed. Measuring moved
+       to the shared harness, so the ruler the compositor decides with is the
+       same one every renderer takes. */
 
     /**
      * Draw a composed region. Converts and paints; decides nothing.
