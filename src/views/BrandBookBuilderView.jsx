@@ -15,6 +15,12 @@ import {
 import { paginatedBookPages, PAGE_FIELDS, readField, APPENDIX_PAGES, fieldHome, FIELD_HOMES } from '../lib/book/bookContent'
 import { currentBrandPack } from '../lib/book/currentPack'
 import { downloadBrandPackVectorPdf } from '../lib/book/exportFiles'
+import PositionedPageView from '../components/book/PositionedPageView'
+import {
+  bookPageRatio,
+  composeSectionOpenPage,
+  createBrowserMeasureContext,
+} from '../lib/book/layout/bookPageDriver'
 import { bookSectionIds, bookPlan, FOUNDATION_PAGES, SECTION_PAGES } from '../lib/book/bookDocument'
 import { labelFor, parseLabel, familyByName } from '../lib/book/fontCatalog'
 import { monogramFor, logoDontsList, DEFAULT_LOGO_CLEARSPACE, DEFAULT_LOGO_MIN_SIZE } from '../lib/brandSystem'
@@ -343,21 +349,102 @@ function FrontCover({ kit, style, id }) {
    cover and the back, a hard-coded 0/1 would repeat page numbers and put the
    alternating margins on the wrong side. Defaults keep the old behaviour if
    this page is ever rendered on its own. */
-function ColorsPage({ kit, style, pageIndex = 0, id }) {
+/**
+ * The composed section opening for one page.
+ *
+ * Composition is asynchronous because the ruler is: `createMeasureHarness`
+ * needs a font-prepared jsPDF document, and geometry measured against
+ * fallback faces is not the geometry the book prints. So this renders nothing
+ * until the real measurement is available rather than showing a page laid out
+ * to the wrong metrics and correcting it a moment later.
+ *
+ * It composes and hands the result down. It does not draw — that is
+ * `PositionedPageView`, which cannot reach a template.
+ */
+function ComposedSectionPage({ pack, bookSetup, section, fontFamily, render }) {
+  const [composed, setComposed] = useState(null)
+  /* `pack` and `bookSetup` are rebuilt on every render, so they cannot be
+     effect dependencies — the effect would re-run forever. The signature
+     names exactly what the composition READS, so it changes when a rail edit
+     changes the page and not when React merely re-renders. That is also what
+     makes the rail-edit proof real: change the palette or the type scale and
+     the signature moves, the page recomposes, and the drawing changes. */
+  const signature = JSON.stringify([
+    section?.id, section?.num, section?.divider, section?.page, section?.dark,
+    bookSetup,
+    pack?.palette, pack?.colorRoles, pack?.bookPageBg,
+    pack?.bookTypeScale, pack?.bookTypeColor, pack?.bookRunning,
+  ])
+
+  useEffect(() => {
+    let live = true
+    /* Captured from THIS render. When the signature changes the effect gets a
+       fresh closure with the fresh pack, and the signature names everything
+       the composition reads — so a stale capture is not reachable. */
+    const p = pack
+    const setup = bookSetup
+    const sec = section
+    if (!sec) return undefined
+    createBrowserMeasureContext(p, setup)
+      .then((context) => {
+        if (!live) return
+        const page = composeSectionOpenPage(p, sec, context)
+        setComposed({ page, advanceTo: page.regions[0]?.advanceTo || 0 })
+      })
+      .catch(() => {
+        /* No composed opening rather than a wrong one. The page keeps its own
+           heading, which is the honest fallback. */
+        if (live) setComposed(null)
+      })
+    return () => {
+      live = false
+    }
+  }, [signature])
+
+  if (!composed || !section) return render({ opening: null, contentTop: null })
+  return render({
+    opening: (
+      <PositionedPageView
+        page={composed.page}
+        fontFamily={fontFamily}
+        title={`${section.num} · ${section.page}`}
+      />
+    ),
+    /* WHERE THE PAGE'S OWN CONTENT STARTS, ACCORDING TO THE COMPOSITOR.
+       `advanceTo` is the cursor the region hands on — the same number the PDF
+       adopts after drawing this band. React does not compute it, it reads it,
+       which is the whole point: the opening and the content below it agree
+       because one thing decided where the boundary is.
+
+       Divided by WIDTH, not height: a percentage padding resolves against the
+       containing block's width in CSS, whatever axis it is applied to. Using
+       the height read plausibly and put the content ~30pt too high. */
+    contentTop: `${(composed.advanceTo / composed.page.size.w) * 100}%`,
+  })
+}
+
+function ColorsPage({ kit, style, pageIndex = 0, id, opening = null, contentTop = null }) {
   const { colors, bg, dark, grid, running, swatchCols, roleColors } = kit
   const swatches = colors.slice(0, 6)
   const roles = roleColors || []
   return (
     <div
       id={id}
-      className="bbb-page bbb-page--colors"
+      className={`bbb-page bbb-page--colors${opening ? ' bbb-page--composed' : ''}`}
       data-dark={dark || undefined}
-      style={{ background: bg, ...style }}
+      style={{ background: bg, ...style, ...(contentTop ? { paddingTop: contentTop } : null) }}
     >
       <span className="bbb-page-label">Color page</span>
       <GridOverlay {...grid} />
       <RunningHeader {...running} pageIndex={pageIndex} />
-      <p className="bbb-ph-title">Color palette</p>
+      {/* PHASE 10B — THIS PAGE'S OPENING IS COMPOSED, NOT WRITTEN HERE.
+          When the compositor has measured, the section band, number, title
+          and rule arrive as a PositionedPage and are drawn by
+          `PositionedPageView`. Until then the page keeps its own title, so a
+          slow font load shows the old heading rather than nothing. This is
+          the divergence 10B exists to close: the PDF has drawn this band on
+          every section page all along and the canvas never did. */}
+      {opening || <p className="bbb-ph-title">Color palette</p>}
       {roles.length > 0 && (
         <div className="bbb-role-swatches" aria-label="Brand colour roles">
           {roles.map((r) => {
@@ -1317,13 +1404,34 @@ export default function BrandBookBuilderView({
 
   bookSectionIds(pack).forEach((id) => {
     if (id === 'color') {
+      /* THE ONE COMPOSITOR-DRIVEN PAGE. Everything else on the canvas still
+         renders the way it always has; this page's opening now comes from
+         the same compositor and the same templates that produce the PDF.
+         `dark: false` matches the PDF's own call site for this section — the
+         ink/gold alternation still lives at the PDF's five call sites rather
+         than in the plan, which is a real thing to move later and not this
+         phase's to move. */
+      const colorSection = bookPlan(pack).sections.find((sx) => sx.id === 'color')
       inner.push((i) => (
-        <ColorsPage
+        <ComposedSectionPage
           key="colors"
-          pageLabel={sectionName('color')}
-          pageIndex={i}
-          kit={{ ...kit, ...bgFor('pageColors') }}
-          style={gridMarginVar}
+          pack={pack}
+          bookSetup={projectBookSetup(project)}
+          section={colorSection ? { ...colorSection, dark: false } : null}
+          fontFamily={{ display: hStack, heading: hStack, label: hStack, body: bStack }}
+          render={({ opening, contentTop }) => (
+            <ColorsPage
+              pageLabel={sectionName('color')}
+              pageIndex={i}
+              kit={{ ...kit, ...bgFor('pageColors') }}
+              style={{
+                ...gridMarginVar,
+                '--bbb-page-ratio': bookPageRatio(projectBookSetup(project)),
+              }}
+              opening={opening}
+              contentTop={contentTop}
+            />
+          )}
         />
       ))
       return

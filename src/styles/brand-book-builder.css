@@ -1245,3 +1245,38 @@
     padding: var(--space-md, 16px);
   }
 }
+
+/* ── PHASE 10B · the compositor-driven page ──────────────────────────────
+   The composed opening is an SVG laid over the page it belongs to. It fills
+   the sheet because its viewBox IS the sheet, in points, so the band lands
+   where the PDF puts it and scales with whatever room the Builder has.
+
+   `aspect-ratio` is set INLINE by the renderer from the geometry the page was
+   composed against, never here: `.bbb-page` is hardcoded to A4 and a Letter
+   project previewed at the wrong shape long before this. Only the composed
+   page is corrected — the rest of the canvas is not this phase's to change. */
+.bbb-page--composed {
+  position: relative;
+  /* Overrides the sheet ratio `.bbb-page` hardcodes. The variable is set
+     inline from `bookPageRatio()`, so Letter is 612/792 and A4 is
+     595.28/841.89 rather than both being A4. */
+  width: min(var(--bbb-avail-w), calc(var(--bbb-avail-h) * var(--bbb-page-ratio)));
+  height: min(var(--bbb-avail-h), calc(var(--bbb-avail-w) / var(--bbb-page-ratio)));
+  aspect-ratio: var(--bbb-page-ratio);
+}
+
+.bbb-positioned-page {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* The page's own content sits above the composed layer and below the band.
+   The offset is the band's height as a share of the sheet — the compositor
+   already knows it, and this is the one place the canvas reads it. */
+.bbb-page--composed > .bbb-role-swatches,
+.bbb-page--composed > .bbb-swatch-row,
+.bbb-page--composed > .bbb-ph-sub { position: relative; z-index: 1; }
