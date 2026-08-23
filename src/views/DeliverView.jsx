@@ -28,7 +28,7 @@ import {
 import { POMODORO_WORK_MIN } from '../lib/helper/forcedBreak'
 import '../styles/lazy-deliver.css'
 
-import { bookVersionRenderInputs, DTPL_BUILTIN_BOOK } from '../lib/documents/documentModel'
+import { deliveryPackFor, DTPL_BUILTIN_BOOK } from '../lib/documents/documentModel'
 
 const BrandBookPreview = lazy(
   () => import('../components/BrandBookPreview')
@@ -105,26 +105,23 @@ export default function DeliverView({
      (project, versionId), already tested, and refusing rather than
      substituting. A Version it cannot open falls back to the working document
      WITH A LABEL SAYING SO, never to a live render dressed as a frozen one. */
-  const bookVersions = (activeProject?.documentVersions || []).filter(
+  /* The same resolver `runExport` uses, so the book being proofed and the book
+     being shipped cannot be two different documents. This was three lines
+     inline here and absent from the export path — see
+     `latestBookVersionInputs`. */
+  const hasBookVersion = (activeProject?.documentVersions || []).some(
     (v) => v?.templateId === DTPL_BUILTIN_BOOK
   )
-  const latestBookVersion = bookVersions.length ? bookVersions[bookVersions.length - 1] : null
-  const frozenProof = latestBookVersion
-    ? bookVersionRenderInputs(activeProject, latestBookVersion.documentVersionId)
-    : null
-  const proof = frozenProof?.ok
-    ? {
-        pack: frozenProof.pack,
-        book: frozenProof.book,
-        label: 'The book your client has — frozen when you sent it.',
-      }
-    : {
-        pack: packSnap,
-        book: bookSetup,
-        label: latestBookVersion
-          ? 'Your working book — the sent version could not be opened.'
-          : 'Your working book — nothing has been sent yet.',
-      }
+  const delivery = deliveryPackFor(activeProject, packSnap, bookSetup)
+  const proof = {
+    pack: delivery.pack,
+    book: delivery.book,
+    label: delivery.frozen
+      ? 'The book your client has — frozen when you sent it.'
+      : hasBookVersion
+        ? 'Your working book — the sent version could not be opened.'
+        : 'Your working book — nothing has been sent yet.',
+  }
   const ready = packReadiness(packSnap)
   const gaps = ready.checks.filter((c) => !c.ok)
   /* Core gaps drive the status line; handoff/learnings are ship polish and
@@ -358,8 +355,22 @@ export default function DeliverView({
             client is getting what they bought. Below the one-click download
             on purpose: the fast path stays one press, and the package is
             there when the job is bigger than a PDF. */}
+        {/* FILES FROZEN, AGREEMENT LIVE.
+            The manifest must describe the bytes `runExport('package')` will
+            actually write, and those now come from the frozen Book Version —
+            it read `packSnap` (live), so the folder list described a different
+            book from the one in the zip.
+            `detective` is deliberately the LIVE one. A frozen pack carries
+            `detective: {}` by design, and this panel's other job is "did the
+            client get what they BOUGHT" — an agreement that lives in today's
+            brief, not in a book frozen last week. Handing it an empty brief
+            would silently empty the "not in the package yet" list, which is
+            the most useful thing this panel says. `deliverablesPicked` feeds
+            only that checklist and the attribution control
+            (`attachableDeliverables` / `deliverableChecklist`), never
+            `packagePlan`'s file list, so the bytes are identical either way. */}
         <ClientPackagePanel
-          pack={packSnap}
+          pack={proof.pack}
           onExport={runExport}
           flashToast={flashToast}
         />

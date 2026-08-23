@@ -476,7 +476,69 @@ export function paginatedBookPages(packIn) {
  * `detective` is deliberately NOT stored. Its fields are resolved to values and
  * kept flat; there is no second copy of the client's answers here.
  */
-export const BOOK_CONTENT_EXTRA_FIELDS = Object.freeze(['clientName', 'studio', 'name'])
+/**
+ * FACTORY WRITING RULES — the values `brandIdentityDefaults` seeds on every
+ * project (useAppStore.js: writingCase 'sentence', writingCaps 'sparing').
+ *
+ * Declared here rather than imported so this module stays free of the store,
+ * the same way `journeyProgress.js` carries `STOCK_PROJECT_PALETTE`. If the
+ * store's defaults move, `bookContentStockRules.test.js` fails.
+ */
+export const STOCK_WRITING_CASE = 'sentence'
+export const STOCK_WRITING_CAPS = 'sparing'
+
+/**
+ * Printed by the book, authored somewhere other than a page row.
+ *
+ * WHY THIS LIST GREW. `frozenBookContentFrom` walks `PAGE_FIELDS` plus this
+ * list, and `PAGE_FIELDS` is the BUILDER's read-only panel — not the full set
+ * of things `brandBookPdf` prints. Six printed fields were in neither, so a
+ * frozen Version could not reproduce them and the delivered book lost its
+ * Messaging appendix and any authored print rules. Measured: a 20-page working
+ * book froze to 17.
+ *
+ * `PAGE_FIELDS` is deliberately NOT where these go — adding rows there would
+ * add controls to the Builder panel, which is a UI change, not a freeze fix.
+ * This list is the existing extension point for exactly this case.
+ *
+ * NOT here on purpose: `writingCase` / `writingCaps`. They are enum selections
+ * that `buildBrandPackSnapshot` defaults (`p.writingCase || 'sentence'`), so
+ * the pack ALWAYS carries a value even when the designer never chose one.
+ * Freezing that would print the app's factory rule in a client's brand book as
+ * though the designer had written it — the placeholder-as-spec failure
+ * docs/PRD.md §9 bans. They are frozen only when they differ from the factory
+ * value; see `authoredWritingRules`.
+ */
+export const BOOK_CONTENT_EXTRA_FIELDS = Object.freeze([
+  'clientName',
+  'studio',
+  'name',
+  /* Messaging appendix — the client's own answers, from the Brief. */
+  'messagingPlan',
+  'messagingCta',
+  /* Writing appendix — free text, authored or absent. Unlike the two enums
+     above it, this has no factory value to confuse it with. */
+  'writingNotes',
+  /* Handoff rows — print specification the designer typed. */
+  'printPantone',
+  'printStock',
+  'printFinish',
+])
+
+/**
+ * The writing enums, but only when the designer actually moved them.
+ *
+ * @param {object} pack
+ * @returns {{writingCase?: string, writingCaps?: string}}
+ */
+export function authoredWritingRules(pack = {}) {
+  const out = {}
+  const c = String(pack?.writingCase ?? '').trim()
+  const k = String(pack?.writingCaps ?? '').trim()
+  if (c && c !== STOCK_WRITING_CASE) out.writingCase = c
+  if (k && k !== STOCK_WRITING_CAPS) out.writingCaps = k
+  return out
+}
 
 /** Every field the book prints, derived from the page plan. */
 export function bookContentFieldList() {
@@ -508,5 +570,6 @@ export function frozenBookContentFrom(pack) {
     const value = String(p[key] ?? '').trim()
     if (value) out[key] = value
   }
+  Object.assign(out, authoredWritingRules(p))
   return JSON.parse(JSON.stringify(out))
 }

@@ -18,6 +18,10 @@
 import { describe, it, expect } from 'vitest'
 import { JOURNEY_STEPS, PATH_STEP_COUNT } from './journey'
 import { pathProgressSummary } from './journeyProgress'
+import {
+  DOCUMENT_KIND_BOOK,
+  DTPL_BUILTIN_BOOK,
+} from '../documents/documentModel'
 
 /**
  * A context in which every stop genuinely counts as done — derived from the
@@ -27,7 +31,7 @@ import { pathProgressSummary } from './journeyProgress'
  *   ideate    a titled direction, a rough idea, or a spark pin
  *   design    mark or wordmark PLUS words or non-stock colour (not tagline alone)
  *   sketch    at least one touchpointApps note / mock accept / colour sample
- *   book      the builder has been touched (`bookBuilder` exists)
+ *   book      the Book Document exists (the builder was opened)
  *   deliver   a handoff note or learnings (evidence only — not delivered)
  *
  * `ideate` and `book` joined the path on 2026-08-09. The fixture gained the
@@ -49,7 +53,18 @@ const everythingDone = {
     logoWordmark: 'Harbor',
     tagline: 'Coastal and warm',
     touchpointApps: { website: { note: 'Hero uses the wordmark' } },
-    bookBuilder: { print: { pageSize: 'a4' } },
+    /* The Book Document is what proves the builder was opened —
+       `ensureBookDocument` writes it and only BrandBookBuilderView calls that.
+       This fixture used to carry `bookBuilder` instead, which
+       `createBlankProject` seeds on EVERY project, so the rule it was
+       exercising was true for a project nobody had touched. */
+    document: {
+      documentId: 'doc_fixture_book',
+      kind: DOCUMENT_KIND_BOOK,
+      templateId: DTPL_BUILTIN_BOOK,
+      overrides: {},
+      composition: [],
+    },
     handoffNote: 'Everything is in the pack.',
   },
   tasks: [],
