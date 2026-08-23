@@ -16,6 +16,10 @@ import {
   STOCK_PROJECT_TYPE_BODY,
 } from './journeyProgress'
 import { JOURNEY_STEPS } from './journey'
+import {
+  DOCUMENT_KIND_BOOK,
+  DTPL_BUILTIN_BOOK,
+} from '../documents/documentModel'
 
 describe('pathStepHasContent', () => {
   it('define needs detective required core — not display name alone', () => {
@@ -253,9 +257,16 @@ describe('pathStepHasContent', () => {
         /* Directions and Brand book are stops now, so a fixture claiming to be
            a fully-worked project has to carry their content too. `directions`
            above already satisfied Directions — it was there for the Tools
-           screen — and `bookBuilder` is what the builder writes on first
-           touch. */
-        bookBuilder: { print: { pageSize: 'a4' } },
+           screen — and the Book DOCUMENT is what opening the builder writes.
+           This said `bookBuilder`, which createBlankProject seeds on every
+           project, so the rule was satisfied by an untouched project. */
+        document: {
+          documentId: 'doc_fixture_book',
+          kind: DOCUMENT_KIND_BOOK,
+          templateId: DTPL_BUILTIN_BOOK,
+          overrides: {},
+          composition: [],
+        },
       },
       moodItems: [{ id: 1, inPack: true, type: 'quote', note: 'ref' }],
       tasks: [],

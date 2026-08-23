@@ -9,6 +9,7 @@
 import { useMemo, useRef, useState } from 'react'
 import {
   fontFamilyFromLabel,
+  inkOn,
   mapPaletteRoles,
   normalizeHex,
   bestTextOn,
@@ -45,6 +46,17 @@ export default function BusinessCardProduce({
     normalizeHex(project.colorRoles?.cover) || roles.cover || '#1A1A1A'
   const accent =
     normalizeHex(project.colorRoles?.accent) || roles.accent || '#606060'
+  /* The brand name is set in the accent ON the cover, and nothing checked that
+     those two roles contrast. On an ordinary palette they need not: measured
+     #3F5540 on #B4552D = 1.66:1, and the SAME package ships a colour spec sheet
+     that prints "FAIL  Accent on primary — 1.66:1 (needs 3:1)". So the package
+     contained a produced, client-owned artifact contradicting its own
+     accessibility report — on a brief that asked for WCAG AA.
+     The name and title one line below already do this correctly via
+     `bestTextOn(cover)`; this line simply bypassed it. `inkOn` keeps the accent
+     wherever it is genuinely readable and falls back only when it is not, so a
+     palette with a legible accent still gets its accent. */
+  const orgInk = inkOn(cover, accent)
   const headingFont = fontFamilyFromLabel(project.typeHeading)
   const bodyFont = fontFamilyFromLabel(project.typeBody)
   const orgName =
@@ -173,7 +185,7 @@ export default function BusinessCardProduce({
                 .filter(Boolean)
                 .join('  ·  ')}
             </div>
-            <div className="stationery-card-org" style={{ color: accent }}>
+            <div className="stationery-card-org" style={{ color: orgInk }}>
               {orgName}
             </div>
           </div>

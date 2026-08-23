@@ -298,7 +298,12 @@ describe('nothing is fabricated where something real exists', () => {
 describe('the proof is the ship', () => {
   it('DeliverView previews the frozen Version, not the live pack', () => {
     const view = codeOnly(read('src/views/DeliverView.jsx'))
-    expect(view).toMatch(/bookVersionRenderInputs/)
+    /* Was `bookVersionRenderInputs` called inline here. The same three lines
+       were then needed by the EXPORT path, which had none of them and shipped
+       the live pack — so the resolver moved into `latestBookVersionInputs` and
+       both call it. The rule this test protects is unchanged: the preview
+       resolves a frozen Version. */
+    expect(view).toMatch(/deliveryPackFor/)
     expect(view).toMatch(/pack=\{proof\.pack\}/)
     /* Scoped to the PREVIEW. `packSnap` legitimately still feeds
        `DeliverToClient`, whose `deliveryGaps` compares what the client holds

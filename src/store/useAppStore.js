@@ -1913,31 +1913,30 @@ const useAppStore = create(
            send actually rendered rather than a second interpretation of the
            same project. `frozenBookContentFrom` keeps only the resolved values
            the page plan declares — no `detective`, no project dump. */
-        const content = frozenBookContentFrom(
-          currentBrandPack({
-            project,
-            projectId: owner,
-            tasks: get().tasks,
-            moodItems: get().moodItems,
-          })
-        )
+        /* ONE pack, read twice. The words and the ★ pack must describe the
+           same instant, and building the pack twice invites them to drift. */
+        const sentPack = currentBrandPack({
+          project,
+          projectId: owner,
+          tasks: get().tasks,
+          moodItems: get().moodItems,
+        })
+        const content = frozenBookContentFrom(sentPack)
+        /* The starred pins exactly as the book drew them — `currentBrandPack`
+           has already applied `selectPackPins` (★ only, hero first, capped at
+           six), so this is the page's own input, not a second selection. */
+        const sentPins = Array.isArray(sentPack.pins) ? sentPack.pins : []
         /* THE PRODUCED ARTWORK THE BOOK SHOWS, COPIED AT THE SAME MOMENT.
            Resolved from the same pack the content came from, so the Version's
            words and its artwork describe one instant rather than two. */
-        const frozenApps = frozenAppsFrom(
-          currentBrandPack({
-            project,
-            projectId: owner,
-            tasks: get().tasks,
-            moodItems: get().moodItems,
-          })
-        )
+        const frozenApps = frozenAppsFrom(sentPack)
         const built = buildDocumentVersionData(project, {
           identitySnapshotId: snapshotId,
           freezeEvent: 'sent',
           content,
           appAssets: frozenApps.assets,
           appPlacement: { touchpoints: frozenApps.touchpoints, apps: frozenApps.apps },
+          pins: sentPins,
         })
         if (!built.ok) return built
         const version = JSON.parse(JSON.stringify(built.version))

@@ -395,6 +395,10 @@ export function packFromBookVersion(version, snapshot) {
        can see. A Version frozen before Phase 9 has none and renders exactly as
        it did. */
     packageAssets: Array.isArray(v.appAssets) ? v.appAssets : [],
+    /* The ★ pack as frozen. Same key the live pack uses, so the Imagery page
+       draws from one shape whichever pack it is handed. A Version frozen
+       before pins were captured has none and renders exactly as it did. */
+    pins: Array.isArray(v.pins) ? v.pins : [],
     /* Same keys the live pack uses, so one resolver serves both. */
     touchpoints: Array.isArray(v.appPlacement?.touchpoints) ? [...v.appPlacement.touchpoints] : [],
     touchpointApps: v.appPlacement?.apps && typeof v.appPlacement.apps === 'object'
@@ -465,6 +469,90 @@ export function bookVersionRenderInputs(project, documentVersionId) {
     },
     missingRefs: pack.missingRefs,
   }
+}
+
+/**
+ * The most recent frozen Book Version's render inputs, or null.
+ *
+ * WHY THIS IS A FUNCTION AND NOT THREE LINES AT EACH CALL SITE.
+ * "Find the Book Versions, take the last one, open it" was written inline in
+ * DeliverView so the pack PREVIEW could be version-bound, and was simply
+ * absent from the export path — so the preview showed the frozen book while
+ * `runExport` built the client's PDF and ZIP from `buildCurrentBrandPack()`.
+ * The audit's reverse trace found the consequence: not one file in the
+ * downloaded package carried a Version id, and the package silently tracked
+ * the live project. Two answers to "which book is this" is the defect; one
+ * function is the fix.
+ *
+ * Returns null — never a live fallback — when there is no Book Version or the
+ * Version cannot be opened. Callers decide what to do with that and must say
+ * which book they are showing, exactly as DeliverView's label already does.
+ *
+ * @param {object} project
+ * @returns {{version: object, pack: object, book: object, missingRefs: string[]}|null}
+ */
+/**
+ * The pack the CLIENT PACKAGE is built from, and what each half of it means.
+ *
+ * The book is frozen; the folder around it is not, and conflating the two
+ * breaks the package in both directions.
+ *
+ *  FROZEN — everything the approved book IS: mark, palette, colour roles,
+ *  type, wordmark, the page composition and the page setup. This is what the
+ *  client approved and what must never change under them because the designer
+ *  kept working.
+ *
+ *  LIVE — three things that are deliberately NOT properties of a frozen book:
+ *    · `detective`, the agreed brief. `packFromBookVersion` empties it on
+ *      purpose (a Version freezes the book, not the agreement), but the
+ *      package writes `06_PROJECT/<client>_Brief_Agreed.md` from it and every
+ *      file in the zip is NAMED from the client on it. Handing the packager an
+ *      empty brief renamed nine files `Brand_*` and emptied the brief file —
+ *      measured, not predicted.
+ *    · `packageAssets`, the designer's own shelf of produced and uploaded
+ *      files. A Version freezes only the artwork the BOOK REFERENCES
+ *      (`frozenAppsFrom`), so a produced business card the book never draws
+ *      has `appAssets: []` — and a pure frozen pack silently dropped it out of
+ *      `05_APPLICATIONS/`, taking a paid deliverable off the client.
+ *    · `studio` / footer credit, which is studio identity, not book content.
+ *
+ * So: the BOOK is version-bound, the FOLDER is current. Stated once, here,
+ * because the export path and the panel that describes it must not answer this
+ * differently — which is exactly how they drifted before.
+ *
+ * Returns `{ pack, book, frozen }`. `frozen` is false when there is no Book
+ * Version to bind to, and callers must say so rather than implying otherwise.
+ *
+ * @param {object} project
+ * @param {object} livePack the current `buildCurrentBrandPack()` result
+ * @param {object} liveBook the current book setup
+ */
+export function deliveryPackFor(project, livePack, liveBook) {
+  const frozen = latestBookVersionInputs(project)
+  if (!frozen) return { pack: livePack, book: liveBook, frozen: false }
+  return {
+    pack: {
+      ...frozen.pack,
+      detective: livePack?.detective || {},
+      projectName: livePack?.projectName || frozen.pack.projectName,
+      studio: livePack?.studio,
+      packageAssets: Array.isArray(livePack?.packageAssets)
+        ? livePack.packageAssets
+        : frozen.pack.packageAssets || [],
+    },
+    book: frozen.book,
+    frozen: true,
+  }
+}
+
+export function latestBookVersionInputs(project) {
+  const versions = Array.isArray(project?.documentVersions)
+    ? project.documentVersions.filter((v) => v?.templateId === DTPL_BUILTIN_BOOK)
+    : []
+  if (!versions.length) return null
+  const latest = versions[versions.length - 1]
+  const inputs = bookVersionRenderInputs(project, latest.documentVersionId)
+  return inputs?.ok ? inputs : null
 }
 
 /**
@@ -578,7 +666,7 @@ function joinWords(list) {
  */
 export function buildDocumentVersionData(
   project,
-  { identitySnapshotId, freezeEvent = FREEZE_SENT, content = null, appAssets = null, appPlacement = null } = {}
+  { identitySnapshotId, freezeEvent = FREEZE_SENT, content = null, appAssets = null, appPlacement = null, pins = null } = {}
 ) {
   const snapshotId = String(identitySnapshotId || '').trim()
   if (!snapshotId) {
@@ -616,6 +704,15 @@ export function buildDocumentVersionData(
        applies both filters, so a withheld file never enters the Version and
        therefore never reaches the client. */
     appAssets: Array.isArray(appAssets) ? copyJson(appAssets) : [],
+    /* THE ★ PACK THIS BOOK SHOWS, BY VALUE.
+       The mood board is authored work — the designer starred these and wrote a
+       "why" on each — and the book draws an Imagery page from them. Nothing
+       froze them, so a version-bound render had `pins: []` and simply omitted
+       the page: a 20-page working book delivered as 17.
+       By value for the same reason `appAssets` and the snapshot's mark are:
+       a reference into `moodItems` would let unstarring a pin tomorrow change
+       a book delivered yesterday. Bounded by the product's own ★ cap of 6. */
+    pins: Array.isArray(pins) ? copyJson(pins) : [],
     /* Which surface each of those assets was placed on, and which surfaces the
        book had. A frozen pack's `detective` is empty on purpose, so without
        this the Version cannot rebuild its own Applications pages. */

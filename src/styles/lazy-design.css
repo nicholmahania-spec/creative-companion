@@ -2499,7 +2499,15 @@
 .mark-concept-star.is-on {
   background: var(--text-primary);
   border-color: var(--text-primary);
-  color: var(--ts-ink, var(--bg-card));
+  /* `--ts-ink` is the INK, not the colour that sits on it. It is defined
+     globally (shell.css `--ts-ink: var(--text-primary)`; workroom.css
+     `var(--stage-ink)`), so the light `var(--bg-card)` fallback written here
+     could never fire and this resolved to dark-on-dark — measured 1.00:1, the
+     chosen state rendering as a solid bar with no readable label. Every other
+     consumer in the codebase pairs it with a DARK fallback
+     (`var(--ts-ink, #171717)`), which is what the token means.
+     `--bg-canvas` is the established on-`--text-primary` colour in shell.css. */
+  color: var(--bg-canvas);
   cursor: default;
 }
 

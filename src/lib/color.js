@@ -95,6 +95,41 @@ export function bestTextOn(bgHex) {
 }
 
 /**
+ * The brand's own ink on `bgHex` when it is readable there, otherwise a
+ * readable one. "Prefer the brand, never at the cost of legibility."
+ *
+ * This is not a new idea — `brandBookPdf.js` has carried exactly this rule
+ * privately as its `textOn(bgHex, preferHex)` for the book's own surfaces.
+ * It is here because two surfaces outside the book needed it and each got it
+ * wrong in the same way: they took a ROLE value as a foreground and trusted
+ * two unrelated role values to happen to contrast.
+ *
+ *   BrandArtboard's PRIMARY lockup   fg: roles.text  on bg: roles.quiet
+ *   BusinessCardProduce's org line   fg: roles.accent on bg: roles.cover
+ *
+ * Both shipped at ~1:1 and ~1.7:1 on ordinary palettes. Neither was a
+ * designer error: a palette is free to contain two light colours or two
+ * mid-tone colours, and nothing in a role's NAME promises it contrasts with
+ * another role. The pairing has to be checked at the point of use, and the
+ * only honest thing to do when it fails is to stop using the preferred ink.
+ *
+ * `need` defaults to the AA body-text floor because these are read as text.
+ * Callers showing large display type may pass 3.
+ *
+ * @param {string} bgHex background the ink sits on
+ * @param {string} preferHex the brand ink we would rather use
+ * @param {number} [need] minimum contrast ratio the preferred ink must clear
+ * @returns {string} a hex that clears `need` on `bgHex`
+ */
+export function inkOn(bgHex, preferHex, need = 4.5) {
+  const bg = normalizeHex(bgHex)
+  if (!bg) return bestTextOn(bgHex)
+  const pref = normalizeHex(preferHex)
+  if (pref && contrastRatio(pref, bg) >= need) return pref
+  return bestTextOn(bg)
+}
+
+/**
  * Map unordered palette swatches to roles for System artboard / pack cover.
  * Never assumes palette[0] is cover-safe.
  */

@@ -172,12 +172,78 @@ async function rasterizeToPngDataUrl(src) {
   })
 }
 
+/**
+ * The dominant opaque colour of a raster mark, or '' when it cannot be read.
+ *
+ * The book paints the mark onto four different grounds. Until now it never
+ * asked what colour the mark was, which was safe only because it never drew
+ * the real mark on those grounds at all — it drew a monogram in a computed
+ * ink. Now that the artwork itself goes there (F15), the book has to know
+ * whether the artwork would disappear: a one-colour mark drawn in the brand's
+ * accent, dropped on a square filled with the brand's accent, is invisible.
+ *
+ * Best-effort by design. No DOM (the CLI exports through Vite with no canvas)
+ * or a tainted canvas returns '' — and '' is read as "unknown", which routes
+ * the mark onto a paper chip rather than gambling on the ground.
+ */
+function sampleInkFromPngDataUrl(png) {
+  const s = String(png || '')
+  if (!imageFormatFromDataUrl(s)) return ''
+  if (typeof document === 'undefined' || typeof Image === 'undefined') return ''
+  return new Promise((resolve) => {
+    try {
+      const img = new Image()
+      img.onload = () => {
+        try {
+          const w = Math.max(1, Math.min(img.naturalWidth || 64, 64))
+          const h = Math.max(1, Math.min(img.naturalHeight || 64, 64))
+          const c = document.createElement('canvas')
+          c.width = w
+          c.height = h
+          const ctx = c.getContext('2d')
+          if (!ctx) return resolve('')
+          ctx.drawImage(img, 0, 0, w, h)
+          const d = ctx.getImageData(0, 0, w, h).data
+          /* Mean of the opaque pixels. A mark is usually one flat colour on
+             transparency, so the mean IS that colour; for a multi-colour mark
+             the mean is a fair stand-in for "how dark is this thing overall",
+             which is the only question being asked. */
+          let r = 0
+          let g = 0
+          let b = 0
+          let n = 0
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 128) continue
+            r += d[i]
+            g += d[i + 1]
+            b += d[i + 2]
+            n += 1
+          }
+          if (!n) return resolve('')
+          const hex = (v) =>
+            Math.round(v / n)
+              .toString(16)
+              .padStart(2, '0')
+          resolve(`#${hex(r)}${hex(g)}${hex(b)}`)
+        } catch {
+          resolve('')
+        }
+      }
+      img.onerror = () => resolve('')
+      img.src = s
+    } catch {
+      resolve('')
+    }
+  })
+}
+
 async function preparePackRasters(pack) {
   if (!pack || typeof pack !== 'object') return pack
   let logoImage = pack.logoImage || ''
   if (logoImage && !imageFormatFromDataUrl(logoImage)) {
     logoImage = (await rasterizeToPngDataUrl(logoImage)) || logoImage
   }
+  const logoInk = logoImage ? await sampleInkFromPngDataUrl(logoImage) : ''
   const pins = await Promise.all(
     (Array.isArray(pack.pins) ? pack.pins : []).map(async (p) => {
       const visual = String(p?.visual || '')
@@ -188,7 +254,7 @@ async function preparePackRasters(pack) {
       return p
     })
   )
-  return { ...pack, logoImage, pins }
+  return { ...pack, logoImage, logoInk, pins }
 }
 
 /**
@@ -344,6 +410,54 @@ export async function downloadBrandPackVectorPdf(
     const projectName = clean(pack?.projectName) || 'Untitled project'
     const wordmark = clean(pack?.logoWordmark) || projectName
     const monogram = monogramFor(wordmark)
+
+    /* THE MARK, WHEREVER THE BOOK SETS ONE.
+       Three places drew `monogram` unconditionally — the cover square, the
+       four lockup tiles and the closing page — while `drawLogoSection` drew
+       the real artwork. So one PDF could show the client's actual mark in its
+       clearspace diagram and an invented "L&" on its cover: a second mark the
+       designer never made, printed as specification on the most looked-at page
+       of the deliverable. PRD §9 already bans placeholder content presented as
+       spec, which is the same reasoning that removed the geometry when no
+       artwork exists.
+       There is now ONE painter, defined where the artwork and the monogram are
+       both in scope, so those surfaces cannot drift apart again.
+       Contrast is checked because the ground is often a brand colour and the
+       mark is often a brand colour: `GOLD` is `roles.accent`, so an accent-ink
+       mark on the accent square would be invisible. When the mark cannot be
+       seen on the ground — or its ink could not be read at all — it is set on
+       a paper chip instead of being swapped for a monogram, so the ARTWORK is
+       always what the client sees whenever artwork exists. */
+    const markArt = pack?.logoImage || ''
+    const markFmt = imageFormatFromDataUrl(markArt)
+    const hasMarkArt = !!(markFmt && markArt)
+    const markInk = normalizeHex(pack?.logoInk) || ''
+
+    const drawMarkOrMonogram = (x, y, w, h, groundHex, monoSize, monoRgb) => {
+      if (hasMarkArt) {
+        const readable =
+          markInk && groundHex ? contrastRatio(markInk, groundHex) >= 2.2 : false
+        const pad = Math.min(w, h) * 0.14
+        if (!readable) {
+          /* A paper chip under the mark. Standard brand-book device, and the
+             only honest way to show a one-colour mark on its own brand colour
+             without inventing a reverse version of it (which the app does not
+             have — see the reverse/knockout gap in the audit). */
+          box(x, y, w, h, CREAM)
+        }
+        try {
+          pdf.addImage(markArt, markFmt, x + pad, y + pad, w - pad * 2, h - pad * 2)
+          return
+        } catch {
+          /* fall through to the monogram */
+        }
+      }
+      const fs = monoSize || Math.min(h * 0.7, w * 0.7)
+      setFace('display', fs, monoRgb || ON_GOLD)
+      pdf.text(pdfSafeText(monogram), x + w / 2, y + h / 2 + fs * 0.36, {
+        align: 'center',
+      })
+    }
     const tagline = clean(pack?.tagline)
     const d = pack?.detective || {}
     /* THE COVER'S DATE IS THE SNAPSHOT'S, NOT THE CLOCK'S.
@@ -924,10 +1038,7 @@ export async function downloadBrandPackVectorPdf(
       let by = Math.max(bandTop, bandTop + (navY - px(24) - bandTop - blockH) / 2)
 
       box(margin, by, MARK, MARK, GOLD)
-      setFace('display', px(24), ON_GOLD)
-      pdf.text(pdfSafeText(monogram), margin + MARK / 2, by + MARK / 2 + px(24) * 0.36, {
-        align: 'center',
-      })
+      drawMarkOrMonogram(margin, by, MARK, MARK, goldHex, px(24), ON_GOLD)
       by += MARK + px(32)
 
       setFace('display', TITLE_FIT, ON_INK)
@@ -1103,15 +1214,44 @@ export async function downloadBrandPackVectorPdf(
 
     // ═══════════════════════════════════════════ SECTIONS
 
-    /** The wordmark lockup, set as the design sets it: monogram + wordmark. */
-    const lockup = (x, cy, size, rgb, maxW) => {
+    /**
+     * The lockup: the MARK plus the wordmark, centred on `x`.
+     *
+     * This used to set `${monogram} ${wordmark}` as a single text run and
+     * never look at the artwork, so the one page in the book whose whole job
+     * is "here is the lockup on four grounds" showed an invented monogram on
+     * all four — while the clearspace diagram directly beneath it, on the same
+     * page, drew the real mark. With artwork present the mark is now drawn as
+     * artwork; the monogram remains the fallback for a project that has none.
+     *
+     * @param groundHex the tile's fill, so the mark is never set invisibly
+     */
+    const lockup = (x, cy, size, rgb, maxW, groundHex) => {
+      const glyph = hasMarkArt ? '' : `${monogram} `
       setFace('heading', size, rgb)
-      let text = `${monogram} ${wordmark}`
-      while (pdf.getTextWidth(pdfSafeText(text)) > maxW && size > px(10)) {
+      /* Reserve the mark's square before fitting the words, or the wordmark
+         sizes itself to the full cell and the mark then pushes it out. */
+      const markW = hasMarkArt ? size * 1.25 : 0
+      const markGap = hasMarkArt ? size * 0.42 : 0
+      const textMax = Math.max(px(10), maxW - markW - markGap)
+      let text = `${glyph}${wordmark}`
+      while (pdf.getTextWidth(pdfSafeText(text)) > textMax && size > px(10)) {
         size -= 0.5
         setFace('heading', size, rgb)
       }
-      pdf.text(pdfSafeText(text), x, cy + size * 0.36, { align: 'center' })
+      if (!hasMarkArt) {
+        pdf.text(pdfSafeText(text), x, cy + size * 0.36, { align: 'center' })
+        return
+      }
+      const mw = size * 1.25
+      const tw = pdf.getTextWidth(pdfSafeText(text))
+      const total = mw + markGap + tw
+      const left = x - total / 2
+      drawMarkOrMonogram(left, cy - mw / 2, mw, mw, groundHex, size, rgb)
+      setFace('heading', size, rgb)
+      pdf.text(pdfSafeText(text), left + mw + markGap, cy + size * 0.36, {
+        align: 'left',
+      })
     }
 
     const drawLogoSection = (s) => {
@@ -1136,17 +1276,17 @@ export async function downloadBrandPackVectorPdf(
       const cellW = (contentW - gap) / 2
       const cellH = px(64)
       const fields = [
-        [WHITE, textOn('#ffffff', inkHex)],
-        [INK, ON_INK],
-        [GOLD, ON_GOLD],
-        [BLACK, WHITE],
+        [WHITE, textOn('#ffffff', inkHex), '#FFFFFF'],
+        [INK, ON_INK, inkHex],
+        [GOLD, ON_GOLD, goldHex],
+        [BLACK, WHITE, '#000000'],
       ]
       box(margin, y, contentW, cellH * 2 + gap, mixRgb(INK, CREAM, 0.1))
-      fields.forEach(([bg, fg], i) => {
+      fields.forEach(([bg, fg, bgHex], i) => {
         const cx = margin + (i % 2) * (cellW + gap)
         const cy = y + Math.floor(i / 2) * (cellH + gap)
         box(cx, cy, cellW, cellH, bg)
-        lockup(cx + cellW / 2, cy + cellH / 2, px(20), fg, cellW - px(36))
+        lockup(cx + cellW / 2, cy + cellH / 2, px(20), fg, cellW - px(36), bgHex)
       })
       y += cellH * 2 + gap + px(24)
 
@@ -1948,8 +2088,7 @@ export async function downloadBrandPackVectorPdf(
       let cy = pageH - bleed - px(48) - blockH
 
       box(margin, cy, MARK, MARK, GOLD)
-      setFace('display', px(20), ON_GOLD)
-      pdf.text(pdfSafeText(monogram), margin + MARK / 2, cy + MARK / 2 + px(20) * 0.36, { align: 'center' })
+      drawMarkOrMonogram(margin, cy, MARK, MARK, goldHex, px(20), ON_GOLD)
       cy += MARK + px(28)
 
       setFace('display', H1, ON_INK)

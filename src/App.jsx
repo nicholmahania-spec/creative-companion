@@ -21,6 +21,7 @@ import { warmPathViewChunks, RESTORABLE_VIEWS } from './app/viewRegistry'
 import versionService from './services/versionService'
 
 import { DEFAULT_PALETTE } from './lib/color'
+import { deliveryPackFor } from './lib/documents/documentModel'
 import { clampFocusMaskPct } from './lib/uiPrefs'
 import { downscaleDataUrl } from './lib/moodPins'
 import { resolveStudioName } from './lib/studio/studioIdentity'
@@ -2599,8 +2600,33 @@ function App() {
        told the file exists. Clearing up front covers every failure and
        cancel branch, including ones added later. */
     setLastExportNote('')
-    const pack = buildCurrentBrandPack()
-    const slug = slugifyFilename(pack.projectName, 'brand-pack')
+    const livePack = buildCurrentBrandPack()
+
+    /* WHAT THE CLIENT RECEIVES IS THE FROZEN VERSION, NOT TODAY'S PROJECT.
+       Every export kind read `buildCurrentBrandPack()`. For the designer's own
+       formats that is right — a backup, a JSON dump and the working HTML/MD
+       are meant to be current. For the two CLIENT-FACING outputs it was not:
+       the brand guide PDF and the client package ZIP are the artifacts a
+       client is handed and later holds you to, and they silently tracked the
+       live project. An audit reverse-trace confirmed it end to end — no file
+       in a downloaded package carried a Version id, and editing Identity after
+       a send changed what a re-download produced.
+       DeliverView's pack PREVIEW was already version-bound and labelled "the
+       book your client has — frozen when you sent it", so the app was showing
+       one book and shipping another. `latestBookVersionInputs` is the same
+       resolver that preview uses, and it REFUSES rather than substituting: no
+       Book Version, or one that cannot be opened, returns null and these two
+       kinds fall back to live — which is honest, because before a send the
+       working book is genuinely what there is. */
+    const clientFacingExport = kind === 'package' || kind === 'pdf'
+    const delivery = clientFacingExport
+      ? deliveryPackFor(activeProject, livePack, bookSetup)
+      : { pack: livePack, book: bookSetup, frozen: false }
+    const pack = delivery.pack
+    const bookForExport = delivery.book
+    /* The filename names the CLIENT, which is a live fact about who this is
+       for, not a property of the frozen book. */
+    const slug = slugifyFilename(livePack.projectName, 'brand-pack')
     const finishOk = (label) => {
       const when = new Date().toLocaleTimeString([], {
         hour: 'numeric',
@@ -2696,7 +2722,7 @@ function App() {
                was in flight: the two merged with no textual conflict and left
                a free identifier that would have thrown at render — caught by
                the ratchet's zero-tolerance no-undef rule, not by review. */
-            book: bookSetup,
+            book: bookForExport,
             assets: pack.packageAssets || [],
           },
           handlePromise
@@ -2753,7 +2779,7 @@ function App() {
       return (async () => {
         const result = await downloadBrandPackPdf(pack, handlePromise, {
           mode: 'vector',
-          book: bookSetup,
+          book: bookForExport,
         })
         if (result.ok) {
           setLastExportNote(
