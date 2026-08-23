@@ -34,6 +34,7 @@
 import { getDetectiveProgress } from '../brief/detectiveBrief'
 import { touchpointsFor } from '../journey/touchpoints'
 import { hasProducedProjectType } from './journeyProgress'
+import { isBookDocument } from '../documents/documentModel'
 
 const clean = (v) => String(v ?? '').trim()
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
@@ -137,8 +138,13 @@ export function stopEstablished(stepId, ctx = {}) {
       return { line: 'No routes yet' }
     }
     case 'book': {
-      /* bookBuilder exists after first touch — not a finished client book. */
-      const built = project.bookBuilder && typeof project.bookBuilder === 'object'
+      /* The Book DOCUMENT, not the settings bag — same correction as the
+         `book` case in journeyProgress.js, and for the same reason: the bag is
+         seeded by createBlankProject, so "bookBuilder exists after first
+         touch" was never true and this line read "Builder opened" on a project
+         nobody had opened. `project.document` is written only by
+         `ensureBookDocument`, which only BrandBookBuilderView's mount calls. */
+      const built = isBookDocument(project.document)
       return { line: built ? 'Builder opened' : 'Builder not opened yet' }
     }
     case 'deliver': {

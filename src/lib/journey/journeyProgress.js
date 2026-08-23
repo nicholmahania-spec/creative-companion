@@ -1,4 +1,5 @@
 import { getDetectiveProgress } from '../brief/detectiveBrief'
+import { isBookDocument } from '../documents/documentModel'
 
 /**
  * Stock blank-project palette (matches useAppStore.defaultProjectPalette).
@@ -223,9 +224,23 @@ export function pathStepMeetsCondition(stepId, ctx = {}) {
         (project.tagline?.trim() && mood.some((m) => m.inPack))
       )
     case 'book': {
-      /* Builder settings object exists — proves “builder opened”, not a
-         finished brand book or client PDF. */
-      return !!(project.bookBuilder && typeof project.bookBuilder === 'object')
+      /* THE BOOK DOCUMENT, not the settings bag.
+         This read `project.bookBuilder` and called that "proves builder
+         opened". It never did: `createBlankProject` seeds
+         `bookBuilder: { ...bookSetup }` from the studio's sticky defaults, so
+         the condition was true from the instant a project existed. App.jsx
+         latches every met condition into `pathReached`, and that latch can
+         never be cleared — so every new project announced "Step 6: Brand book,
+         done" on its own first render, permanently, before anyone had opened
+         it. In a product whose whole promise is an honest Completed → Current
+         → Next, that is the one thing this readout must not do.
+         `project.document` is the canonical Book state (PRD §5, Phase 7) and
+         is written by `ensureBookDocument`, whose ONLY caller is
+         BrandBookBuilderView's mount effect — so it means precisely what the
+         old comment claimed. Legacy projects that laid out a book before the
+         Document existed keep their tick through the `pathReached` latch they
+         already carry, so nothing loses a mark it had earned. */
+      return isBookDocument(project.document)
     }
     case 'deliver': {
       /* Handoff note or learnings text only — proves EVIDENCE of a close note,

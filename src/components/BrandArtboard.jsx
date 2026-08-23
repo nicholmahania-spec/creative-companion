@@ -3,6 +3,7 @@ import {
   bestTextOn,
   fontFamilyFromLabel,
   formatRgb,
+  inkOn,
   mapPaletteRoles,
   normalizeHex,
 } from '../lib/color'
@@ -405,8 +406,19 @@ export default function BrandArtboard({
           {
             id: 'primary',
             label: 'Primary',
+            /* PREFER the brand's text ink, but only when it is readable on the
+               brand's quiet ground. This tile was the only one of the four that
+               did not compute its foreground — reverse takes `coverFg`, mono is
+               a fixed safe pair, accent takes `bestTextOn(...)` — and so it was
+               the only one that could fail. It did: a perfectly ordinary
+               palette whose text role is light and whose quiet role is paper
+               rendered the wordmark at 1.04:1, invisible, on the single most
+               important artifact in the system. `roles.text` and `roles.quiet`
+               are independent values; a role's name promises nothing about how
+               it pairs. `inkOn` keeps the brand ink whenever it clears AA and
+               falls back only when it does not. */
             bg: roles.quiet || '#FAFAF9',
-            fg: roles.text || '#1C1917',
+            fg: inkOn(roles.quiet || '#FAFAF9', roles.text || '#1C1917'),
           },
           {
             id: 'reverse',
