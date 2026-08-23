@@ -34,16 +34,11 @@
  * numbers below can be read straight off the design.
  */
 import {
-  mapPaletteRoles,
-  normalizeHex,
-  bestTextOn,
   contrastRatio,
   formatRatio,
-  nudgeHexForContrast,
   tintsAndShades,
 } from '../color'
 import {
-  buildColorSystem,
   decisionLineFromPack,
   logoDontsList,
   logoDefaultsNote,
@@ -64,6 +59,11 @@ import {
 import { resolveBookSetup } from './brandBookSetup'
 import { bookPlan } from './bookDocument'
 import { composeRegion } from './layout/compose'
+import {
+  buildBookStyle,
+  hexToRgb,
+  mixRgb,
+} from './layout/renderContext'
 import { composeSectionOpen } from './layout/templates/sectionOpen'
 import { composeContentOpen } from './layout/templates/contentOpen'
 import { appAssetFor, APP_ASSET_STATES } from './bookAssets'
@@ -88,42 +88,6 @@ function pdfSafeText(input) {
     .replace(/[←⇐]/g, '<-')
     .replace(/[×✕✖]/g, 'x')
     .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, '')
-}
-
-function hexToRgb(hex) {
-  const s = String(hex || '').trim().replace(/^#/, '')
-  if (s.length === 3) {
-    const r = parseInt(s[0] + s[0], 16)
-    const g = parseInt(s[1] + s[1], 16)
-    const b = parseInt(s[2] + s[2], 16)
-    if ([r, g, b].some((n) => Number.isNaN(n))) return null
-    return [r, g, b]
-  }
-  if (s.length === 6) {
-    const r = parseInt(s.slice(0, 2), 16)
-    const g = parseInt(s.slice(2, 4), 16)
-    const b = parseInt(s.slice(4, 6), 16)
-    if ([r, g, b].some((n) => Number.isNaN(n))) return null
-    return [r, g, b]
-  }
-  return null
-}
-
-const rgbToHexStr = ([r, g, b]) =>
-  `#${[r, g, b].map((n) => Math.round(n).toString(16).padStart(2, '0')).join('')}`
-
-/** `t` of `a` over `b`. Used where the design asks for a translucent ink. */
-const mixRgb = (a, b, t) => a.map((v, i) => Math.round(v * t + b[i] * (1 - t)))
-
-function packCoverHex(pack) {
-  const roles = pack?.colorRoles || {}
-  const auto = mapPaletteRoles(pack?.palette || [])
-  return (
-    normalizeHex(roles.cover) ||
-    normalizeHex(auto.cover) ||
-    normalizeHex((pack?.palette || [])[0]) ||
-    '#1C1917'
-  )
 }
 
 function imageFormatFromDataUrl(url) {
@@ -253,94 +217,38 @@ export async function downloadBrandPackVectorPdf(
        the design specifies it so the two can be read side by side. */
     const px = (n) => n * 0.75
 
-    // ── the book's colors, all four derived from the project's palette ──
-
-    const colors = (pack?.palette || [])
-      .map((c) => normalizeHex(c) || c)
-      .filter(Boolean)
-    const roles = { ...mapPaletteRoles(colors), ...(pack?.colorRoles || {}) }
-    const colorSys = buildColorSystem(colors, pack?.colorRoles)
-
-    const inkHex = normalizeHex(roles.text) || packCoverHex(pack)
-    const goldHex = normalizeHex(roles.accent) || colors[1] || inkHex
-    /* The book's paper. The builder has always had a page-background control
-       and it never reached here — the book on screen repainted and the file
-       the client received did not, so the control looked like it styled the
-       deliverable and did not. The chosen colour wins; the palette-derived
-       quiet tone stays as the fallback for a project that never picked one.
-
-       Everything cream-derived follows from this one value — the content
-       sheet, its hairlines and tints, and the text colours computed by
-       `textOn`, which falls back to a readable colour whenever the preferred
-       ink would not clear 4.5:1. So a dark paper repaints the page and its
-       type together rather than leaving unreadable text behind. */
-    const creamHex =
-      normalizeHex(pack?.bookPageBg?.pageType) ||
-      normalizeHex(roles.quiet) ||
-      colors[colors.length - 1] ||
-      '#FAFAF9'
-    /* The fourth colour the design calls "tan": the palette member that is
-       none of the three roles. Where a project has only three colours it is
-       mixed from the two it does have rather than invented. */
-    const tanHex =
-      colors.find((c) => c !== inkHex && c !== goldHex && c !== creamHex) ||
-      rgbToHexStr(mixRgb(hexToRgb(goldHex) || [0, 0, 0], hexToRgb(creamHex) || [255, 255, 255], 0.45))
-
-    const INK = hexToRgb(inkHex) || [27, 58, 47]
-    const GOLD = hexToRgb(goldHex) || [196, 165, 116]
-    const TAN = hexToRgb(tanHex) || [232, 220, 200]
-    const CREAM = hexToRgb(creamHex) || [247, 243, 236]
-    const WHITE = [255, 255, 255]
-    const BLACK = [0, 0, 0]
-
-    /** The text colour for a field of `bgHex`, preferring the book's own ink. */
-    const textOn = (bgHex, preferHex) => {
-      const pref = normalizeHex(preferHex)
-      if (pref && contrastRatio(pref, bgHex) >= 4.5) return hexToRgb(pref)
-      return hexToRgb(bestTextOn(bgHex)) || [0, 0, 0]
-    }
-    const ON_INK = textOn(inkHex, creamHex)
-    const ON_GOLD = textOn(goldHex, inkHex)
-    const ON_CREAM = textOn(creamHex, inkHex)
-    const ON_TAN = textOn(tanHex, inkHex)
-
-    /**
-     * A kicker's colour on a given field.
-     *
-     * The design's kicker is a darkened accent (#8a7256 against #C4A574's
-     * gold). Deriving it by nudging the project's own accent until it clears
-     * 4.5:1 reproduces exactly that relationship for any palette, instead of
-     * hard-coding one project's brown into every book.
-     */
-    const kickerOn = (bgHex) => {
-      const n = nudgeHexForContrast(goldHex, bgHex, 4.5)
-      return hexToRgb(n?.hex || goldHex) || GOLD
-    }
-    const KICKER_CREAM = kickerOn(creamHex)
-    const KICKER_INK = kickerOn(inkHex)
-    const KICKER_TAN = kickerOn(tanHex)
-
-    /**
-     * The quiet greys — footers, secondary prose, captions.
-     *
-     * The design asks for the page's ink at 40-55% opacity. That is a real
-     * design intent (recede, don't disappear) and a real accessibility
-     * problem: ink at 40% on cream measures about 2.3:1, and this document
-     * carries page numbers and the studio's name to a client. So the blend is
-     * taken as the design specifies it and then nudged only as far as it has
-     * to go to clear 4.5:1 — the design's tone wherever the design's tone
-     * already passes.
-     */
-    const quietOn = (fg, bg, t) => {
-      const blended = rgbToHexStr(mixRgb(fg, bg, t))
-      const n = nudgeHexForContrast(blended, rgbToHexStr(bg), 4.5)
-      return hexToRgb(n?.hex || blended) || fg
-    }
-    const MUTE_CREAM = quietOn(INK, CREAM, 0.7)
-    const MUTE_INK = quietOn(ON_INK, INK, 0.7)
-    const FOOT_CREAM = quietOn(INK, CREAM, 0.4)
-    const FOOT_INK = quietOn(ON_INK, INK, 0.45)
-    const HAIRLINE = mixRgb(INK, CREAM, 0.15)
+    /* ── the book's colours ──────────────────────────────────────────────
+       Resolved in the shared render context, not here, so the React renderer
+       composes against the same paint rather than deriving its own. Every
+       value below is the same value this file used to compute inline; the
+       logic moved, it did not change. */
+    const style = buildBookStyle(pack)
+    const {
+      colors,
+      colorSys,
+      inkHex,
+      creamHex,
+      INK,
+      GOLD,
+      TAN,
+      CREAM,
+      WHITE,
+      BLACK,
+      textOn,
+      quietOn,
+      ON_INK,
+      ON_GOLD,
+      ON_CREAM,
+      ON_TAN,
+      KICKER_CREAM,
+      KICKER_INK,
+      KICKER_TAN,
+      MUTE_CREAM,
+      MUTE_INK,
+      FOOT_CREAM,
+      FOOT_INK,
+      HAIRLINE,
+    } = style
 
     // ── the project's words ──
 
