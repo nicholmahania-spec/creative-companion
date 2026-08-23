@@ -168,3 +168,70 @@ describe('the renderer draws positioned data and nothing else', () => {
     expect(render(null)).toBe('')
   })
 })
+
+/* ───────────────────────── PHASE 10C · authored placement ──────────────── */
+
+describe('an authored cell reaches the composed page', () => {
+  const placed = (cell) => ({
+    ...PACK,
+    bookGrid: { columns: 12, gutter: 3, margin: 9, rows: 1, show: false },
+    bookComposition: cell
+      ? [{ itemId: 'bpage_color', pageId: 'color', locked: false, layoutV: 2,
+           elements: [{ id: 'headingBlock', cell }] }]
+      : [],
+  })
+
+  it('composes an unplaced page exactly as it composed before', async () => {
+    /* The identity that protects every existing book: no placement must be
+       arithmetically the same as a placement across the whole measure. */
+    const bare = composeSectionOpenPage(PACK, SECTION, await ctx())
+    const empty = composeSectionOpenPage(placed(null), SECTION, await ctx())
+    const full = composeSectionOpenPage(placed({ col: 1, colSpan: 12 }), SECTION, await ctx())
+    const heading = (p) => p.boxes.find((b) => b.id === 'pageTitle').rect
+    expect(heading(empty)).toEqual(heading(bare))
+    expect(heading(full)).toEqual(heading(bare))
+  })
+
+  it('moves the heading and its rule, and nothing else', async () => {
+    const before = composeSectionOpenPage(placed(null), SECTION, await ctx())
+    const after = composeSectionOpenPage(placed({ col: 7, colSpan: 6 }), SECTION, await ctx())
+    const box = (p, id) => p.boxes.find((b) => b.id === id)
+
+    expect(box(after, 'pageTitle').rect.x).toBeGreaterThan(box(before, 'pageTitle').rect.x)
+    expect(box(after, 'rule').rect.x).toBe(box(after, 'pageTitle').rect.x)
+    /* The band is full-bleed by design and is not the designer's to move. */
+    expect(box(after, 'band').rect).toEqual(box(before, 'band').rect)
+    expect(box(after, 'sectionNumber').origin).toEqual(box(before, 'sectionNumber').origin)
+    expect(box(after, 'sectionTitle').origin).toEqual(box(before, 'sectionTitle').origin)
+  })
+
+  it('narrows the heading measure when the span narrows', async () => {
+    const wide = composeSectionOpenPage(placed({ col: 1, colSpan: 12 }), SECTION, await ctx())
+    const half = composeSectionOpenPage(placed({ col: 1, colSpan: 6 }), SECTION, await ctx())
+    expect(half.boxes.find((b) => b.id === 'pageTitle').rect.w)
+      .toBeLessThan(wide.boxes.find((b) => b.id === 'pageTitle').rect.w)
+    /* A narrower heading starts in the same place — only the measure changed. */
+    expect(half.boxes.find((b) => b.id === 'pageTitle').rect.x)
+      .toBe(wide.boxes.find((b) => b.id === 'pageTitle').rect.x)
+  })
+
+  it('is deterministic, and carries no coordinate back into the record', async () => {
+    const cell = { col: 3, colSpan: 4 }
+    const a = composeSectionOpenPage(placed(cell), SECTION, await ctx())
+    const b = composeSectionOpenPage(placed(cell), SECTION, await ctx())
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b))
+    expect(cell).toEqual({ col: 3, colSpan: 4 })
+  })
+
+  it('ignores a placement meant for another page', async () => {
+    const elsewhere = {
+      ...PACK,
+      bookComposition: [{ itemId: 'bpage_type', pageId: 'type', locked: false, layoutV: 2,
+        elements: [{ id: 'headingBlock', cell: { col: 9, colSpan: 4 } }] }],
+    }
+    const bare = composeSectionOpenPage(PACK, SECTION, await ctx())
+    const other = composeSectionOpenPage(elsewhere, SECTION, await ctx())
+    expect(other.boxes.find((b) => b.id === 'pageTitle').rect)
+      .toEqual(bare.boxes.find((b) => b.id === 'pageTitle').rect)
+  })
+})

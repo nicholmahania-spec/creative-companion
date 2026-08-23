@@ -454,7 +454,20 @@ export const BOOK_OVERRIDE_KEYS = Object.freeze([
  * type and the colours but not the order, so re-rendering that send would have
  * produced a different book from the one the client got.
  */
-export const BOOK_COMPOSITION_KEYS = Object.freeze(['pageOrder', 'pageLocking'])
+export const BOOK_COMPOSITION_KEYS = Object.freeze([
+  'pageOrder',
+  'pageLocking',
+  /* PHASE 10C — WHERE A PAGE'S ELEMENTS SIT. Composition, not an override:
+     it is the designer's own layout decision, it belongs beside the order it
+     is a sibling of, and it therefore freezes into a Version through the path
+     order already travels rather than needing one of its own. */
+  'pageElements',
+])
+
+/** The generation marker. A row without it predates authored placement and
+    composes exactly as it always did — which is what keeps every existing
+    project and every frozen Version untouched. */
+export const BOOK_LAYOUT_V = 2
 
 export function emptyBookComposition() {
   return []
@@ -517,11 +530,76 @@ export function compositionFromLegacy(patch, previous = []) {
   const locked = Array.isArray(patch?.pageLocking?.lockedPages)
     ? new Set(patch.pageLocking.lockedPages)
     : prevLocked
+  /* Elements are carried forward per page unless this patch names that page,
+     so reordering or locking never silently drops a placement. */
+  const prevElements = new Map(
+    (Array.isArray(previous) ? previous : [])
+      .filter((r) => Array.isArray(r?.elements) && r.elements.length)
+      .map((r) => [r.pageId, r.elements])
+  )
+  const incoming = patch?.pageElements && typeof patch.pageElements === 'object'
+    ? patch.pageElements
+    : null
+
   const ids = [...order, ...[...locked].filter((id) => !order.includes(id))]
+  const named = incoming ? Object.keys(incoming) : []
+  for (const id of named) if (!ids.includes(id)) ids.push(id)
+
   return ids
     .map((id) => String(id || '').trim())
     .filter(Boolean)
-    .map((pageId) => ({ itemId: `bpage_${pageId}`, pageId, locked: locked.has(pageId) }))
+    .map((pageId) => {
+      const row = { itemId: `bpage_${pageId}`, pageId, locked: locked.has(pageId) }
+      const els = incoming && Object.hasOwn(incoming, pageId)
+        ? sanitizeElements(incoming[pageId])
+        : prevElements.get(pageId) || null
+      if (els && els.length) {
+        row.layoutV = BOOK_LAYOUT_V
+        row.elements = els
+      }
+      return row
+    })
+}
+
+/**
+ * Authored placement, and nothing else.
+ *
+ * Only `id` and a grid cell survive. Resolved geometry — points, pixels,
+ * percentages, anything a renderer produced — must never reach storage: a
+ * stored coordinate would freeze the book to one paper size and one column
+ * count, which is the whole reason the cell is grid-relative.
+ */
+function sanitizeElements(list) {
+  if (!Array.isArray(list)) return []
+  const out = []
+  for (const el of list) {
+    const id = String(el?.id ?? '').trim()
+    const col = Math.round(Number(el?.cell?.col))
+    const colSpan = Math.round(Number(el?.cell?.colSpan))
+    if (!id || !Number.isFinite(col) || !Number.isFinite(colSpan)) continue
+    if (col < 1 || colSpan < 1) continue
+    out.push({ id, cell: { col, colSpan } })
+  }
+  return out
+}
+
+/**
+ * The one element a designer can place, named once.
+ *
+ * It lives here rather than in the composition driver because BOTH renderers
+ * need it and the PDF must not depend on the React side to know what a
+ * placement refers to — that import would drag the browser driver's whole
+ * graph into the file generator for a single string.
+ */
+export const HEADING_ELEMENT_ID = 'headingBlock'
+
+/** The authored cell for one element on one page, or null for "not placed". */
+export function elementCellFor(composition, pageId, elementId) {
+  const rows = Array.isArray(composition) ? composition : []
+  const row = rows.find((r) => r && r.pageId === pageId)
+  if (!row || row.layoutV !== BOOK_LAYOUT_V || !Array.isArray(row.elements)) return null
+  const hit = row.elements.find((e) => e && e.id === elementId)
+  return hit?.cell ? { ...hit.cell } : null
 }
 
 /**

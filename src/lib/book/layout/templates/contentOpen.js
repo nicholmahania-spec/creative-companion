@@ -75,7 +75,7 @@ export function composeContentOpen(pageSpec, content, style, geometry, measure) 
     style,
     { ...geometry, startY: y },
     measure,
-    { titleSize: SPEC.titleSize }
+    { titleSize: SPEC.titleSize, cell: content?.headingCell || null }
   )
   boxes.push(...head.boxes)
 

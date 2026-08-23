@@ -386,7 +386,10 @@ export function packFromBookVersion(version, snapshot) {
     pageSize: overrides.pageSize,
     edgeSpace: overrides.edgeSpace,
     printShop: overrides.printShop,
-    /* Which pages, in what order, as sent. */
+    /* Which pages, in what order, as sent — and, since 10C, where the
+       designer placed their elements on them. A Version has carried its own
+       composition since Phase 7, so a frozen book already had everything an
+       authored placement needs; only the LIVE pack was missing it. */
     bookComposition: Array.isArray(v.composition) ? v.composition : [],
     /* THE SAME KEY THE LIVE PACK USES, holding the Version's own copies.
        `appAssetFor` resolves `packageAssets` without caring which it has, so
