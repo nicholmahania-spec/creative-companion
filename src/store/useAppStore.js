@@ -5,7 +5,10 @@ import {
   isWrongShapeForField,
   SPECTRUM_FIELDS,
 } from '../lib/brief/detectiveBrief'
-import { attributesFromBrief } from '../lib/brand/strategySeed'
+import {
+  attributesFromBrief,
+  strategyFromBrief,
+} from '../lib/brand/strategySeed'
 import { consolidateDiscovery } from '../lib/brief/discoveryConsolidation'
 /* Page setup is seeded from prefs at creation and migration ONLY — see
    `seededBookSetup`. No other read of `prefs.book*` exists. */
@@ -4677,33 +4680,76 @@ const useAppStore = create(
         })),
 
       /**
-       * Place the client's positioning answers on the rulers, once.
+       * Place the client's answers on the strategy list, each of them once.
        *
        * MATERIALISED, NOT DERIVED AT READ TIME, and that is the whole design.
        * A read-time merge would fight the designer: adjust a seeded word and
        * the derivation overwrites it; delete one and it returns on the next
        * render. Writing real attributes hands them over — from that moment
-       * they are the designer's words to edit, remove or ignore, with no
-       * tombstones and no second source of truth.
+       * they are the designer's words to edit, remove or ignore.
        *
-       * Runs only when `strategyAttributes` has NEVER been set. An empty
-       * array is a decision ("I cleared these"); `undefined` is the absence
-       * of one. Distinguishing them is what stops a cleared list refilling
-       * itself, without needing a `seeded` flag on every project.
+       * ONCE PER BRIEF ITEM, not once per project. The first version ran only
+       * while `strategyAttributes` had never been set, which meant a brief
+       * answered after the designer's first visit — the client filling the
+       * portal a week later is the normal case — never reached the list, and
+       * the client's three words (`toneOfVoice`, `feel`) could not be added
+       * to projects that already existed. `strategySeededFrom` records the
+       * stable id of every brief item that has been handed over, so a new
+       * answer arrives exactly once and a word the designer removed stays
+       * removed. It is provenance, not a second source of truth: nothing
+       * reads it but this action.
+       *
+       * Projects seeded before the record existed carry the spectrums
+       * already; those ids are marked handed-over on first contact so they
+       * cannot come back into a list the designer has since cleared.
        */
       seedStrategyAttributes: (projectId) => {
         const state = get()
         const p = state.projects.find((x) => x.id === projectId)
         if (!p) return { ok: false, seeded: 0 }
-        if (Array.isArray(p.strategyAttributes)) return { ok: true, seeded: 0 }
-        const seeded = attributesFromBrief(p.detective, SPECTRUM_FIELDS)
-        if (!seeded.length) return { ok: true, seeded: 0 }
+        const derived = strategyFromBrief(p.detective, SPECTRUM_FIELDS)
+        const existing = Array.isArray(p.strategyAttributes)
+          ? p.strategyAttributes
+          : null
+        const handed = new Set(
+          Array.isArray(p.strategySeededFrom) ? p.strategySeededFrom : []
+        )
+        if (!Array.isArray(p.strategySeededFrom) && existing) {
+          for (const a of attributesFromBrief(p.detective, SPECTRUM_FIELDS))
+            handed.add(a.id)
+        }
+        const fresh = derived.filter((a) => !handed.has(a.id))
+        if (!fresh.length) {
+          /* Nothing new — but if the legacy hand-over needs recording, record
+             it now so the next call does not redo the arithmetic. */
+          if (!Array.isArray(p.strategySeededFrom) && existing && handed.size) {
+            set({
+              projects: state.projects.map((x) =>
+                x.id === projectId
+                  ? { ...x, strategySeededFrom: [...handed] }
+                  : x
+              ),
+            })
+          }
+          return { ok: true, seeded: 0 }
+        }
+        const have = new Set((existing || []).map((a) => a.id))
+        const add = fresh.filter((a) => !have.has(a.id))
         set({
           projects: state.projects.map((x) =>
-            x.id === projectId ? { ...x, strategyAttributes: seeded } : x
+            x.id === projectId
+              ? {
+                  ...x,
+                  strategyAttributes: [...(existing || []), ...add],
+                  strategySeededFrom: [
+                    ...handed,
+                    ...fresh.map((a) => a.id),
+                  ],
+                }
+              : x
           ),
         })
-        return { ok: true, seeded: seeded.length }
+        return { ok: true, seeded: add.length }
       },
 
       /* A tagged candidate — today only the chosen typeface. Keyed by a

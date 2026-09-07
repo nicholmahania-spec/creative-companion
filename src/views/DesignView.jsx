@@ -64,6 +64,7 @@ import { applyBrandCssVars, clearBrandCssVars } from '../lib/brandCssVars'
 import ReadabilityRows from '../features/palette/ReadabilityRows'
 import MarkColourCheck from '../features/brand/MarkColourCheck'
 import TypeSpecimen from '../features/brand/TypeSpecimen'
+import BriefDirection from '../features/brand/BriefDirection'
 import DirectionInDevelopment, {
   DirectionPartOffer,
   DirectionPartLead,
@@ -1119,6 +1120,14 @@ export default function DesignView({
             </div>
 
             <div className="design-edit-column">
+            {/* The brief, read at the bench. Words always; prose lines only
+                where this screen's decision needs them. Renders nothing on
+                a project with no answers yet. */}
+            <BriefDirection
+              project={activeProject}
+              substep={identitySubstep}
+              onEditInBrief={() => setActiveView?.('project')}
+            />
             {identitySubstep === 'logo' && (
             <section
               id="design-section-content-logo"

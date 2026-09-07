@@ -208,3 +208,87 @@ describe('attributesFromBrief', () => {
     expect(SPECTRUM_FIELDS.length).toBe(4)
   })
 })
+
+/**
+ * The client's own words — "three words" and "how should people feel" —
+ * become strategy words. Before this, the same question was asked of the
+ * designer again, in an empty box, on the same page.
+ */
+import {
+  splitBriefWords,
+  wordsFromBrief,
+  strategyFromBrief,
+  WORD_SOURCES,
+} from './strategySeed'
+
+describe('wordsFromBrief', () => {
+  it('reads exactly the two brief questions whose answers are words', () => {
+    expect([...WORD_SOURCES]).toEqual(['toneOfVoice', 'feel'])
+  })
+
+  it('splits a three-word answer into three words, in the client’s casing', () => {
+    const words = wordsFromBrief({ toneOfVoice: '“Quick, honest, no nonsense”' })
+    expect(words.map((w) => w.label)).toEqual(['Quick', 'honest', 'no nonsense'])
+    expect(words.every((w) => w.fromBrief === 'toneOfVoice')).toBe(true)
+  })
+
+  it('splits on "and" but leaves a sentence alone', () => {
+    expect(splitBriefWords('warm and welcoming')).toEqual(['warm', 'welcoming'])
+    expect(
+      splitBriefWords('they should feel like they can really trust us')
+    ).toEqual([])
+  })
+
+  it('places a known adjective on one axis and marks it as a rough placement', () => {
+    const [warm] = wordsFromBrief({ feel: 'warm' })
+    expect(warm.warmth).toBeCloseTo(0.9)
+    expect(warm.suggested).toBe(true)
+    const spoken = AXIS_IDS.filter((a) => warm[a] !== undefined)
+    expect(spoken).toEqual(['warmth'])
+  })
+
+  it('never claims a pole — a lexicon cannot know how warm THIS warm is', () => {
+    for (const w of wordsFromBrief({
+      feel: 'warm, cool, bold, light, modern, classic, playful, formal, calm, energetic',
+    })) {
+      for (const a of AXIS_IDS) {
+        if (w[a] === undefined) continue
+        expect(w[a]).toBeGreaterThan(0)
+        expect(w[a]).toBeLessThan(1)
+      }
+    }
+  })
+
+  it('gives an unknown word no axes at all rather than guessing', () => {
+    const [honest] = wordsFromBrief({ toneOfVoice: 'honest' })
+    expect(honest.label).toBe('honest')
+    expect(honest.suggested).toBeUndefined()
+    for (const a of AXIS_IDS) expect(honest[a]).toBeUndefined()
+  })
+
+  it('credits the same word to one question only', () => {
+    const words = wordsFromBrief({ toneOfVoice: 'Warm', feel: 'warm, calm' })
+    expect(words.map((w) => w.id)).toEqual([
+      'brief:toneOfVoice:warm',
+      'brief:feel:calm',
+    ])
+  })
+
+  it('gives stable ids, so seeding twice cannot duplicate a word', () => {
+    const a = wordsFromBrief({ feel: 'reassured, curious' })
+    const b = wordsFromBrief({ feel: 'reassured, curious' })
+    expect(a.map((w) => w.id)).toEqual(b.map((w) => w.id))
+  })
+
+  it('strategyFromBrief puts the spectrums first and the words after', () => {
+    const all = strategyFromBrief(
+      { spectrumBoldMinimalist: 'a', feel: 'calm' },
+      SPECTRUM_FIELDS
+    )
+    expect(all.map((x) => x.id)).toEqual([
+      'brief:spectrumBoldMinimalist',
+      'brief:feel:calm',
+    ])
+    expect(strategyFromBrief({}, SPECTRUM_FIELDS)).toEqual([])
+  })
+})

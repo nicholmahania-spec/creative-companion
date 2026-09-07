@@ -165,16 +165,14 @@ const ROLE_KEYS = BRAND_ROLE_KEYS.map((id) => ({
  * sheet with five things written on it.
  *
  * NO animation on the dash being replaced, though the roadmap asked for one.
- * The audit's Phase 5 #20 assumed the direction sheet sits beside the fields
- * that feed it, so a designer would watch strategy turn into the brand. It
- * does not: all three call sites pass `editable={false}`, and the artboard
- * only renders on Identity's Preview sub-screen, on Review, and in the export
- * panel — never next to the Words fields where Positioning and Voice are
- * written. The transition therefore always happens on a screen nobody is
- * looking at, and firing it on arrival instead would flutter every line of a
- * project finished last week, which is the exact noise the idea was meant to
- * avoid. An animation nothing can see is not delight, it is dead code with a
- * keyframe. See docs/VISUAL_AUDIT.md Phase 5.
+ * The audit's Phase 5 #20 wanted a designer to watch strategy turn into the
+ * brand. The sheet now does sit beside the tools on every Identity screen,
+ * editable there (Review and the export panel still pass `editable={false}`,
+ * as they should — they are pictures of the sheet, not the bench). But the
+ * lines that change on it are typed into it directly, so there is no moment
+ * of arrival to animate; and firing a transition on mount would flutter every
+ * line of a project finished last week, which is the exact noise the idea was
+ * meant to avoid. See docs/VISUAL_AUDIT.md Phase 5.
  */
 function DirectionValue({ value, className = 'direction-brief', empty = '—' }) {
   const text = String(value ?? '').trim()

@@ -246,3 +246,30 @@
   color: var(--text-primary);
   background: var(--surface-sunken, rgba(0, 0, 0, 0.04));
 }
+
+/* The words list is a review of what the client said, so it carries a
+   heading and a lede of its own — the question it used to ask is asked in
+   the brief above it. Provenance is a suffix, never a control. */
+.strategy-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.strategy-lede {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-2);
+  color: var(--text-secondary);
+}
+
+.strategy-from-brief {
+  font-weight: 500;
+  font-size: var(--fs-1);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.strategy-add {
+  margin-top: var(--space-4);
+}
