@@ -49,7 +49,7 @@ import { ESLint } from 'eslint'
 
    The value is still correct. The header above says why banked slack is worse
    than slack never gained: it refills silently. */
-const BUDGET = 121
+const BUDGET = 114
 
 /** Rules that are never allowed, whatever the budget says. */
 const ZERO_TOLERANCE = new Set([
